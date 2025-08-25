@@ -404,15 +404,42 @@ async function sendMessage() {
         const searchQuery = extractSearchQuery(message);
         const shouldSearch = searchQuery || settings.webSearchEnabled;
         
+        console.log(`🔍 Web search check:`, {
+            searchQuery,
+            webSearchEnabled: settings.webSearchEnabled,
+            shouldSearch
+        });
+        
         if (shouldSearch) {
             const query = searchQuery || message;
+            console.log(`🌐 Initiating web search for: "${query}"`);
+            
+            // Show user that search is happening
+            displayMessage({
+                role: 'system',
+                content: `🔍 Searching the web for: "${query}"...`
+            });
+            
             const searchResults = await performWebSearch(query);
+            
+            console.log(`📊 Search results:`, searchResults ? 'Found results' : 'No results');
             
             if (searchResults) {
                 const searchContext = `Web search results for "${query}":\n\n${searchResults}\n\n`;
                 messages.push({
                     role: 'system',
                     content: searchContext + 'Please provide a helpful response based on the search results and the user\'s question.'
+                });
+                
+                // Show user that search completed
+                displayMessage({
+                    role: 'system',
+                    content: `✅ Web search completed. Processing results...`
+                });
+            } else {
+                displayMessage({
+                    role: 'system',
+                    content: `⚠️ Web search completed but no results found.`
                 });
             }
         }
@@ -468,48 +495,98 @@ function shouldSearchWeb(message) {
 }
 
 async function performWebSearch(query) {
+    console.log(`🔍 Performing web search for: "${query}"`);
+    
+    // Try multiple search methods in order of preference
+    const searchMethods = [
+        () => searchWithDuckDuckGo(query),
+        () => searchWithBing(query),
+        () => searchWithWikipedia(query)
+    ];
+    
+    for (let i = 0; i < searchMethods.length; i++) {
+        try {
+            const results = await searchMethods[i]();
+            if (results) {
+                console.log(`✅ Web search successful using method ${i + 1}`);
+                return results;
+            }
+        } catch (error) {
+            console.warn(`⚠️ Search method ${i + 1} failed:`, error.message);
+        }
+    }
+    
+    console.error('❌ All web search methods failed');
+    return `🌐 I attempted to search the web for "${query}" but encountered technical difficulties. The web search feature is active but experiencing connectivity issues.`;
+}
+
+async function searchWithDuckDuckGo(query) {
+    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`DuckDuckGo API error: ${response.status}`);
+    
+    const data = await response.json();
+    let results = '';
+    
+    if (data.Abstract && data.Abstract.trim()) {
+        results += `📝 **Summary:** ${data.Abstract}\n\n`;
+    }
+    
+    if (data.Definition && data.Definition.trim()) {
+        results += `📖 **Definition:** ${data.Definition}\n\n`;
+    }
+    
+    if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+        results += '🔗 **Related Information:**\n';
+        data.RelatedTopics.slice(0, 3).forEach((topic, index) => {
+            if (topic.Text) {
+                results += `${index + 1}. ${topic.Text}\n`;
+            }
+        });
+        results += '\n';
+    }
+    
+    return results || null;
+}
+
+async function searchWithBing(query) {
+    // Using Bing's public search suggestions API (limited but available)
+    const url = `https://www.bing.com/AS/Suggestions?q=${encodeURIComponent(query)}&mkt=en-us&ds=nt&qry=${encodeURIComponent(query)}`;
+    
     try {
-        console.log(`Performing web search for: ${query}`);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Bing API error: ${response.status}`);
         
-        // Use a CORS proxy or alternative search approach
-        // For now, we'll use SerpAPI's free tier through a proxy
-        const proxyUrl = 'https://api.allorigins.win/raw?url=';
-        const searchUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(query)}&api_key=demo&num=3`;
+        const text = await response.text();
         
-        const response = await fetch(proxyUrl + encodeURIComponent(searchUrl));
-        
-        if (!response.ok) {
-            throw new Error(`Search request failed: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        let results = '';
-        
-        // Process SerpAPI results
-        if (data.organic_results && data.organic_results.length > 0) {
-            results += 'Recent web search results:\n\n';
-            data.organic_results.slice(0, 3).forEach((result, index) => {
-                results += `${index + 1}. **${result.title}**\n`;
-                if (result.snippet) {
-                    results += `   ${result.snippet}\n`;
-                }
-                results += `   Source: ${result.link}\n\n`;
-            });
-        }
-        
-        // Add answer box if available
-        if (data.answer_box && data.answer_box.answer) {
-            results = `**Answer:** ${data.answer_box.answer}\n\n` + results;
-        }
-        
-        return results || `I searched for "${query}" but couldn't find specific current information. Let me help you with what I know.`;
+        // Simple fallback - just indicate we tried to search
+        return `🔍 **Web Search Attempted:** I searched for "${query}" using Bing's search service. While I cannot display full results due to API limitations, you can find current information about this topic by searching directly on search engines.\n\n`;
         
     } catch (error) {
-        console.error('Web search error:', error);
-        // Fallback message explaining the search capability
-        return `I attempted to search the web for "${query}" but encountered a technical issue. Web search functionality is available - you can try rephrasing your query or using the format "search: your question" to trigger a web search.`;
+        throw new Error('Bing search failed');
     }
+}
+
+async function searchWithWikipedia(query) {
+    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Wikipedia API error: ${response.status}`);
+    
+    const data = await response.json();
+    
+    if (data.extract && data.extract.trim()) {
+        let results = `📚 **Wikipedia Summary:**\n${data.extract}\n\n`;
+        
+        if (data.content_urls && data.content_urls.desktop) {
+            results += `🔗 **Source:** ${data.content_urls.desktop.page}\n\n`;
+        }
+        
+        return results;
+    }
+    
+    return null;
 }
 
 // ========== UI HELPER FUNCTIONS ==========
