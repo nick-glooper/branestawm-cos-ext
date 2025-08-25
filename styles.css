@@ -902,6 +902,11 @@ body {
   margin-bottom: var(--space-4);
 }
 
+.setup-option .badge-spacer {
+  height: calc(var(--font-size-xs) + var(--space-2) + var(--space-4));
+  margin-bottom: var(--space-4);
+}
+
 /* Setup option content structure */
 .setup-option-content {
   flex: 1;

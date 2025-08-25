@@ -458,55 +458,66 @@ function extractSearchQuery(message) {
 }
 
 function shouldSearchWeb(message) {
-    // Simple heuristics to determine if web search is needed
+    // Enhanced heuristics to determine if web search is needed
     const searchIndicators = [
-        /what.*current/i, /latest/i, /recent/i, /today/i, /now/i,
-        /price/i, /cost/i, /weather/i, /news/i, /stock/i,
-        /when.*happen/i, /what.*happen/i, /who.*won/i
+        /what.*current/i, /latest/i, /recent/i, /today/i, /now/i, /this week/i, /this month/i,
+        /price/i, /cost/i, /weather/i, /news/i, /stock/i, /breaking/i,
+        /when.*happen/i, /what.*happen/i, /who.*won/i, /what.*trending/i,
+        /update/i, /2024/i, /2025/i, /real.time/i, /live/i, /current events/i
     ];
     
-    return searchIndicators.some(pattern => pattern.test(message));
+    // Also search for factual questions that might have recent answers
+    const factualQuestions = [
+        /how much/i, /how many/i, /what is the/i, /who is/i, /where is/i,
+        /when did/i, /when will/i, /why did/i, /results/i, /score/i
+    ];
+    
+    return searchIndicators.some(pattern => pattern.test(message)) || 
+           (factualQuestions.some(pattern => pattern.test(message)) && message.length > 10);
 }
 
 async function performWebSearch(query) {
     try {
-        // Use DuckDuckGo instant answer API
-        const response = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1&skip_disambig=1`);
+        console.log(`Performing web search for: ${query}`);
+        
+        // Use a CORS proxy or alternative search approach
+        // For now, we'll use SerpAPI's free tier through a proxy
+        const proxyUrl = 'https://api.allorigins.win/raw?url=';
+        const searchUrl = `https://serpapi.com/search.json?q=${encodeURIComponent(query)}&api_key=demo&num=3`;
+        
+        const response = await fetch(proxyUrl + encodeURIComponent(searchUrl));
         
         if (!response.ok) {
-            throw new Error('Search request failed');
+            throw new Error(`Search request failed: ${response.status}`);
         }
         
         const data = await response.json();
         
         let results = '';
         
-        // Add abstract if available
-        if (data.Abstract) {
-            results += `${data.Abstract}\n\n`;
-        }
-        
-        // Add definition if available
-        if (data.Definition) {
-            results += `Definition: ${data.Definition}\n\n`;
-        }
-        
-        // Add related topics
-        if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-            results += 'Related information:\n';
-            data.RelatedTopics.slice(0, 3).forEach(topic => {
-                if (topic.Text) {
-                    results += `• ${topic.Text}\n`;
+        // Process SerpAPI results
+        if (data.organic_results && data.organic_results.length > 0) {
+            results += 'Recent web search results:\n\n';
+            data.organic_results.slice(0, 3).forEach((result, index) => {
+                results += `${index + 1}. **${result.title}**\n`;
+                if (result.snippet) {
+                    results += `   ${result.snippet}\n`;
                 }
+                results += `   Source: ${result.link}\n\n`;
             });
-            results += '\n';
+        }
+        
+        // Add answer box if available
+        if (data.answer_box && data.answer_box.answer) {
+            results = `**Answer:** ${data.answer_box.answer}\n\n` + results;
         }
         
         return results || `I searched for "${query}" but couldn't find specific current information. Let me help you with what I know.`;
         
     } catch (error) {
         console.error('Web search error:', error);
-        return null;
+        // Fallback message explaining the search capability
+        return `I attempted to search the web for "${query}" but encountered a technical issue. Web search functionality is available - you can try rephrasing your query or using the format "search: your question" to trigger a web search.`;
     }
 }
 
