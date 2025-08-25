@@ -584,7 +584,7 @@ function setupEventListeners() {
     document.getElementById('messageInput').addEventListener('input', autoResizeTextarea);
     
     // Setup modal events
-    document.getElementById('googleSignInBtn').addEventListener('click', authenticateWithGoogle);
+    document.getElementById('googleAuthBtn').addEventListener('click', authenticateWithGoogle);
     document.getElementById('advancedSetupBtn').addEventListener('click', () => {
         closeModal('setupModal');
         openSettings();
@@ -595,7 +595,7 @@ function setupEventListeners() {
         showModal('exportModal');
     });
     
-    document.getElementById('exportCurrentConversationBtn').addEventListener('click', () => {
+    document.getElementById('exportCurrentBtn').addEventListener('click', () => {
         closeModal('exportModal');
         if (currentConversation) {
             exportConversationAsMarkdown(currentConversation);
@@ -604,7 +604,7 @@ function setupEventListeners() {
         }
     });
     
-    document.getElementById('exportAllDataBtn').addEventListener('click', () => {
+    document.getElementById('exportAllBtn').addEventListener('click', () => {
         closeModal('exportModal');
         exportAllDataAsMarkdown();
     });
@@ -612,7 +612,7 @@ function setupEventListeners() {
     // Other UI events
     document.getElementById('settingsBtn').addEventListener('click', openSettings);
     document.getElementById('syncBtn').addEventListener('click', () => showModal('syncModal'));
-    document.getElementById('newProjectBtn').addEventListener('click', () => showModal('newProjectModal'));
+    document.getElementById('newProjectBtn').addEventListener('click', () => showModal('projectModal'));
     document.getElementById('newChatBtn').addEventListener('click', newConversation);
     document.getElementById('newArtifactBtn').addEventListener('click', () => showModal('artifactModal'));
     
@@ -621,10 +621,19 @@ function setupEventListeners() {
         switchProject(this.value);
     });
     
+    // Modal action events
+    document.getElementById('createProjectBtn').addEventListener('click', createProject);
+    document.getElementById('cancelProjectBtn').addEventListener('click', () => closeModal('projectModal'));
+    document.getElementById('saveArtifactBtn').addEventListener('click', saveArtifact);
+    document.getElementById('cancelArtifactBtn').addEventListener('click', () => closeModal('artifactModal'));
+    
     // Modal close events
     document.querySelectorAll('.close-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            closeModal(this.dataset.modal);
+            const modal = this.closest('.modal');
+            if (modal) {
+                closeModal(modal.id);
+            }
         });
     });
     
@@ -833,12 +842,118 @@ function updateConversationsList() {
     // Placeholder - implement conversation list UI
 }
 
-function updateArtifactsList() {
-    // Placeholder - implement artifacts list UI
+function switchToConversation(conversationId) {
+    if (!conversations[conversationId]) return;
+    
+    currentConversation = conversationId;
+    
+    // Clear and populate chat messages
+    const chatMessages = document.getElementById('chatMessages');
+    chatMessages.innerHTML = '';
+    
+    // Display all messages from this conversation
+    conversations[conversationId].messages.forEach(message => {
+        displayMessage(message);
+    });
+    
+    scrollToBottom();
+    updateConversationsList(); // Refresh to show active state
+    saveData();
+}
+
+function editArtifact(artifactId) {
+    const artifact = artifacts[artifactId];
+    if (!artifact) return;
+    
+    // Populate the artifact modal with existing data
+    document.getElementById('artifactTitle').value = artifact.title;
+    document.getElementById('artifactText').value = artifact.content;
+    document.getElementById('artifactModalTitle').textContent = 'Edit Note';
+    
+    // Store the artifact ID for saving
+    document.getElementById('artifactModal').dataset.artifactId = artifactId;
+    
+    showModal('artifactModal');
 }
 
 function openSettings() {
     chrome.runtime.openOptionsPage();
+}
+
+function createProject() {
+    const name = document.getElementById('projectName').value.trim();
+    const description = document.getElementById('projectDescription').value.trim();
+    
+    if (!name) {
+        showMessage('Project name is required', 'error');
+        return;
+    }
+    
+    const projectId = generateId();
+    const project = {
+        id: projectId,
+        name: name,
+        description: description,
+        conversations: [],
+        artifacts: [],
+        createdAt: new Date().toISOString()
+    };
+    
+    projects[projectId] = project;
+    currentProject = projectId;
+    
+    // Clear form
+    document.getElementById('projectName').value = '';
+    document.getElementById('projectDescription').value = '';
+    
+    closeModal('projectModal');
+    updateUI();
+    saveData();
+    showMessage(`Project "${name}" created successfully!`, 'success');
+}
+
+function saveArtifact() {
+    const title = document.getElementById('artifactTitle').value.trim();
+    const content = document.getElementById('artifactText').value.trim();
+    
+    if (!title) {
+        showMessage('Note title is required', 'error');
+        return;
+    }
+    
+    const artifactModal = document.getElementById('artifactModal');
+    const existingId = artifactModal.dataset.artifactId;
+    
+    if (existingId) {
+        // Edit existing artifact
+        artifacts[existingId].title = title;
+        artifacts[existingId].content = content;
+        artifacts[existingId].updatedAt = new Date().toISOString();
+        showMessage('Note updated successfully!', 'success');
+    } else {
+        // Create new artifact
+        const artifactId = generateId();
+        const artifact = {
+            id: artifactId,
+            title: title,
+            content: content,
+            projectId: currentProject,
+            createdAt: new Date().toISOString()
+        };
+        
+        artifacts[artifactId] = artifact;
+        projects[currentProject].artifacts.push(artifactId);
+        showMessage('Note created successfully!', 'success');
+    }
+    
+    // Clear form and modal data
+    document.getElementById('artifactTitle').value = '';
+    document.getElementById('artifactText').value = '';
+    delete artifactModal.dataset.artifactId;
+    
+    closeModal('artifactModal');
+    updateUI();
+    saveData();
 }
 
 function setupTooltips() {

@@ -1111,6 +1111,36 @@ body {
   transition: all var(--duration-200) var(--ease-out);
   z-index: 1000;
   margin-bottom: var(--space-2);
+  max-width: 200px;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+/* Smart positioning for header tooltips */
+.header .tooltip-content {
+  top: 100%;
+  bottom: auto;
+  margin-top: var(--space-2);
+  margin-bottom: 0;
+}
+
+.header .tooltip-content::after {
+  top: -4px;
+  bottom: auto;
+  border-top-color: transparent;
+  border-bottom-color: var(--surface-elevated);
+}
+
+/* Edge positioning adjustments */
+.header-controls .tooltip:first-child .tooltip-content {
+  left: 0;
+  transform: translateX(0);
+}
+
+.header-controls .tooltip:last-child .tooltip-content {
+  right: 0;
+  left: auto;
+  transform: translateX(0);
 }
 
 .tooltip:hover .tooltip-content,
