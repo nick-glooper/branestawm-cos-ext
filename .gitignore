@@ -1,0 +1,24 @@
+﻿# Node.js dependencies
+node_modules/
+
+# Build artifacts
+dist/
+build/
+
+# Log files
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Environment variables
+.env
+
+# Chrome extension specific
+*.crx
+*.pem
