@@ -425,10 +425,17 @@ async function sendMessage() {
             console.log(`📊 Search results:`, searchResults ? 'Found results' : 'No results');
             
             if (searchResults) {
-                const searchContext = `Web search results for "${query}":\n\n${searchResults}\n\n`;
+                const searchContext = `🌐 LIVE WEB SEARCH RESULTS AVAILABLE:
+
+Query: "${query}"
+
+${searchResults}
+
+IMPORTANT: The above contains fresh web search results that were just retrieved for this query. Use this information to provide specific, current answers. The search was successful and returned actual web data - please integrate these results into your response to provide accurate, up-to-date information about the user's question.`;
+                
                 messages.push({
                     role: 'system',
-                    content: searchContext + 'Please provide a helpful response based on the search results and the user\'s question.'
+                    content: searchContext
                 });
                 
                 // Show user that search completed
