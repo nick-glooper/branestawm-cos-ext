@@ -304,14 +304,19 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     
     if (message.type === 'WEB_SEARCH') {
         console.log('🔍 Background: Performing web search for:', message.query);
-        try {
-            const results = await performBackgroundWebSearch(message.query);
-            console.log('✅ Background: Web search completed');
-            sendResponse({ success: true, results });
-        } catch (error) {
-            console.error('❌ Background: Web search failed:', error);
-            sendResponse({ success: false, error: error.message });
-        }
+        
+        // Use an immediately-invoked async function to handle the response
+        (async () => {
+            try {
+                const results = await performBackgroundWebSearch(message.query);
+                console.log('✅ Background: Web search completed');
+                sendResponse({ success: true, results });
+            } catch (error) {
+                console.error('❌ Background: Web search failed:', error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
+        
         return true; // Will respond asynchronously
     }
 });
@@ -346,31 +351,46 @@ async function performBackgroundWebSearch(query) {
 async function searchWithDuckDuckGo(query) {
     const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
     
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`DuckDuckGo API error: ${response.status}`);
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
     
-    const data = await response.json();
-    let results = '';
-    
-    if (data.Abstract && data.Abstract.trim()) {
-        results += `📝 **Summary:** ${data.Abstract}\n\n`;
-    }
-    
-    if (data.Definition && data.Definition.trim()) {
-        results += `📖 **Definition:** ${data.Definition}\n\n`;
-    }
-    
-    if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-        results += '🔗 **Related Information:**\n';
-        data.RelatedTopics.slice(0, 3).forEach((topic, index) => {
-            if (topic.Text) {
-                results += `${index + 1}. ${topic.Text}\n`;
+    try {
+        const response = await fetch(url, { 
+            signal: controller.signal,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; BranestawmBot/1.0)'
             }
         });
-        results += '\n';
+        clearTimeout(timeoutId);
+        
+        if (!response.ok) throw new Error(`DuckDuckGo API error: ${response.status}`);
+        
+        const data = await response.json();
+        let results = '';
+        
+        if (data.Abstract && data.Abstract.trim()) {
+            results += `📝 **Summary:** ${data.Abstract}\n\n`;
+        }
+        
+        if (data.Definition && data.Definition.trim()) {
+            results += `📖 **Definition:** ${data.Definition}\n\n`;
+        }
+        
+        if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+            results += '🔗 **Related Information:**\n';
+            data.RelatedTopics.slice(0, 3).forEach((topic, index) => {
+                if (topic.Text) {
+                    results += `${index + 1}. ${topic.Text}\n`;
+                }
+            });
+            results += '\n';
+        }
+        
+        return results || null;
+    } finally {
+        clearTimeout(timeoutId);
     }
-    
-    return results || null;
 }
 
 async function searchWithWikipedia(query) {
@@ -380,22 +400,32 @@ async function searchWithWikipedia(query) {
     
     const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerms)}`;
     
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Wikipedia API error: ${response.status}`);
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
     
-    const data = await response.json();
-    
-    if (data.extract && data.extract.trim()) {
-        let results = `📚 **Wikipedia Summary for "${searchTerms}":**\n${data.extract}\n\n`;
+    try {
+        const response = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
         
-        if (data.content_urls && data.content_urls.desktop) {
-            results += `🔗 **Source:** ${data.content_urls.desktop.page}\n\n`;
+        if (!response.ok) throw new Error(`Wikipedia API error: ${response.status}`);
+        
+        const data = await response.json();
+        
+        if (data.extract && data.extract.trim()) {
+            let results = `📚 **Wikipedia Summary for "${searchTerms}":**\n${data.extract}\n\n`;
+            
+            if (data.content_urls && data.content_urls.desktop) {
+                results += `🔗 **Source:** ${data.content_urls.desktop.page}\n\n`;
+            }
+            
+            return results;
         }
         
-        return results;
+        return null;
+    } finally {
+        clearTimeout(timeoutId);
     }
-    
-    return null;
 }
 
 async function searchWithSimpleSearch(query) {
