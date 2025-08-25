@@ -28,7 +28,13 @@ let settings = {
     syncId: '',
     jsonbinApiKey: '',
     usePrivateBins: false,
-    autoSync: false
+    autoSync: false,
+    // Glooper Design System settings
+    colorScheme: 'professional', // 'professional', 'warm', 'cool'
+    themeMode: 'dark', // 'light', 'dark', 'auto'
+    fontSize: 'standard', // 'compact', 'standard', 'large', 'xl'
+    reducedMotion: false,
+    highContrast: false
 };
 
 let isProcessing = false;
@@ -1290,24 +1296,3 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 // ... existing code ...
-let settings = {
-    authMethod: null, // 'google' or 'apikey'
-    googleToken: null,
-    apiEndpoint: 'https://api.cerebras.ai/v1/chat/completions',
-    apiKey: '',
-    model: 'llama3.1-8b',
-    systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
-    showTooltips: true,
-    autoWebSearch: true,
-    syncKey: '',
-    syncId: '',
-    jsonbinApiKey: '',
-    usePrivateBins: false,
-    autoSync: false,
-    // Glooper Design System settings
-    colorScheme: 'professional', // 'professional', 'warm', 'cool'
-    themeMode: 'dark', // 'light', 'dark', 'auto'
-    fontSize: 'standard', // 'compact', 'standard', 'large', 'xl'
-    reducedMotion: false,
-    highContrast: false
-};
