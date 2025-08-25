@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Branestawm - Your AI Chief of Staff</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>Branestawm</h1>
+                <div class="header-subtitle">Your indispensable AI Chief of Staff</div>
+            </div>
+            <div class="header-controls">
+                <button class="btn icon-btn" id="settingsBtn" data-tooltip="Open settings">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                    </svg>
+                </button>
+                <button class="btn icon-btn" id="syncBtn" data-tooltip="Sync your data to cloud">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,18.17L8.83,15L7.42,16.41L12,21L16.58,16.41L15.17,15M12,5.83L15.17,9L16.58,7.59L12,3L7.42,7.59L8.83,9L12,5.83Z"/>
+                    </svg>
+                </button>
+                <button class="btn" id="exportBtn" data-tooltip="Export your data as markdown files">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                    </svg>
+                    Export
+                </button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <select class="project-selector" id="projectSelect">
+                        <option value="default">Default Project</option>
+                    </select>
+                    <div class="sidebar-buttons">
+                        <button class="btn small" id="newProjectBtn" data-tooltip="Create a new project to organize your chats">New Project</button>
+                        <button class="btn small" id="newChatBtn" data-tooltip="Start a new conversation in this project">New Chat</button>
+                    </div>
+                </div>
+                <div class="conversations-list" id="conversationsList">
+                    <!-- Conversations will be populated here -->
+                </div>
+            </div>
+
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message system">
+                        <strong>Welcome to Branestawm!</strong> Your indispensable AI Chief of Staff is here to provide cognitive support and help with executive function challenges.
+                        <br><br>
+                        <strong>I'm designed to help you:</strong><br>
+                        • Break down complex tasks into manageable steps<br>
+                        • Organize thoughts and create structured plans<br>
+                        • Provide patient, supportive guidance<br>
+                        • Search the web when you need current information<br>
+                        <br>
+                        <strong>Getting Started:</strong><br>
+                        • If you haven't set up yet, I'll guide you through the simple process<br>
+                        • Type "search: your question" for web search<br>
+                        • Use the notes panel to save important information<br>
+                        <br>
+                        <em>Designed as a cognitive prosthetic to support neurodivergent users with executive function challenges.</em>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <div class="input-container">
+                        <textarea class="message-input" id="messageInput" placeholder="Tell Branestawm what you need help with... (Tip: Use 'search: query' for web search)"></textarea>
+                        <button class="btn send-btn" id="sendBtn" data-tooltip="Send message (Enter)">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="artifacts-panel">
+                <div class="artifacts-header">
+                    <h3>Notes</h3>
+                    <button class="btn small" id="newArtifactBtn" data-tooltip="Create a new markdown note">New Note</button>
+                </div>
+                <div class="artifacts-list" id="artifactsList">
+                    <!-- Notes will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Setup Modal for New Users -->
+    <div class="modal" id="setupModal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Welcome to Branestawm</h3>
+            </div>
+            <div class="setup-intro">
+                <p>Your indispensable AI Chief of Staff is ready to help! Choose your setup method:</p>
+            </div>
+            
+            <div class="setup-options">
+                <div class="setup-option" id="easySetup">
+                    <div class="setup-option-icon">🚀</div>
+                    <h4>Easy Setup (Recommended)</h4>
+                    <p>Sign in with Google</p>
+                    <ul>
+                        <li>No payment required</li>
+                        <li>1,500 requests per day</li>
+                        <li>Ready in 30 seconds</li>
+                        <li>Great for task planning & organization</li>
+                    </ul>
+                    <button class="btn" id="googleSignInBtn">Sign in with Google</button>
+                </div>
+                
+                <div class="setup-option" id="advancedSetup">
+                    <div class="setup-option-icon">⚙️</div>
+                    <h4>Advanced Setup</h4>
+                    <p>Use your own AI service</p>
+                    <ul>
+                        <li>More powerful models</li>
+                        <li>You control the costs</li>
+                        <li>Multiple provider options</li>
+                        <li>Unlimited usage</li>
+                    </ul>
+                    <button class="btn secondary" id="advancedSetupBtn">Configure API</button>
+                </div>
+            </div>
+            
+            <div class="setup-footer">
+                <p><small>Branestawm is designed as a cognitive prosthetic for neurodivergent users. Your data stays private and is stored locally on your device.</small></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Export Your Data</h3>
+                <button class="close-btn" data-modal="exportModal">×</button>
+            </div>
+            <div class="export-options">
+                <button class="btn" id="exportCurrentConversationBtn">Export Current Conversation</button>
+                <button class="btn" id="exportAllDataBtn">Export All Data</button>
+            </div>
+            <div class="export-info">
+                <p><small>Your data will be exported as markdown (.md) files that you can open in any text editor or markdown viewer. This ensures you always have access to your data.</small></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Other existing modals -->
+    <div class="modal" id="newProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Project</h3>
+                <button class="close-btn" data-modal="newProjectModal">×</button>
+            </div>
+            <form id="newProjectForm">
+                <div class="form-group">
+                    <label for="projectName">Project Name</label>
+                    <input type="text" id="projectName" required placeholder="e.g., Work Tasks, Personal Goals">
+                </div>
+                <div class="form-group">
+                    <label for="projectDescription">Description (optional)</label>
+                    <textarea id="projectDescription" placeholder="What will you use this project for?"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn secondary" data-modal="newProjectModal">Cancel</button>
+                    <button type="submit" class="btn">Create Project</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="artifactModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="artifactModalTitle">New Note</h3>
+                <button class="close-btn" data-modal="artifactModal">×</button>
+            </div>
+            <form id="artifactForm">
+                <div class="form-group">
+                    <label for="artifactName">Note Name</label>
+                    <input type="text" id="artifactName" required placeholder="e.g., Meeting Notes, Task List">
+                </div>
+                <div class="form-group">
+                    <label for="artifactContent">Content (Markdown supported)</label>
+                    <textarea id="artifactContent" rows="10" placeholder="# Your note title
+
+Write your content here using markdown formatting..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn secondary" data-modal="artifactModal">Cancel</button>
+                    <button type="submit" class="btn">Save Note</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="syncModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Sync Your Data</h3>
+                <button class="close-btn" data-modal="syncModal">×</button>
+            </div>
+            <!-- Sync modal content remains the same -->
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+    <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Branestawm Settings</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .settings-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #2d3748;
+            border-radius: 0.75rem;
+            border: 1px solid #4a5568;
+        }
+        
+        .settings-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #4a5568;
+        }
+        
+        .settings-header h1 {
+            color: #4299e1;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .settings-header .subtitle {
+            color: #a0aec0;
+            font-size: 1rem;
+        }
+        
+        .settings-section {
+            margin-bottom: 2.5rem;
+            padding: 1.5rem;
+            background: #1a202c;
+            border-radius: 0.5rem;
+            border: 1px solid #4a5568;
+        }
+        
+        .settings-section h3 {
+            color: #e2e8f0;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .settings-section h3::before {
+            content: "⚙️";
+            font-size: 1.2rem;
+        }
+        
+        .auth-method-selector {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .auth-option {
+            padding: 1rem;
+            background: #2d3748;
+            border: 2px solid #4a5568;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        
+        .auth-option.selected {
+            border-color: #4299e1;
+            background: #3182ce;
+            color: white;
+        }
+        
+        .auth-option:hover {
+            border-color: #4299e1;
+        }
+        
+        .auth-section {
+            display: none;
+            margin-top: 1.5rem;
+        }
+        
+        .auth-section.active {
+            display: block;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            margin-left: 1rem;
+        }
+        
+        .status-indicator.connected {
+            background: #22543d;
+            color: #c6f6d5;
+            border: 1px solid #38a169;
+        }
+        
+        .status-indicator.disconnected {
+            background: #742a2a;
+            color: #feb2b2;
+            border: 1px solid #e53e3e;
+        }
+        
+        .help-text {
+            color: #a0aec0;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+        
+        .settings-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #4a5568;
+        }
+        
+        .provider-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .provider-card {
+            padding: 1rem;
+            background: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 0.5rem;
+        }
+        
+        .provider-card h4 {
+            color: #4299e1;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .provider-card .provider-info {
+            color: #a0aec0;
+            font-size: 0.875rem;
+            line-height: 1.4;
+        }
+        
+        .quota-info {
+            background: #1a365d;
+            border: 1px solid #2c5282;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .quota-info h4 {
+            color: #63b3ed;
+            margin-bottom: 0.5rem;
+        }
+        
+        .quota-info .quota-text {
+            color: #a0aec0;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-container">
+        <div class="settings-header">
+            <h1>Branestawm Settings</h1>
+            <div class="subtitle">Configure your AI Chief of Staff</div>
+        </div>
+
+        <!-- Authentication Section -->
+        <div class="settings-section">
+            <h3>Authentication Method</h3>
+            <div class="auth-method-selector">
+                <div class="auth-option" id="googleAuthOption">
+                    <h4>🚀 Google Sign-in</h4>
+                    <p>Easy setup, no API key needed</p>
+                    <div id="googleStatus" class="status-indicator disconnected">
+                        <span class="status-dot">●</span>
+                        Not connected
+                    </div>
+                </div>
+                <div class="auth-option" id="apikeyAuthOption">
+                    <h4>⚙️ API Key</h4>
+                    <p>Advanced configuration</p>
+                    <div id="apikeyStatus" class="status-indicator disconnected">
+                        <span class="status-dot">●</span>
+                        Not configured
+                    </div>
+                </div>
+            </div>
+
+            <!-- Google Authentication Section -->
+            <div class="auth-section" id="googleAuthSection">
+                <div class="quota-info">
+                    <h4>Google Gemini Free Tier</h4>
+                    <div class="quota-text">
+                        • 1,500 requests per day<br>
+                        • Gemini 1.5 Flash model<br>
+                        • Great for task planning and organization<br>
+                        • No payment required
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button class="btn" id="googleSignInBtn" type="button">Sign in with Google</button>
+                    <button class="btn secondary" id="googleSignOutBtn" type="button" style="display: none;">Sign Out</button>
+                    <div class="help-text">
+                        You'll be redirected to Google to sign in. Branestawm will access the Gemini API on your behalf.
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Key Authentication Section -->
+            <div class="auth-section" id="apikeyAuthSection">
+                <div class="form-group">
+                    <label for="apiEndpoint">API Endpoint</label>
+                    <select id="apiEndpoint">
+                        <option value="https://api.cerebras.ai/v1/chat/completions">Cerebras (Free)</option>
+                        <option value="https://api.openai.com/v1/chat/completions">OpenAI</option>
+                        <option value="https://openrouter.ai/api/v1/chat/completions">OpenRouter</option>
+                        <option value="https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium">Hugging Face</option>
+                        <option value="custom">Custom Endpoint</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="customEndpointGroup" style="display: none;">
+                    <label for="customEndpoint">Custom Endpoint URL</label>
+                    <input type="text" id="customEndpoint" placeholder="https://your-api-endpoint.com/v1/chat/completions">
+                    <div class="help-text">
+                        Enter any OpenAI-compatible API endpoint. Must support the /chat/completions format.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="apiKey">API Key</label>
+                    <input type="password" id="apiKey" placeholder="sk-..." autocomplete="new-password">
+                    <div class="help-text">
+                        Your API key is stored locally and never synced to cloud. Get keys from your provider's dashboard.
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="model">Model Name</label>
+                    <input type="text" id="model" placeholder="llama3.1-8b">
+                    <div class="help-text">
+                        Enter the exact model name from your provider. Leave default for automatic selection.
+                    </div>
+                </div>
+
+                <div class="provider-grid">
+                    <div class="provider-card">
+                        <h4>Cerebras (Recommended)</h4>
+                        <div class="provider-info">
+                            • Completely free<br>
+                            • Llama 3.3 70B model<br>
+                            • Very fast inference<br>
+                            • No credit card required<br>
+                            <strong>Model:</strong> llama3.1-8b
+                        </div>
+                    </div>
+                    <div class="provider-card">
+                        <h4>OpenAI</h4>
+                        <div class="provider-info">
+                            • Highest quality models<br>
+                            • Pay-per-use pricing<br>
+                            • Credit card required<br>
+                            <strong>Models:</strong> gpt-3.5-turbo, gpt-4
+                        </div>
+                    </div>
+                    <div class="provider-card">
+                        <h4>OpenRouter</h4>
+                        <div class="provider-info">
+                            • Access to 40+ models<br>
+                            • Competitive pricing<br>
+                            • $10 minimum deposit<br>
+                            <strong>Popular:</strong> deepseek/deepseek-chat
+                        </div>
+                    </div>
+                    <div class="provider-card">
+                        <h4>Hugging Face</h4>
+                        <div class="provider-info">
+                            • Open source models<br>
+                            • Very affordable<br>
+                            • Research-focused<br>
+                            <strong>Models:</strong> Various open models
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <button class="btn" id="testConnectionBtn" type="button">Test Connection</button>
+                    <div class="help-text">
+                        Test your API configuration to ensure it's working correctly.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Behavior Settings -->
+        <div class="settings-section">
+            <h3>Behavior Settings</h3>
+            
+            <div class="form-group">
+                <label for="systemPrompt">System Prompt</label>
+                <textarea id="systemPrompt" rows="4" placeholder="You are Branestawm, an indispensable AI Chief of Staff..."></textarea>
+                <div class="help-text">
+                    Customize how Branestawm behaves. The default prompt is optimized for neurodivergent cognitive support.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="autoWebSearch"> Enable Auto Web Search
+                </label>
+                <div class="help-text">
+                    Branestawm will automatically search the web when it determines current information is needed.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="showTooltips"> Show Helpful Tooltips
+                </label>
+                <div class="help-text">
+                    Display helpful guidance tooltips throughout the interface.
+                </div>
+            </div>
+        </div>
+
+        <!-- Cloud Sync Settings -->
+        <div class="settings-section">
+            <h3>Cloud Sync Settings</h3>
+            
+            <div class="form-group">
+                <label for="syncId">Sync ID</label>
+                <input type="text" id="syncId" placeholder="Your sync ID (if you have one)">
+                <div class="help-text">
+                    Use this to sync data across devices. Generated when you first upload data.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="syncKey">Encryption Key</label>
+                <input type="password" id="syncKey" placeholder="Your secret encryption key">
+                <div class="help-text">
+                    AES256 encryption key for your cloud data. Keep this safe and secret!
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="jsonbinApiKey">JSONBin API Key (Optional)</label>
+                <input type="password" id="jsonbinApiKey" placeholder="$2a$10$...">
+                <div class="help-text">
+                    For private bins only. Get a free API key from <a href="https://jsonbin.io" target="_blank" style="color: #4299e1;">jsonbin.io</a>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="usePrivateBins"> Use Private Bins
+                </label>
+                <div class="help-text">
+                    Requires JSONBin API key but provides additional security layer.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="autoSync"> Auto-sync when closing Branestawm
+                </label>
+                <div class="help-text">
+                    Automatically backup your data to cloud when you close the Branestawm tab.
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="settings-actions">
+            <button class="btn secondary" id="resetBtn">Reset to Defaults</button>
+            <button class="btn" id="saveBtn">Save Settings</button>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script src="options.js"></script>
+</body>
+</html>
