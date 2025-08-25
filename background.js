@@ -79,7 +79,7 @@ async function openBranestawmTab() {
         
         // Create new tab
         const tab = await chrome.tabs.create({
-            url: chrome.runtime.getURL('main.html'),
+            url: chrome.runtime.getURL('index.html'),
             active: true
         });
         

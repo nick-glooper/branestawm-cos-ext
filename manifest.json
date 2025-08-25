@@ -32,7 +32,7 @@
   },
   
   "oauth2": {
-    "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+    "client_id": "1083981042375-vkh2nqlbude3o9hs3faj090o3l6bdc12.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/generative-language.retriever"
     ]
