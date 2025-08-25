@@ -392,8 +392,30 @@ async function sendMessage() {
         const typingDiv = addTypingIndicator();
         
         // Prepare messages for API
+        const currentDate = new Date();
+        const dateString = currentDate.toLocaleDateString('en-US', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+        const timeString = currentDate.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZoneName: 'short'
+        });
+        
         let messages = [
-            { role: 'system', content: settings.systemPrompt }
+            { 
+                role: 'system', 
+                content: `${settings.systemPrompt}
+
+📅 CURRENT DATE AND TIME: ${dateString} at ${timeString}
+🗓️ Today is: ${dateString}
+⏰ Current time: ${timeString}
+
+IMPORTANT: When users reference relative dates like "yesterday", "Saturday just gone", "last week", etc., calculate from TODAY'S date: ${dateString}. You have full access to current date/time information above.` 
+            }
         ];
         
         // Add conversation history (last 10 messages to stay within context limits)
