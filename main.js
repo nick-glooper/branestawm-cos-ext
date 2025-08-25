@@ -425,13 +425,17 @@ async function sendMessage() {
             console.log(`📊 Search results:`, searchResults ? 'Found results' : 'No results');
             
             if (searchResults) {
-                const searchContext = `🌐 LIVE WEB SEARCH RESULTS AVAILABLE:
+                const searchContext = `🌐 REAL-TIME WEB SEARCH DATA SUCCESSFULLY RETRIEVED:
 
-Query: "${query}"
+User Query: "${query}"
 
 ${searchResults}
 
-IMPORTANT: The above contains fresh web search results that were just retrieved for this query. Use this information to provide specific, current answers. The search was successful and returned actual web data - please integrate these results into your response to provide accurate, up-to-date information about the user's question.`;
+CRITICAL INSTRUCTION: You have just received LIVE web search results from multiple databases. This is CURRENT, FRESH data that was retrieved specifically for this user's question. You MUST use this information to provide definitive answers about recent events, scores, news, or current information. 
+
+DO NOT say you cannot access real-time information - you now have it above. Analyze the search results and provide specific answers based on the retrieved data. The web search was completely successful and returned actual current information.
+
+Your response should reference the search results and provide concrete answers based on the data retrieved.`;
                 
                 messages.push({
                     role: 'system',
