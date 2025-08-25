@@ -497,11 +497,13 @@ function shouldSearchWeb(message) {
 async function performWebSearch(query) {
     console.log(`🔍 Main: Requesting web search from background script for: "${query}"`);
     
+    const searchId = `search_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     try {
-        // Send search request to background script (which has full CORS permissions)
+        // Send search request to background script
         const response = await new Promise((resolve, reject) => {
             chrome.runtime.sendMessage(
-                { type: 'WEB_SEARCH', query: query },
+                { type: 'WEB_SEARCH', query: query, searchId: searchId },
                 (response) => {
                     if (chrome.runtime.lastError) {
                         reject(new Error(chrome.runtime.lastError.message));
@@ -512,18 +514,55 @@ async function performWebSearch(query) {
             );
         });
         
-        if (response.success) {
-            console.log('✅ Main: Web search completed successfully');
-            return response.results;
+        if (response.success && response.status === 'started') {
+            console.log(`✅ Main: Web search started with ID: ${response.searchId}`);
+            
+            // Poll for results using storage
+            return await pollForWebSearchResults(response.searchId);
         } else {
-            console.error('❌ Main: Background web search failed:', response.error);
-            return `🌐 Web search failed: ${response.error}`;
+            console.error('❌ Main: Failed to start web search:', response);
+            return `🌐 Web search failed to start.`;
         }
         
     } catch (error) {
         console.error('❌ Main: Failed to communicate with background script:', error);
         return `🌐 Web search unavailable: Could not communicate with background service.`;
     }
+}
+
+async function pollForWebSearchResults(searchId, maxAttempts = 30) {
+    console.log(`🔄 Main: Polling for search results (ID: ${searchId})`);
+    
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+            const data = await chrome.storage.local.get([`webSearch_${searchId}`]);
+            const searchResult = data[`webSearch_${searchId}`];
+            
+            if (searchResult) {
+                if (searchResult.status === 'completed') {
+                    console.log('✅ Main: Web search results received');
+                    // Clean up storage
+                    chrome.storage.local.remove([`webSearch_${searchId}`]);
+                    return searchResult.results;
+                } else if (searchResult.status === 'error') {
+                    console.error('❌ Main: Web search failed:', searchResult.error);
+                    // Clean up storage
+                    chrome.storage.local.remove([`webSearch_${searchId}`]);
+                    return `🌐 Web search failed: ${searchResult.error}`;
+                }
+            }
+            
+            // Wait 500ms before next attempt
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+        } catch (error) {
+            console.error('❌ Main: Error polling for results:', error);
+            break;
+        }
+    }
+    
+    console.warn('⚠️ Main: Web search timed out');
+    return `🌐 Web search timed out after ${maxAttempts * 0.5} seconds.`;
 }
 
 // ========== UI HELPER FUNCTIONS ==========

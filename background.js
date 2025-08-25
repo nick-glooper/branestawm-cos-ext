@@ -305,19 +305,35 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.type === 'WEB_SEARCH') {
         console.log('🔍 Background: Performing web search for:', message.query);
         
-        // Use an immediately-invoked async function to handle the response
-        (async () => {
-            try {
-                const results = await performBackgroundWebSearch(message.query);
-                console.log('✅ Background: Web search completed');
-                sendResponse({ success: true, results });
-            } catch (error) {
-                console.error('❌ Background: Web search failed:', error);
-                sendResponse({ success: false, error: error.message });
-            }
-        })();
+        const searchId = message.searchId || `search_${Date.now()}`;
         
-        return true; // Will respond asynchronously
+        // Immediately respond with search ID
+        sendResponse({ success: true, searchId, status: 'started' });
+        
+        // Perform search asynchronously and store results
+        performBackgroundWebSearch(message.query)
+            .then(async (results) => {
+                console.log('✅ Background: Web search completed, storing results');
+                await chrome.storage.local.set({
+                    [`webSearch_${searchId}`]: {
+                        status: 'completed',
+                        results: results,
+                        timestamp: Date.now()
+                    }
+                });
+            })
+            .catch(async (error) => {
+                console.error('❌ Background: Web search failed:', error);
+                await chrome.storage.local.set({
+                    [`webSearch_${searchId}`]: {
+                        status: 'error',
+                        error: error.message,
+                        timestamp: Date.now()
+                    }
+                });
+            });
+        
+        return false; // Response sent immediately
     }
 });
 
