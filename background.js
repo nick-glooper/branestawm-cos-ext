@@ -219,7 +219,8 @@ function setupContextMenus() {
     }
 }
 
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+if (chrome.contextMenus) {
+    chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const selectedText = info.selectionText;
     let query = '';
     
@@ -245,7 +246,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
             pendingQueryTimestamp: Date.now()
         });
     }
-});
+    });
+}
 
 // Keep service worker alive during active sessions
 function startKeepAlive() {
