@@ -301,7 +301,107 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.type === 'GET_TAB_ID') {
         sendResponse({ tabId: branestawmTabId });
     }
+    
+    if (message.type === 'WEB_SEARCH') {
+        console.log('🔍 Background: Performing web search for:', message.query);
+        try {
+            const results = await performBackgroundWebSearch(message.query);
+            console.log('✅ Background: Web search completed');
+            sendResponse({ success: true, results });
+        } catch (error) {
+            console.error('❌ Background: Web search failed:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+        return true; // Will respond asynchronously
+    }
 });
+
+// Web search functions (run in background with full permissions)
+async function performBackgroundWebSearch(query) {
+    console.log(`🔍 Background: Starting web search for: "${query}"`);
+    
+    // Try multiple search methods in order of preference
+    const searchMethods = [
+        () => searchWithDuckDuckGo(query),
+        () => searchWithWikipedia(query),
+        () => searchWithSimpleSearch(query)
+    ];
+    
+    for (let i = 0; i < searchMethods.length; i++) {
+        try {
+            const results = await searchMethods[i]();
+            if (results) {
+                console.log(`✅ Background: Web search successful using method ${i + 1}`);
+                return results;
+            }
+        } catch (error) {
+            console.warn(`⚠️ Background: Search method ${i + 1} failed:`, error.message);
+        }
+    }
+    
+    console.error('❌ Background: All web search methods failed');
+    return `🌐 Web search attempted but all methods failed. The search functionality is experiencing technical difficulties.`;
+}
+
+async function searchWithDuckDuckGo(query) {
+    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`DuckDuckGo API error: ${response.status}`);
+    
+    const data = await response.json();
+    let results = '';
+    
+    if (data.Abstract && data.Abstract.trim()) {
+        results += `📝 **Summary:** ${data.Abstract}\n\n`;
+    }
+    
+    if (data.Definition && data.Definition.trim()) {
+        results += `📖 **Definition:** ${data.Definition}\n\n`;
+    }
+    
+    if (data.RelatedTopics && data.RelatedTopics.length > 0) {
+        results += '🔗 **Related Information:**\n';
+        data.RelatedTopics.slice(0, 3).forEach((topic, index) => {
+            if (topic.Text) {
+                results += `${index + 1}. ${topic.Text}\n`;
+            }
+        });
+        results += '\n';
+    }
+    
+    return results || null;
+}
+
+async function searchWithWikipedia(query) {
+    // Clean up the query for Wikipedia - extract key terms
+    const cleanQuery = query.replace(/^(can you|who won|what is|when did)/i, '').trim();
+    const searchTerms = cleanQuery.split(' ').filter(word => word.length > 2).slice(0, 3).join(' ');
+    
+    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerms)}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Wikipedia API error: ${response.status}`);
+    
+    const data = await response.json();
+    
+    if (data.extract && data.extract.trim()) {
+        let results = `📚 **Wikipedia Summary for "${searchTerms}":**\n${data.extract}\n\n`;
+        
+        if (data.content_urls && data.content_urls.desktop) {
+            results += `🔗 **Source:** ${data.content_urls.desktop.page}\n\n`;
+        }
+        
+        return results;
+    }
+    
+    return null;
+}
+
+async function searchWithSimpleSearch(query) {
+    // Fallback method - just provide a helpful message
+    return `🔍 **Search Notice:** I attempted to search for "${query}" but couldn't retrieve specific results. For the most current information about sports scores, news, or recent events, please check reputable news sources or official websites directly.`;
+}
 
 // Migration function for updates
 async function migrateDataIfNeeded() {

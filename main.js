@@ -495,98 +495,35 @@ function shouldSearchWeb(message) {
 }
 
 async function performWebSearch(query) {
-    console.log(`🔍 Performing web search for: "${query}"`);
-    
-    // Try multiple search methods in order of preference
-    const searchMethods = [
-        () => searchWithDuckDuckGo(query),
-        () => searchWithBing(query),
-        () => searchWithWikipedia(query)
-    ];
-    
-    for (let i = 0; i < searchMethods.length; i++) {
-        try {
-            const results = await searchMethods[i]();
-            if (results) {
-                console.log(`✅ Web search successful using method ${i + 1}`);
-                return results;
-            }
-        } catch (error) {
-            console.warn(`⚠️ Search method ${i + 1} failed:`, error.message);
-        }
-    }
-    
-    console.error('❌ All web search methods failed');
-    return `🌐 I attempted to search the web for "${query}" but encountered technical difficulties. The web search feature is active but experiencing connectivity issues.`;
-}
-
-async function searchWithDuckDuckGo(query) {
-    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1&skip_disambig=1`;
-    
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`DuckDuckGo API error: ${response.status}`);
-    
-    const data = await response.json();
-    let results = '';
-    
-    if (data.Abstract && data.Abstract.trim()) {
-        results += `📝 **Summary:** ${data.Abstract}\n\n`;
-    }
-    
-    if (data.Definition && data.Definition.trim()) {
-        results += `📖 **Definition:** ${data.Definition}\n\n`;
-    }
-    
-    if (data.RelatedTopics && data.RelatedTopics.length > 0) {
-        results += '🔗 **Related Information:**\n';
-        data.RelatedTopics.slice(0, 3).forEach((topic, index) => {
-            if (topic.Text) {
-                results += `${index + 1}. ${topic.Text}\n`;
-            }
-        });
-        results += '\n';
-    }
-    
-    return results || null;
-}
-
-async function searchWithBing(query) {
-    // Using Bing's public search suggestions API (limited but available)
-    const url = `https://www.bing.com/AS/Suggestions?q=${encodeURIComponent(query)}&mkt=en-us&ds=nt&qry=${encodeURIComponent(query)}`;
+    console.log(`🔍 Main: Requesting web search from background script for: "${query}"`);
     
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Bing API error: ${response.status}`);
+        // Send search request to background script (which has full CORS permissions)
+        const response = await new Promise((resolve, reject) => {
+            chrome.runtime.sendMessage(
+                { type: 'WEB_SEARCH', query: query },
+                (response) => {
+                    if (chrome.runtime.lastError) {
+                        reject(new Error(chrome.runtime.lastError.message));
+                    } else {
+                        resolve(response);
+                    }
+                }
+            );
+        });
         
-        const text = await response.text();
-        
-        // Simple fallback - just indicate we tried to search
-        return `🔍 **Web Search Attempted:** I searched for "${query}" using Bing's search service. While I cannot display full results due to API limitations, you can find current information about this topic by searching directly on search engines.\n\n`;
-        
-    } catch (error) {
-        throw new Error('Bing search failed');
-    }
-}
-
-async function searchWithWikipedia(query) {
-    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`;
-    
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`Wikipedia API error: ${response.status}`);
-    
-    const data = await response.json();
-    
-    if (data.extract && data.extract.trim()) {
-        let results = `📚 **Wikipedia Summary:**\n${data.extract}\n\n`;
-        
-        if (data.content_urls && data.content_urls.desktop) {
-            results += `🔗 **Source:** ${data.content_urls.desktop.page}\n\n`;
+        if (response.success) {
+            console.log('✅ Main: Web search completed successfully');
+            return response.results;
+        } else {
+            console.error('❌ Main: Background web search failed:', response.error);
+            return `🌐 Web search failed: ${response.error}`;
         }
         
-        return results;
+    } catch (error) {
+        console.error('❌ Main: Failed to communicate with background script:', error);
+        return `🌐 Web search unavailable: Could not communicate with background service.`;
     }
-    
-    return null;
 }
 
 // ========== UI HELPER FUNCTIONS ==========
