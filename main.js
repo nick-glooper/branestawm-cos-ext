@@ -23,7 +23,8 @@ let settings = {
     model: 'llama3.1-8b',
     systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
     showTooltips: true,
-    autoWebSearch: true,
+    webSearchEnabled: true, // New simplified toggle
+    autoWebSearch: true, // Keep for backward compatibility
     syncKey: '',
     syncId: '',
     jsonbinApiKey: '',
@@ -57,6 +58,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupEventListeners();
     setupTooltips();
     updateUI();
+    updateWebSearchButton();
     
     // Check if user needs initial setup
     if (!settings.googleToken && !settings.apiKey) {
@@ -400,7 +402,9 @@ async function sendMessage() {
         
         // Handle web search if needed
         const searchQuery = extractSearchQuery(message);
-        if (searchQuery || (settings.autoWebSearch && shouldSearchWeb(message))) {
+        const shouldSearch = searchQuery || settings.webSearchEnabled;
+        
+        if (shouldSearch) {
             const query = searchQuery || message;
             const searchResults = await performWebSearch(query);
             
@@ -457,23 +461,10 @@ function extractSearchQuery(message) {
     return searchMatch ? searchMatch[1].trim() : null;
 }
 
+// This function is no longer used with the new toggle system
+// but kept for backward compatibility if needed
 function shouldSearchWeb(message) {
-    // Enhanced heuristics to determine if web search is needed
-    const searchIndicators = [
-        /what.*current/i, /latest/i, /recent/i, /today/i, /now/i, /this week/i, /this month/i,
-        /price/i, /cost/i, /weather/i, /news/i, /stock/i, /breaking/i,
-        /when.*happen/i, /what.*happen/i, /who.*won/i, /what.*trending/i,
-        /update/i, /2024/i, /2025/i, /real.time/i, /live/i, /current events/i
-    ];
-    
-    // Also search for factual questions that might have recent answers
-    const factualQuestions = [
-        /how much/i, /how many/i, /what is the/i, /who is/i, /where is/i,
-        /when did/i, /when will/i, /why did/i, /results/i, /score/i
-    ];
-    
-    return searchIndicators.some(pattern => pattern.test(message)) || 
-           (factualQuestions.some(pattern => pattern.test(message)) && message.length > 10);
+    return false; // Disabled - web search is now controlled by the toggle
 }
 
 async function performWebSearch(query) {
@@ -627,6 +618,7 @@ function setupEventListeners() {
     });
     
     // Other UI events
+    document.getElementById('webSearchToggle').addEventListener('click', toggleWebSearch);
     document.getElementById('settingsBtn').addEventListener('click', openSettings);
     document.getElementById('syncBtn').addEventListener('click', () => showModal('syncModal'));
     document.getElementById('newProjectBtn').addEventListener('click', () => showModal('projectModal'));
@@ -973,6 +965,30 @@ function saveArtifact() {
     saveData();
 }
 
+function toggleWebSearch() {
+    settings.webSearchEnabled = !settings.webSearchEnabled;
+    updateWebSearchButton();
+    saveData();
+    
+    const status = settings.webSearchEnabled ? 'enabled' : 'disabled';
+    showMessage(`Web search ${status}`, 'info');
+}
+
+function updateWebSearchButton() {
+    const toggleBtn = document.getElementById('webSearchToggle');
+    const tooltipContent = toggleBtn.parentElement.querySelector('.tooltip-content');
+    
+    if (settings.webSearchEnabled) {
+        toggleBtn.classList.add('active');
+        toggleBtn.setAttribute('aria-label', 'Web search enabled - click to disable');
+        tooltipContent.textContent = 'Web search: ON';
+    } else {
+        toggleBtn.classList.remove('active');
+        toggleBtn.setAttribute('aria-label', 'Web search disabled - click to enable');
+        tooltipContent.textContent = 'Web search: OFF';
+    }
+}
+
 function setupTooltips() {
     // Basic tooltip functionality
     document.querySelectorAll('[data-tooltip]').forEach(element => {
@@ -1292,6 +1308,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupEventListeners();
     setupTooltips();
     updateUI();
+    updateWebSearchButton();
     
     // Check if user needs initial setup
     if (!settings.googleToken && !settings.apiKey) {

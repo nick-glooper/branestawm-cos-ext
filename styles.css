@@ -933,6 +933,28 @@ body {
   margin: 0 auto;
 }
 
+/* Web search toggle button states */
+#webSearchToggle.active {
+  background: var(--success);
+  color: var(--text-inverse);
+}
+
+#webSearchToggle.active:hover {
+  background: var(--success);
+  opacity: 0.9;
+}
+
+#webSearchToggle:not(.active) {
+  background: var(--surface-secondary);
+  color: var(--text-tertiary);
+  border: 1px solid var(--border-secondary);
+}
+
+#webSearchToggle:not(.active):hover {
+  background: var(--surface-elevated);
+  color: var(--text-secondary);
+}
+
 /* ========== FORM ELEMENTS ========== */
 
 .input {
