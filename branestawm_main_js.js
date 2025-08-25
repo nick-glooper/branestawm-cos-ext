@@ -866,3 +866,333 @@ function hideTooltip() {
 }
 
 console.log('Branestawm main.js loaded successfully');
+// ... existing code ...
+
+// ========== DESIGN SYSTEM THEME MANAGEMENT ==========
+
+function initializeTheme() {
+    // Load theme preferences from storage
+    const colorScheme = settings.colorScheme || 'professional';
+    const themeMode = settings.themeMode || 'dark';
+    
+    // Apply theme to document
+    applyTheme(colorScheme, themeMode);
+    
+    // Listen for system theme changes if auto mode
+    if (themeMode === 'auto') {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+    }
+}
+
+function applyTheme(colorScheme, themeMode) {
+    const html = document.documentElement;
+    
+    // Set color scheme
+    html.setAttribute('data-scheme', colorScheme);
+    
+    // Set theme mode (handle auto mode)
+    if (themeMode === 'auto') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        html.setAttribute('data-mode', prefersDark ? 'dark' : 'light');
+    } else {
+        html.setAttribute('data-mode', themeMode);
+    }
+    
+    // Save to settings
+    settings.colorScheme = colorScheme;
+    settings.themeMode = themeMode;
+}
+
+function handleSystemThemeChange(e) {
+    if (settings.themeMode === 'auto') {
+        const html = document.documentElement;
+        html.setAttribute('data-mode', e.matches ? 'dark' : 'light');
+    }
+}
+
+function toggleTheme() {
+    const html = document.documentElement;
+    const currentMode = html.getAttribute('data-mode');
+    const newMode = currentMode === 'dark' ? 'light' : 'dark';
+    
+    applyTheme(settings.colorScheme || 'professional', newMode);
+    saveData();
+}
+
+// ========== ACCESSIBILITY ENHANCEMENTS ==========
+
+function setupAccessibility() {
+    // Add keyboard navigation for modals
+    document.addEventListener('keydown', handleGlobalKeydown);
+    
+    // Setup focus management
+    setupFocusManagement();
+    
+    // Setup reduced motion preferences
+    setupReducedMotion();
+    
+    // Setup high contrast mode detection
+    setupHighContrastMode();
+}
+
+function handleGlobalKeydown(e) {
+    // Escape key closes modals
+    if (e.key === 'Escape') {
+        const openModal = document.querySelector('.modal.show');
+        if (openModal) {
+            closeModal(openModal.id);
+        }
+    }
+    
+    // Enter key on setup options
+    if (e.key === 'Enter' && e.target.classList.contains('setup-option')) {
+        e.target.click();
+    }
+    
+    // Ctrl/Cmd + Enter sends message
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && e.target.id === 'messageInput') {
+        sendMessage();
+    }
+}
+
+function setupFocusManagement() {
+    // Trap focus in modals
+    document.addEventListener('focusin', (e) => {
+        const openModal = document.querySelector('.modal.show');
+        if (openModal && !openModal.contains(e.target)) {
+            const focusableElements = openModal.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            if (focusableElements.length > 0) {
+                focusableElements[0].focus();
+            }
+        }
+    });
+}
+
+function setupReducedMotion() {
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    
+    function handleReducedMotion(e) {
+        document.documentElement.classList.toggle('reduce-motion', e.matches);
+    }
+    
+    handleReducedMotion(prefersReducedMotion);
+    prefersReducedMotion.addEventListener('change', handleReducedMotion);
+}
+
+function setupHighContrastMode() {
+    const prefersHighContrast = window.matchMedia('(prefers-contrast: high)');
+    
+    function handleHighContrast(e) {
+        document.documentElement.classList.toggle('high-contrast', e.matches);
+    }
+    
+    handleHighContrast(prefersHighContrast);
+    prefersHighContrast.addEventListener('change', handleHighContrast);
+}
+
+// ========== TOOLTIP MANAGEMENT ==========
+
+function setupTooltips() {
+    if (!settings.showTooltips) {
+        document.documentElement.classList.add('hide-tooltips');
+        return;
+    }
+    
+    // Add ARIA labels for tooltips
+    document.querySelectorAll('[data-tooltip]').forEach(element => {
+        const tooltip = element.getAttribute('data-tooltip');
+        element.setAttribute('aria-label', tooltip);
+        element.setAttribute('title', tooltip);
+    });
+    
+    // Handle tooltip visibility for keyboard users
+    document.addEventListener('focusin', (e) => {
+        if (e.target.hasAttribute('data-tooltip')) {
+            showTooltip(e.target);
+        }
+    });
+    
+    document.addEventListener('focusout', (e) => {
+        if (e.target.hasAttribute('data-tooltip')) {
+            hideTooltip(e.target);
+        }
+    });
+}
+
+function showTooltip(element) {
+    const tooltip = element.querySelector('.tooltip-content');
+    if (tooltip) {
+        tooltip.style.opacity = '1';
+        tooltip.style.visibility = 'visible';
+    }
+}
+
+function hideTooltip(element) {
+    const tooltip = element.querySelector('.tooltip-content');
+    if (tooltip) {
+        tooltip.style.opacity = '0';
+        tooltip.style.visibility = 'hidden';
+    }
+}
+
+// ========== ENHANCED UI UPDATES ==========
+
+function updateConversationsList() {
+    const conversationsList = document.getElementById('conversationsList');
+    const projectConversations = projects[currentProject]?.conversations || [];
+    
+    conversationsList.innerHTML = '';
+    
+    if (projectConversations.length === 0) {
+        conversationsList.innerHTML = `
+            <div class="empty-state">
+                <p>No conversations yet</p>
+                <p class="help-text">Click "New Chat" to start your first conversation</p>
+            </div>
+        `;
+        return;
+    }
+    
+    projectConversations.forEach(conversationId => {
+        const conversation = conversations[conversationId];
+        if (!conversation) return;
+        
+        const conversationElement = document.createElement('div');
+        conversationElement.className = `conversation-item ${conversation.id === currentConversation ? 'active' : ''}`;
+        conversationElement.setAttribute('role', 'listitem');
+        conversationElement.setAttribute('tabindex', '0');
+        conversationElement.setAttribute('aria-label', `Conversation: ${conversation.title}`);
+        
+        const preview = conversation.messages.length > 0 
+            ? conversation.messages[conversation.messages.length - 1].content.substring(0, 100) + '...'
+            : 'No messages yet';
+            
+        const lastUpdate = conversation.updatedAt 
+            ? new Date(conversation.updatedAt).toLocaleDateString()
+            : new Date(conversation.createdAt).toLocaleDateString();
+        
+        conversationElement.innerHTML = `
+            <div class="conversation-title">${conversation.title}</div>
+            <div class="conversation-preview">${preview}</div>
+            <div class="conversation-meta">${lastUpdate}</div>
+        `;
+        
+        conversationElement.addEventListener('click', () => switchToConversation(conversation.id));
+        conversationElement.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                switchToConversation(conversation.id);
+            }
+        });
+        
+        conversationsList.appendChild(conversationElement);
+    });
+}
+
+function updateArtifactsList() {
+    const artifactsList = document.getElementById('artifactsList');
+    const projectArtifacts = projects[currentProject]?.artifacts || [];
+    
+    artifactsList.innerHTML = '';
+    
+    if (projectArtifacts.length === 0) {
+        artifactsList.innerHTML = `
+            <div class="empty-state">
+                <p>No notes yet</p>
+                <p class="help-text">Click "New Note" to create your first note</p>
+            </div>
+        `;
+        return;
+    }
+    
+    projectArtifacts.forEach(artifactId => {
+        const artifact = artifacts[artifactId];
+        if (!artifact) return;
+        
+        const artifactElement = document.createElement('div');
+        artifactElement.className = 'artifact-item';
+        artifactElement.setAttribute('role', 'listitem');
+        artifactElement.setAttribute('tabindex', '0');
+        artifactElement.setAttribute('aria-label', `Note: ${artifact.title}`);
+        
+        const contentPreview = artifact.content.substring(0, 150) + '...';
+        
+        artifactElement.innerHTML = `
+            <div class="artifact-title">${artifact.title}</div>
+            <div class="artifact-content">${contentPreview}</div>
+        `;
+        
+        artifactElement.addEventListener('click', () => editArtifact(artifact.id));
+        artifactElement.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                editArtifact(artifact.id);
+            }
+        });
+        
+        artifactsList.appendChild(artifactElement);
+    });
+}
+
+// Update the initialization to include new features
+document.addEventListener('DOMContentLoaded', async function() {
+    console.log('Branestawm initializing...');
+    
+    // Establish keepalive connection with service worker
+    keepAlivePort = chrome.runtime.connect({ name: 'branestawm-keepalive' });
+    
+    // Load data and check setup status
+    await loadData();
+    
+    // Initialize theme system
+    initializeTheme();
+    
+    // Setup accessibility features
+    setupAccessibility();
+    
+    // Check for pending query from context menu
+    await checkPendingQuery();
+    
+    // Setup UI
+    setupEventListeners();
+    setupTooltips();
+    updateUI();
+    
+    // Check if user needs initial setup
+    if (!settings.googleToken && !settings.apiKey) {
+        showSetupModal();
+    } else {
+        // Create first conversation if none exist
+        if (Object.keys(conversations).length === 0) {
+            newConversation();
+        }
+    }
+    
+    console.log('Branestawm initialized successfully');
+});
+
+// ... existing code ...
+let settings = {
+    authMethod: null, // 'google' or 'apikey'
+    googleToken: null,
+    apiEndpoint: 'https://api.cerebras.ai/v1/chat/completions',
+    apiKey: '',
+    model: 'llama3.1-8b',
+    systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
+    showTooltips: true,
+    autoWebSearch: true,
+    syncKey: '',
+    syncId: '',
+    jsonbinApiKey: '',
+    usePrivateBins: false,
+    autoSync: false,
+    // Glooper Design System settings
+    colorScheme: 'professional', // 'professional', 'warm', 'cool'
+    themeMode: 'dark', // 'light', 'dark', 'auto'
+    fontSize: 'standard', // 'compact', 'standard', 'large', 'xl'
+    reducedMotion: false,
+    highContrast: false
+};

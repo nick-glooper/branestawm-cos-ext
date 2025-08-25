@@ -14,7 +14,13 @@ let settings = {
     syncId: '',
     jsonbinApiKey: '',
     usePrivateBins: false,
-    autoSync: false
+    autoSync: false,
+    // Glooper Design System settings
+    colorScheme: 'professional', // 'professional', 'warm', 'cool'
+    themeMode: 'dark', // 'light', 'dark', 'auto'
+    fontSize: 'standard', // 'compact', 'standard', 'large', 'xl'
+    reducedMotion: false,
+    highContrast: false
 };
 
 // Initialize settings page
@@ -22,11 +28,47 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('Branestawm settings page loading...');
     
     await loadSettings();
+    initializeTheme();
     setupEventListeners();
     updateUI();
     
     console.log('Settings page loaded successfully');
 });
+
+// ========== DESIGN SYSTEM THEME MANAGEMENT ==========
+
+function initializeTheme() {
+    // Apply current theme settings
+    applyTheme(settings.colorScheme, settings.themeMode);
+    
+    // Listen for system theme changes if auto mode
+    if (settings.themeMode === 'auto') {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+    }
+}
+
+function applyTheme(colorScheme, themeMode) {
+    const html = document.documentElement;
+    
+    // Set color scheme
+    html.setAttribute('data-scheme', colorScheme);
+    
+    // Set theme mode (handle auto mode)
+    if (themeMode === 'auto') {
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        html.setAttribute('data-mode', prefersDark ? 'dark' : 'light');
+    } else {
+        html.setAttribute('data-mode', themeMode);
+    }
+}
+
+function handleSystemThemeChange(e) {
+    if (settings.themeMode === 'auto') {
+        const html = document.documentElement;
+        html.setAttribute('data-mode', e.matches ? 'dark' : 'light');
+    }
+}
 
 // ========== SETTINGS PERSISTENCE ==========
 
@@ -61,7 +103,7 @@ function setupEventListeners() {
         selectAuthMethod('google');
     });
     
-    document.getElementById('apikeyAuthOption').addEventListener('click', () => {
+    document.getElementById('apiKeyOption').addEventListener('click', () => {
         selectAuthMethod('apikey');
     });
     
@@ -69,76 +111,188 @@ function setupEventListeners() {
     document.getElementById('googleSignInBtn').addEventListener('click', authenticateWithGoogle);
     document.getElementById('googleSignOutBtn').addEventListener('click', signOutFromGoogle);
     
-    // API configuration
-    document.getElementById('apiEndpoint').addEventListener('change', handleEndpointChange);
-    document.getElementById('apiKey').addEventListener('input', function() {
-        settings.apiKey = this.value;
+    // Provider selection
+    document.querySelectorAll('.provider-card').forEach(card => {
+        card.addEventListener('click', () => {
+            selectProvider(card.dataset.provider);
+        });
     });
-    document.getElementById('model').addEventListener('input', function() {
+    
+    // API configuration
+    document.getElementById('apiEndpoint').addEventListener('input', function() {
+        settings.apiEndpoint = this.value;
+    });
+    document.getElementById('apiModel').addEventListener('input', function() {
         settings.model = this.value;
     });
-    document.getElementById('customEndpoint').addEventListener('input', function() {
-        settings.apiEndpoint = this.value;
+    document.getElementById('apiKey').addEventListener('input', function() {
+        settings.apiKey = this.value;
     });
     
     // Test connection
     document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
     
-    // Behavior settings
+    // Appearance settings
+    document.getElementById('colorScheme').addEventListener('change', function() {
+        settings.colorScheme = this.value;
+        applyTheme(settings.colorScheme, settings.themeMode);
+    });
+    
+    document.getElementById('themeMode').addEventListener('change', function() {
+        settings.themeMode = this.value;
+        applyTheme(settings.colorScheme, settings.themeMode);
+        
+        // Setup/remove system theme listener
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        if (this.value === 'auto') {
+            mediaQuery.addEventListener('change', handleSystemThemeChange);
+        } else {
+            mediaQuery.removeEventListener('change', handleSystemThemeChange);
+        }
+    });
+    
+    document.getElementById('showTooltips').addEventListener('change', function() {
+        settings.showTooltips = this.checked;
+        document.documentElement.classList.toggle('hide-tooltips', !this.checked);
+    });
+    
+    // AI Behavior settings
     document.getElementById('systemPrompt').addEventListener('input', function() {
         settings.systemPrompt = this.value;
     });
+    
     document.getElementById('autoWebSearch').addEventListener('change', function() {
         settings.autoWebSearch = this.checked;
     });
-    document.getElementById('showTooltips').addEventListener('change', function() {
-        settings.showTooltips = this.checked;
-    });
     
     // Sync settings
-    document.getElementById('syncId').addEventListener('input', function() {
-        settings.syncId = this.value;
+    document.getElementById('enableSync').addEventListener('change', function() {
+        settings.autoSync = this.checked;
+        document.getElementById('syncKeyGroup').style.display = this.checked ? 'block' : 'none';
+        document.getElementById('uploadDataBtn').style.display = this.checked ? 'inline-block' : 'none';
+        document.getElementById('downloadDataBtn').style.display = this.checked ? 'inline-block' : 'none';
     });
+    
     document.getElementById('syncKey').addEventListener('input', function() {
         settings.syncKey = this.value;
     });
-    document.getElementById('jsonbinApiKey').addEventListener('input', function() {
-        settings.jsonbinApiKey = this.value;
-    });
-    document.getElementById('usePrivateBins').addEventListener('change', function() {
-        settings.usePrivateBins = this.checked;
-    });
-    document.getElementById('autoSync').addEventListener('change', function() {
-        settings.autoSync = this.checked;
-    });
     
-    // Action buttons
-    document.getElementById('saveBtn').addEventListener('click', saveSettings);
-    document.getElementById('resetBtn').addEventListener('click', resetToDefaults);
+    document.getElementById('uploadDataBtn').addEventListener('click', uploadData);
+    document.getElementById('downloadDataBtn').addEventListener('click', downloadData);
+    
+    // Form actions
+    document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings);
+    document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
 }
 
 // ========== AUTH METHOD SELECTION ==========
 
 function selectAuthMethod(method) {
-    // Update visual selection
+    // Update UI
     document.querySelectorAll('.auth-option').forEach(option => {
         option.classList.remove('selected');
+    });
+    
+    document.querySelectorAll('.auth-section').forEach(section => {
+        section.classList.remove('active');
     });
     
     if (method === 'google') {
         document.getElementById('googleAuthOption').classList.add('selected');
         document.getElementById('googleAuthSection').classList.add('active');
-        document.getElementById('apikeyAuthSection').classList.remove('active');
         settings.authMethod = 'google';
     } else {
-        document.getElementById('apikeyAuthOption').classList.add('selected');
-        document.getElementById('apikeyAuthSection').classList.add('active');
-        document.getElementById('googleAuthSection').classList.remove('active');
+        document.getElementById('apiKeyOption').classList.add('selected');
+        document.getElementById('apiKeySection').classList.add('active');
         settings.authMethod = 'apikey';
     }
 }
 
-// ========== GOOGLE OAUTH INTEGRATION ==========
+// ========== PROVIDER SELECTION ==========
+
+function selectProvider(provider) {
+    // Update UI
+    document.querySelectorAll('.provider-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    document.querySelector(`[data-provider="${provider}"]`).classList.add('selected');
+    
+    // Update form fields based on provider
+    const providerConfigs = {
+        cerebras: {
+            endpoint: 'https://api.cerebras.ai/v1/chat/completions',
+            model: 'llama3.1-8b',
+            instructions: `
+                <h6>🚀 Cerebras Setup (Free):</h6>
+                <ol>
+                    <li>Go to <code>cloud.cerebras.ai</code></li>
+                    <li>Sign up for a free account</li>
+                    <li>Navigate to API Keys section</li>
+                    <li>Create a new API key</li>
+                    <li>Copy the key and paste it above</li>
+                </ol>
+                <p><strong>Benefits:</strong> Fast inference, generous free tier, Llama 3.1 70B model</p>
+            `
+        },
+        openai: {
+            endpoint: 'https://api.openai.com/v1/chat/completions',
+            model: 'gpt-3.5-turbo',
+            instructions: `
+                <h6>🤖 OpenAI Setup:</h6>
+                <ol>
+                    <li>Go to <code>platform.openai.com</code></li>
+                    <li>Sign in to your account</li>
+                    <li>Navigate to API Keys</li>
+                    <li>Create a new secret key</li>
+                    <li>Copy the key (starts with sk-)</li>
+                </ol>
+                <p><strong>Models:</strong> GPT-3.5 Turbo, GPT-4, GPT-4 Turbo</p>
+            `
+        },
+        openrouter: {
+            endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+            model: 'deepseek/deepseek-chat',
+            instructions: `
+                <h6>🌐 OpenRouter Setup:</h6>
+                <ol>
+                    <li>Go to <code>openrouter.ai</code></li>
+                    <li>Create an account</li>
+                    <li>Go to Keys section</li>
+                    <li>Create a new API key</li>
+                    <li>Add credits to your account</li>
+                </ol>
+                <p><strong>Benefits:</strong> 40+ models, competitive pricing, unified API</p>
+            `
+        },
+        custom: {
+            endpoint: '',
+            model: '',
+            instructions: `
+                <h6>⚙️ Custom Endpoint Setup:</h6>
+                <ol>
+                    <li>Enter your OpenAI-compatible endpoint URL</li>
+                    <li>Specify the model name</li>
+                    <li>Add your API key</li>
+                    <li>Test the connection</li>
+                </ol>
+                <p><strong>Compatible with:</strong> LocalAI, Ollama, vLLM, and other OpenAI-compatible servers</p>
+            `
+        }
+    };
+    
+    const config = providerConfigs[provider];
+    if (config) {
+        document.getElementById('apiEndpoint').value = config.endpoint;
+        document.getElementById('apiModel').value = config.model;
+        document.getElementById('providerInstructions').innerHTML = config.instructions;
+        
+        settings.apiEndpoint = config.endpoint;
+        settings.model = config.model;
+    }
+}
+
+// ========== GOOGLE OAUTH ==========
 
 async function authenticateWithGoogle() {
     try {
@@ -154,44 +308,39 @@ async function authenticateWithGoogle() {
             });
         });
         
-        // Test the connection
+        // Test the token
         await testGoogleConnection(token);
         
-        // Save token
-        settings.googleToken = token;
+        // Save auth method and token
         settings.authMethod = 'google';
-        
-        await saveSettings();
-        updateGoogleStatus(true);
+        settings.googleToken = token;
         
         showToast('Successfully connected to Google Gemini!', 'success');
+        updateGoogleAuthStatus(true);
         
     } catch (error) {
         console.error('Google auth error:', error);
         showToast('Google authentication failed: ' + error.message, 'error');
-        updateGoogleStatus(false);
+        updateGoogleAuthStatus(false);
     }
 }
 
 async function signOutFromGoogle() {
     try {
         if (settings.googleToken) {
-            // Revoke the token
-            chrome.identity.removeCachedAuthToken({ token: settings.googleToken });
+            await new Promise((resolve) => {
+                chrome.identity.removeCachedAuthToken({ token: settings.googleToken }, resolve);
+            });
         }
         
+        settings.authMethod = null;
         settings.googleToken = null;
-        if (settings.authMethod === 'google') {
-            settings.authMethod = null;
-        }
-        
-        await saveSettings();
-        updateGoogleStatus(false);
         
         showToast('Signed out from Google', 'info');
+        updateGoogleAuthStatus(false);
         
     } catch (error) {
-        console.error('Google sign out error:', error);
+        console.error('Sign out error:', error);
         showToast('Error signing out: ' + error.message, 'error');
     }
 }
@@ -199,208 +348,295 @@ async function signOutFromGoogle() {
 async function testGoogleConnection(token) {
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models', {
         headers: {
-            'Authorization': `Bearer ${token || settings.googleToken}`
+            'Authorization': `Bearer ${token}`
         }
     });
     
     if (!response.ok) {
-        throw new Error(`Connection test failed: ${response.status} ${response.statusText}`);
+        throw new Error(`Connection test failed: ${response.status}`);
     }
     
     return true;
 }
 
-function updateGoogleStatus(connected) {
+function updateGoogleAuthStatus(connected) {
     const statusElement = document.getElementById('googleStatus');
+    const statusText = document.getElementById('googleStatusText');
     const signInBtn = document.getElementById('googleSignInBtn');
     const signOutBtn = document.getElementById('googleSignOutBtn');
     
     if (connected) {
         statusElement.className = 'status-indicator connected';
-        statusElement.innerHTML = '<span class="status-dot">●</span> Connected';
+        statusText.textContent = 'Connected to Google Gemini';
         signInBtn.style.display = 'none';
         signOutBtn.style.display = 'inline-flex';
     } else {
         statusElement.className = 'status-indicator disconnected';
-        statusElement.innerHTML = '<span class="status-dot">●</span> Not connected';
+        statusText.textContent = 'Not connected';
         signInBtn.style.display = 'inline-flex';
         signOutBtn.style.display = 'none';
     }
 }
 
-// ========== API KEY CONFIGURATION ==========
-
-function handleEndpointChange() {
-    const select = document.getElementById('apiEndpoint');
-    const customGroup = document.getElementById('customEndpointGroup');
-    const modelInput = document.getElementById('model');
-    
-    if (select.value === 'custom') {
-        customGroup.style.display = 'block';
-        settings.apiEndpoint = document.getElementById('customEndpoint').value || '';
-    } else {
-        customGroup.style.display = 'none';
-        settings.apiEndpoint = select.value;
-        
-        // Set recommended models for different providers
-        switch (select.value) {
-            case 'https://api.cerebras.ai/v1/chat/completions':
-                modelInput.value = 'llama3.1-8b';
-                settings.model = 'llama3.1-8b';
-                break;
-            case 'https://api.openai.com/v1/chat/completions':
-                modelInput.value = 'gpt-3.5-turbo';
-                settings.model = 'gpt-3.5-turbo';
-                break;
-            case 'https://openrouter.ai/api/v1/chat/completions':
-                modelInput.value = 'deepseek/deepseek-chat';
-                settings.model = 'deepseek/deepseek-chat';
-                break;
-            case 'https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium':
-                modelInput.value = 'microsoft/DialoGPT-medium';
-                settings.model = 'microsoft/DialoGPT-medium';
-                break;
-        }
-    }
-}
+// ========== API KEY TESTING ==========
 
 async function testConnection() {
-    if (!settings.apiKey) {
-        showToast('Please enter an API key first', 'error');
-        return;
-    }
-    
-    if (!settings.apiEndpoint) {
-        showToast('Please select or enter an API endpoint', 'error');
+    if (!settings.apiEndpoint || !settings.apiKey) {
+        showTestResult('Please fill in API endpoint and key', 'error');
         return;
     }
     
     const testBtn = document.getElementById('testConnectionBtn');
-    const originalText = testBtn.textContent;
+    testBtn.disabled = true;
+    testBtn.textContent = 'Testing...';
     
     try {
-        testBtn.textContent = 'Testing...';
-        testBtn.disabled = true;
-        
-        // Send a simple test message
-        const testMessage = {
-            model: settings.model || 'llama3.1-8b',
-            messages: [
-                {
-                    role: 'user',
-                    content: 'Hello, this is a connection test. Please respond with "Connection successful".'
-                }
-            ],
-            max_tokens: 50,
-            temperature: 0.1
-        };
-        
         const response = await fetch(settings.apiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${settings.apiKey}`
             },
-            body: JSON.stringify(testMessage)
+            body: JSON.stringify({
+                model: settings.model,
+                messages: [{ role: 'user', content: 'Hello' }],
+                max_tokens: 10
+            })
         });
         
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-        
-        const data = await response.json();
-        
-        // Check response format
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-            showToast('✅ Connection test successful!', 'success');
-            updateAPIStatus(true);
-        } else if (data.generated_text) {
-            // Hugging Face format
-            showToast('✅ Connection test successful!', 'success');
-            updateAPIStatus(true);
+        if (response.ok) {
+            showTestResult('✅ Connection successful!', 'success');
+            updateApiKeyStatus(true);
         } else {
-            throw new Error('Unexpected response format. Check your model name and endpoint.');
+            const errorText = await response.text();
+            showTestResult(`❌ Connection failed: ${response.status} - ${errorText}`, 'error');
+            updateApiKeyStatus(false);
         }
         
     } catch (error) {
-        console.error('Connection test failed:', error);
-        showToast('❌ Connection test failed: ' + error.message, 'error');
-        updateAPIStatus(false);
+        showTestResult(`❌ Connection failed: ${error.message}`, 'error');
+        updateApiKeyStatus(false);
     } finally {
-        testBtn.textContent = originalText;
         testBtn.disabled = false;
+        testBtn.textContent = 'Test Connection';
     }
 }
 
-function updateAPIStatus(connected) {
-    const statusElement = document.getElementById('apikeyStatus');
+function showTestResult(message, type) {
+    const resultElement = document.getElementById('testResult');
+    resultElement.textContent = message;
+    resultElement.className = `test-result ${type}`;
+    resultElement.style.display = 'block';
+}
+
+function updateApiKeyStatus(connected) {
+    const statusElement = document.getElementById('apiKeyStatus');
+    const statusText = document.getElementById('apiKeyStatusText');
     
     if (connected) {
         statusElement.className = 'status-indicator connected';
-        statusElement.innerHTML = '<span class="status-dot">●</span> Connected';
+        statusText.textContent = 'API key configured and tested';
     } else {
         statusElement.className = 'status-indicator disconnected';
-        statusElement.innerHTML = '<span class="status-dot">●</span> Not configured';
+        statusText.textContent = 'Not configured';
     }
+}
+
+// ========== SYNC FUNCTIONALITY ==========
+
+async function uploadData() {
+    if (!settings.syncKey) {
+        showToast('Please enter an encryption key first', 'error');
+        return;
+    }
+    
+    try {
+        showToast('Uploading data...', 'info');
+        
+        // Get all data from main extension
+        const allData = await chrome.storage.local.get(null);
+        
+        // Encrypt the data
+        const encryptedData = await encryptData(JSON.stringify(allData), settings.syncKey);
+        
+        // Upload to JSONBin
+        const response = await fetch('https://api.jsonbin.io/v3/b', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': settings.jsonbinApiKey || '$2a$10$...' // Default key
+            },
+            body: JSON.stringify({ data: encryptedData })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            settings.syncId = result.metadata.id;
+            showToast('Data uploaded successfully!', 'success');
+        } else {
+            throw new Error('Upload failed');
+        }
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        showToast('Upload failed: ' + error.message, 'error');
+    }
+}
+
+async function downloadData() {
+    if (!settings.syncKey || !settings.syncId) {
+        showToast('Please enter encryption key and sync ID', 'error');
+        return;
+    }
+    
+    try {
+        showToast('Downloading data...', 'info');
+        
+        // Download from JSONBin
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${settings.syncId}`, {
+            headers: {
+                'X-Master-Key': settings.jsonbinApiKey || '$2a$10$...' // Default key
+            }
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            
+            // Decrypt the data
+            const decryptedData = await decryptData(result.record.data, settings.syncKey);
+            const allData = JSON.parse(decryptedData);
+            
+            // Save to local storage
+            await chrome.storage.local.set(allData);
+            
+            showToast('Data downloaded successfully! Please refresh the page.', 'success');
+        } else {
+            throw new Error('Download failed');
+        }
+        
+    } catch (error) {
+        console.error('Download error:', error);
+        showToast('Download failed: ' + error.message, 'error');
+    }
+}
+
+// ========== ENCRYPTION HELPERS ==========
+
+async function encryptData(data, key) {
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(key),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveBits', 'deriveKey']
+    );
+    
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const derivedKey = await crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: 100000,
+            hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['encrypt']
+    );
+    
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: iv },
+        derivedKey,
+        encoder.encode(data)
+    );
+    
+    return {
+        salt: Array.from(salt),
+        iv: Array.from(iv),
+        data: Array.from(new Uint8Array(encrypted))
+    };
+}
+
+async function decryptData(encryptedData, key) {
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(key),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveBits', 'deriveKey']
+    );
+    
+    const salt = new Uint8Array(encryptedData.salt);
+    const derivedKey = await crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: 100000,
+            hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt']
+    );
+    
+    const iv = new Uint8Array(encryptedData.iv);
+    const data = new Uint8Array(encryptedData.data);
+    
+    const decrypted = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        derivedKey,
+        data
+    );
+    
+    return decoder.decode(decrypted);
 }
 
 // ========== UI UPDATES ==========
 
 function updateUI() {
-    // Set form values
-    document.getElementById('apiEndpoint').value = settings.apiEndpoint;
-    document.getElementById('apiKey').value = settings.apiKey;
-    document.getElementById('model').value = settings.model;
-    document.getElementById('systemPrompt').value = settings.systemPrompt;
-    document.getElementById('autoWebSearch').checked = settings.autoWebSearch;
-    document.getElementById('showTooltips').checked = settings.showTooltips;
-    document.getElementById('syncId').value = settings.syncId;
-    document.getElementById('syncKey').value = settings.syncKey;
-    document.getElementById('jsonbinApiKey').value = settings.jsonbinApiKey;
-    document.getElementById('usePrivateBins').checked = settings.usePrivateBins;
-    document.getElementById('autoSync').checked = settings.autoSync;
-    
     // Update auth method selection
     if (settings.authMethod === 'google') {
         selectAuthMethod('google');
-        updateGoogleStatus(!!settings.googleToken);
+        updateGoogleAuthStatus(!!settings.googleToken);
     } else if (settings.authMethod === 'apikey') {
         selectAuthMethod('apikey');
-        updateAPIStatus(!!settings.apiKey);
-    } else {
-        // No auth method selected, show Google as default option
-        selectAuthMethod('google');
-        updateGoogleStatus(false);
+        updateApiKeyStatus(!!settings.apiKey);
     }
     
-    // Handle custom endpoint
-    if (settings.apiEndpoint && !document.querySelector('#apiEndpoint option[value="' + settings.apiEndpoint + '"]')) {
-        document.getElementById('apiEndpoint').value = 'custom';
-        document.getElementById('customEndpoint').value = settings.apiEndpoint;
-        document.getElementById('customEndpointGroup').style.display = 'block';
-    }
+    // Update form fields
+    document.getElementById('apiEndpoint').value = settings.apiEndpoint || '';
+    document.getElementById('apiModel').value = settings.model || '';
+    document.getElementById('apiKey').value = settings.apiKey || '';
+    document.getElementById('systemPrompt').value = settings.systemPrompt || '';
+    document.getElementById('autoWebSearch').checked = settings.autoWebSearch;
+    document.getElementById('showTooltips').checked = settings.showTooltips;
     
-    // Update API status based on current settings
-    if (settings.apiKey && settings.apiEndpoint) {
-        updateAPIStatus(true);
-    }
+    // Update appearance settings
+    document.getElementById('colorScheme').value = settings.colorScheme || 'professional';
+    document.getElementById('themeMode').value = settings.themeMode || 'dark';
+    
+    // Update sync settings
+    document.getElementById('enableSync').checked = settings.autoSync;
+    document.getElementById('syncKey').value = settings.syncKey || '';
+    document.getElementById('syncKeyGroup').style.display = settings.autoSync ? 'block' : 'none';
+    document.getElementById('uploadDataBtn').style.display = settings.autoSync ? 'inline-block' : 'none';
+    document.getElementById('downloadDataBtn').style.display = settings.autoSync ? 'inline-block' : 'none';
+    
+    // Apply tooltip visibility
+    document.documentElement.classList.toggle('hide-tooltips', !settings.showTooltips);
 }
 
-// ========== RESET FUNCTIONALITY ==========
+// ========== UTILITY FUNCTIONS ==========
 
-async function resetToDefaults() {
-    if (!confirm('Are you sure you want to reset all settings to defaults? This will sign you out and clear all API keys.')) {
-        return;
-    }
-    
-    try {
-        // Sign out from Google if connected
-        if (settings.googleToken) {
-            chrome.identity.removeCachedAuthToken({ token: settings.googleToken });
-        }
-        
-        // Reset to default settings
+function resetSettings() {
+    if (confirm('Are you sure you want to reset all settings to defaults? This cannot be undone.')) {
         settings = {
             authMethod: null,
             googleToken: null,
@@ -414,157 +650,68 @@ async function resetToDefaults() {
             syncId: '',
             jsonbinApiKey: '',
             usePrivateBins: false,
-            autoSync: false
+            autoSync: false,
+            colorScheme: 'professional',
+            themeMode: 'dark',
+            fontSize: 'standard',
+            reducedMotion: false,
+            highContrast: false
         };
         
-        await saveSettings();
         updateUI();
-        
+        applyTheme(settings.colorScheme, settings.themeMode);
         showToast('Settings reset to defaults', 'info');
-        
-    } catch (error) {
-        console.error('Error resetting settings:', error);
-        showToast('Error resetting settings: ' + error.message, 'error');
     }
 }
-
-// ========== TOAST NOTIFICATIONS ==========
 
 function showToast(message, type = 'info') {
-    const toast = document.getElementById('toast');
-    toast.textContent = message;
+    // Create toast element
+    const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
+    toast.textContent = message;
     
-    // Position the toast
-    toast.style.display = 'block';
-    toast.style.position = 'fixed';
-    toast.style.top = '20px';
-    toast.style.right = '20px';
-    toast.style.zIndex = '9999';
-    toast.style.padding = '1rem 1.5rem';
-    toast.style.borderRadius = '0.5rem';
-    toast.style.fontSize = '0.875rem';
-    toast.style.fontWeight = '500';
-    toast.style.maxWidth = '400px';
-    toast.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
-    toast.style.transform = 'translateX(100%)';
-    toast.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+    // Style the toast
+    Object.assign(toast.style, {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        padding: 'var(--space-3) var(--space-4)',
+        borderRadius: 'var(--radius-lg)',
+        color: 'var(--text-inverse)',
+        fontWeight: '500',
+        fontSize: 'var(--font-size-sm)',
+        zIndex: '1000',
+        opacity: '0',
+        transform: 'translateY(-20px)',
+        transition: 'all var(--duration-300) var(--ease-out)'
+    });
     
-    // Set colors based on type
-    switch (type) {
-        case 'success':
-            toast.style.background = '#065f46';
-            toast.style.color = '#d1fae5';
-            toast.style.border = '1px solid #10b981';
-            break;
-        case 'error':
-            toast.style.background = '#7f1d1d';
-            toast.style.color = '#fecaca';
-            toast.style.border = '1px solid #ef4444';
-            break;
-        case 'warning':
-            toast.style.background = '#78350f';
-            toast.style.color = '#fed7aa';
-            toast.style.border = '1px solid #f97316';
-            break;
-        default:
-            toast.style.background = '#1e3a8a';
-            toast.style.color = '#dbeafe';
-            toast.style.border = '1px solid #3b82f6';
-    }
+    // Set background color based on type
+    const colors = {
+        success: 'var(--success)',
+        error: 'var(--error)',
+        warning: 'var(--warning)',
+        info: 'var(--info)'
+    };
+    toast.style.backgroundColor = colors[type] || colors.info;
+    
+    // Add to page
+    document.body.appendChild(toast);
     
     // Animate in
-    setTimeout(() => {
-        toast.style.transform = 'translateX(0)';
-    }, 100);
-    
-    // Auto-hide after 4 seconds
-    setTimeout(() => {
-        toast.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            toast.style.display = 'none';
-        }, 300);
-    }, 4000);
-}
-
-// ========== PROVIDER HELP ==========
-
-// Add click handlers for provider cards to show setup instructions
-document.addEventListener('DOMContentLoaded', function() {
-    const providerCards = document.querySelectorAll('.provider-card');
-    providerCards.forEach(card => {
-        card.addEventListener('click', function() {
-            const providerName = this.querySelector('h4').textContent;
-            showProviderInstructions(providerName);
-        });
+    requestAnimationFrame(() => {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
     });
-});
-
-function showProviderInstructions(provider) {
-    let instructions = '';
-    let url = '';
     
-    switch (provider) {
-        case 'Cerebras (Recommended)':
-            url = 'https://cloud.cerebras.ai/';
-            instructions = `
-1. Go to cloud.cerebras.ai
-2. Sign up for a free account
-3. Go to API Keys in the dashboard
-4. Create a new API key
-5. Copy the key and paste it above
-6. Use model: llama3.1-8b
-
-✅ Completely free, no credit card required!
-            `;
-            break;
-            
-        case 'OpenAI':
-            url = 'https://platform.openai.com/api-keys';
-            instructions = `
-1. Go to platform.openai.com
-2. Sign in or create account
-3. Go to API Keys
-4. Create new secret key
-5. Copy the key and paste it above
-6. Use model: gpt-3.5-turbo or gpt-4
-
-⚠️ Requires payment and credit card
-            `;
-            break;
-            
-        case 'OpenRouter':
-            url = 'https://openrouter.ai/';
-            instructions = `
-1. Go to openrouter.ai
-2. Sign up for account
-3. Add $10 minimum credit
-4. Go to API Keys
-5. Copy the key and paste it above
-6. Use model: deepseek/deepseek-chat
-
-💡 Access to 40+ different models
-            `;
-            break;
-            
-        case 'Hugging Face':
-            url = 'https://huggingface.co/settings/tokens';
-            instructions = `
-1. Go to huggingface.co
-2. Sign up for account
-3. Go to Settings > Access Tokens
-4. Create new token with 'read' permission
-5. Copy token and paste it above
-6. Use model: microsoft/DialoGPT-medium
-
-🔬 Great for research and experimentation
-            `;
-            break;
-    }
-    
-    if (confirm(`Setup Instructions for ${provider}:\n\n${instructions}\n\nWould you like to open the provider's website?`)) {
-        chrome.tabs.create({ url: url });
-    }
+    // Remove after delay
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-20px)';
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 300);
+    }, 3000);
 }
-
-console.log('Branestawm options.js loaded successfully');

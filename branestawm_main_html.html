@@ -1,57 +1,88 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-scheme="professional" data-mode="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Branestawm - Your AI Chief of Staff</title>
+    
+    <!-- Glooper Design System - Lexend Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <!-- Skip link for accessibility -->
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
     <div class="container">
-        <div class="header">
+        <header class="header" role="banner">
             <div class="header-left">
                 <h1>Branestawm</h1>
                 <div class="header-subtitle">Your indispensable AI Chief of Staff</div>
             </div>
             <div class="header-controls">
-                <button class="btn icon-btn" id="settingsBtn" data-tooltip="Open settings">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
-                    </svg>
-                </button>
-                <button class="btn icon-btn" id="syncBtn" data-tooltip="Sync your data to cloud">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12,18.17L8.83,15L7.42,16.41L12,21L16.58,16.41L15.17,15M12,5.83L15.17,9L16.58,7.59L12,3L7.42,7.59L8.83,9L12,5.83Z"/>
-                    </svg>
-                </button>
-                <button class="btn" id="exportBtn" data-tooltip="Export your data as markdown files">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                    </svg>
-                    Export
-                </button>
+                <div class="tooltip">
+                    <button class="btn icon-btn" id="settingsBtn" aria-label="Open settings">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.82,11.69,4.82,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                        </svg>
+                    </button>
+                    <div class="tooltip-content">Open settings</div>
+                </div>
+                
+                <div class="tooltip">
+                    <button class="btn icon-btn" id="syncBtn" aria-label="Sync your data to cloud">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12,18.17L8.83,15L7.42,16.41L12,21L16.58,16.41L15.17,15M12,5.83L15.17,9L16.58,7.59L12,3L7.42,7.59L8.83,9L12,5.83Z"/>
+                        </svg>
+                    </button>
+                    <div class="tooltip-content">Sync your data to cloud</div>
+                </div>
+                
+                <div class="tooltip">
+                    <button class="btn" id="exportBtn" aria-label="Export your data as markdown files">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                        </svg>
+                        <span>Export</span>
+                    </button>
+                    <div class="tooltip-content">Export your data as markdown files</div>
+                </div>
             </div>
-        </div>
+        </header>
 
-        <div class="main-content">
-            <div class="sidebar">
+        <main class="main-content" id="main-content">
+            <aside class="sidebar" role="complementary" aria-label="Projects and conversations">
                 <div class="sidebar-header">
-                    <select class="project-selector" id="projectSelect">
+                    <label for="projectSelect" class="sr-only">Select project</label>
+                    <select class="project-selector" id="projectSelect" aria-label="Select project">
                         <option value="default">Default Project</option>
                     </select>
                     <div class="sidebar-buttons">
-                        <button class="btn small" id="newProjectBtn" data-tooltip="Create a new project to organize your chats">New Project</button>
-                        <button class="btn small" id="newChatBtn" data-tooltip="Start a new conversation in this project">New Chat</button>
+                        <div class="tooltip">
+                            <button class="btn small" id="newProjectBtn" aria-label="Create a new project to organize your chats">
+                                New Project
+                            </button>
+                            <div class="tooltip-content">Create a new project to organize your chats</div>
+                        </div>
+                        <div class="tooltip">
+                            <button class="btn small" id="newChatBtn" aria-label="Start a new conversation in this project">
+                                New Chat
+                            </button>
+                            <div class="tooltip-content">Start a new conversation in this project</div>
+                        </div>
                     </div>
                 </div>
-                <div class="conversations-list" id="conversationsList">
+                <div class="conversations-list" id="conversationsList" role="list" aria-label="Conversations">
                     <!-- Conversations will be populated here -->
                 </div>
-            </div>
+            </aside>
 
-            <div class="chat-container">
-                <div class="chat-messages" id="chatMessages">
-                    <div class="message system">
+            <section class="chat-container" role="main" aria-label="Chat conversation">
+                <div class="chat-messages" id="chatMessages" role="log" aria-live="polite" aria-label="Chat messages">
+                    <div class="message system" role="status">
                         <strong>Welcome to Branestawm!</strong> Your indispensable AI Chief of Staff is here to provide cognitive support and help with executive function challenges.
                         <br><br>
                         <strong>I'm designed to help you:</strong><br>
@@ -70,149 +101,168 @@
                 </div>
                 <div class="chat-input">
                     <div class="input-container">
-                        <textarea class="message-input" id="messageInput" placeholder="Tell Branestawm what you need help with... (Tip: Use 'search: query' for web search)"></textarea>
-                        <button class="btn send-btn" id="sendBtn" data-tooltip="Send message (Enter)">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
-                            </svg>
-                        </button>
+                        <label for="messageInput" class="sr-only">Message input</label>
+                        <textarea 
+                            class="message-input" 
+                            id="messageInput" 
+                            placeholder="Tell Branestawm what you need help with... (Tip: Use 'search: query' for web search)"
+                            aria-label="Type your message here"
+                            rows="3"
+                        ></textarea>
+                        <div class="tooltip">
+                            <button class="btn send-btn" id="sendBtn" aria-label="Send message">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M2,21L23,12L2,3V10L17,12L2,14V21Z"/>
+                                </svg>
+                                <span class="sr-only">Send (Press Enter)</span>
+                            </button>
+                            <div class="tooltip-content">Send message (Enter)</div>
+                        </div>
                     </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="artifacts-panel">
+            <aside class="artifacts-panel" role="complementary" aria-label="Notes and artifacts">
                 <div class="artifacts-header">
                     <h3>Notes</h3>
-                    <button class="btn small" id="newArtifactBtn" data-tooltip="Create a new markdown note">New Note</button>
+                    <div class="tooltip">
+                        <button class="btn small" id="newArtifactBtn" aria-label="Create a new markdown note">
+                            New Note
+                        </button>
+                        <div class="tooltip-content">Create a new markdown note</div>
+                    </div>
                 </div>
-                <div class="artifacts-list" id="artifactsList">
+                <div class="artifacts-list" id="artifactsList" role="list" aria-label="Notes and artifacts">
                     <!-- Notes will be populated here -->
                 </div>
-            </div>
-        </div>
+            </aside>
+        </main>
     </div>
 
     <!-- Setup Modal for New Users -->
-    <div class="modal" id="setupModal">
+    <div class="modal" id="setupModal" role="dialog" aria-labelledby="setupModalTitle" aria-modal="true">
         <div class="modal-content large">
             <div class="modal-header">
-                <h3>Welcome to Branestawm</h3>
+                <h3 id="setupModalTitle">Welcome to Branestawm</h3>
+                <button class="close-btn" aria-label="Close setup modal">×</button>
             </div>
             <div class="setup-intro">
-                <p>Your indispensable AI Chief of Staff is ready to help! Choose your setup method:</p>
+                <p>Choose how you'd like to connect to AI services. We recommend the <strong>Easy Setup</strong> for most users.</p>
             </div>
             
             <div class="setup-options">
-                <div class="setup-option" id="easySetup">
-                    <div class="setup-option-icon">🚀</div>
-                    <h4>Easy Setup (Recommended)</h4>
-                    <p>Sign in with Google</p>
-                    <ul>
-                        <li>No payment required</li>
-                        <li>1,500 requests per day</li>
-                        <li>Ready in 30 seconds</li>
-                        <li>Great for task planning & organization</li>
-                    </ul>
-                    <button class="btn" id="googleSignInBtn">Sign in with Google</button>
+                <div class="setup-option" id="easySetupOption" tabindex="0" role="button" aria-describedby="easySetupDesc">
+                    <h4>Easy Setup</h4>
+                    <div class="badge">Recommended</div>
+                    <p id="easySetupDesc">Sign in with Google to use Gemini 1.5 Flash. Get 1,500 free requests per day with zero configuration.</p>
+                    <button class="btn" id="googleAuthBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                        </svg>
+                        Sign in with Google
+                    </button>
                 </div>
                 
-                <div class="setup-option" id="advancedSetup">
-                    <div class="setup-option-icon">⚙️</div>
+                <div class="setup-option" id="advancedSetupOption" tabindex="0" role="button" aria-describedby="advancedSetupDesc">
                     <h4>Advanced Setup</h4>
-                    <p>Use your own AI service</p>
-                    <ul>
-                        <li>More powerful models</li>
-                        <li>You control the costs</li>
-                        <li>Multiple provider options</li>
-                        <li>Unlimited usage</li>
-                    </ul>
-                    <button class="btn secondary" id="advancedSetupBtn">Configure API</button>
+                    <p id="advancedSetupDesc">Use your own API key with providers like Cerebras (free), OpenAI, OpenRouter, or custom endpoints.</p>
+                    <button class="btn secondary" id="advancedSetupBtn">Configure API Key</button>
                 </div>
             </div>
             
             <div class="setup-footer">
-                <p><small>Branestawm is designed as a cognitive prosthetic for neurodivergent users. Your data stays private and is stored locally on your device.</small></p>
+                <p class="help-text">
+                    <strong>Privacy:</strong> Your conversations are stored locally on your device. 
+                    Cloud sync is optional and uses military-grade encryption.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal" role="dialog" aria-labelledby="settingsModalTitle" aria-modal="true">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="settingsModalTitle">Settings</h3>
+                <button class="close-btn" aria-label="Close settings modal">×</button>
+            </div>
+            <div id="settingsContent">
+                <!-- Settings content will be loaded here -->
             </div>
         </div>
     </div>
 
     <!-- Export Modal -->
-    <div class="modal" id="exportModal">
+    <div class="modal" id="exportModal" role="dialog" aria-labelledby="exportModalTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Export Your Data</h3>
-                <button class="close-btn" data-modal="exportModal">×</button>
+                <h3 id="exportModalTitle">Export Data</h3>
+                <button class="close-btn" aria-label="Close export modal">×</button>
             </div>
-            <div class="export-options">
-                <button class="btn" id="exportCurrentConversationBtn">Export Current Conversation</button>
-                <button class="btn" id="exportAllDataBtn">Export All Data</button>
-            </div>
-            <div class="export-info">
-                <p><small>Your data will be exported as markdown (.md) files that you can open in any text editor or markdown viewer. This ensures you always have access to your data.</small></p>
+            <div id="exportContent">
+                <p class="help-text">Choose what you'd like to export as markdown files:</p>
+                <div class="export-options">
+                    <button class="btn" id="exportCurrentBtn">Export Current Conversation</button>
+                    <button class="btn" id="exportAllBtn">Export All Data</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Other existing modals -->
-    <div class="modal" id="newProjectModal">
+    <!-- Project Modal -->
+    <div class="modal" id="projectModal" role="dialog" aria-labelledby="projectModalTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Create New Project</h3>
-                <button class="close-btn" data-modal="newProjectModal">×</button>
+                <h3 id="projectModalTitle">New Project</h3>
+                <button class="close-btn" aria-label="Close project modal">×</button>
             </div>
-            <form id="newProjectForm">
+            <div id="projectContent">
                 <div class="form-group">
-                    <label for="projectName">Project Name</label>
-                    <input type="text" id="projectName" required placeholder="e.g., Work Tasks, Personal Goals">
+                    <label for="projectName" class="label label-required">Project Name</label>
+                    <input type="text" id="projectName" class="input" placeholder="Enter project name" required>
+                    <div class="help-text">Choose a descriptive name for your project</div>
                 </div>
                 <div class="form-group">
-                    <label for="projectDescription">Description (optional)</label>
-                    <textarea id="projectDescription" placeholder="What will you use this project for?"></textarea>
+                    <label for="projectDescription" class="label">Description</label>
+                    <textarea id="projectDescription" class="input" placeholder="Optional description" rows="3"></textarea>
+                    <div class="help-text">Briefly describe what this project is for</div>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn secondary" data-modal="newProjectModal">Cancel</button>
-                    <button type="submit" class="btn">Create Project</button>
+                    <button class="btn secondary" id="cancelProjectBtn">Cancel</button>
+                    <button class="btn" id="createProjectBtn">Create Project</button>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
-    <div class="modal" id="artifactModal">
-        <div class="modal-content">
+    <!-- Artifact Modal -->
+    <div class="modal" id="artifactModal" role="dialog" aria-labelledby="artifactModalTitle" aria-modal="true">
+        <div class="modal-content large">
             <div class="modal-header">
-                <h3 id="artifactModalTitle">New Note</h3>
-                <button class="close-btn" data-modal="artifactModal">×</button>
+                <h3 id="artifactModalTitle">Edit Note</h3>
+                <button class="close-btn" aria-label="Close note modal">×</button>
             </div>
-            <form id="artifactForm">
+            <div id="artifactContent">
                 <div class="form-group">
-                    <label for="artifactName">Note Name</label>
-                    <input type="text" id="artifactName" required placeholder="e.g., Meeting Notes, Task List">
+                    <label for="artifactTitle" class="label label-required">Note Title</label>
+                    <input type="text" id="artifactTitle" class="input" placeholder="Enter note title" required>
                 </div>
                 <div class="form-group">
-                    <label for="artifactContent">Content (Markdown supported)</label>
-                    <textarea id="artifactContent" rows="10" placeholder="# Your note title
-
-Write your content here using markdown formatting..."></textarea>
+                    <label for="artifactText" class="label">Content</label>
+                    <textarea id="artifactText" class="input" placeholder="Write your note in markdown..." rows="10"></textarea>
+                    <div class="help-text">You can use markdown formatting</div>
                 </div>
                 <div class="form-actions">
-                    <button type="button" class="btn secondary" data-modal="artifactModal">Cancel</button>
-                    <button type="submit" class="btn">Save Note</button>
+                    <button class="btn secondary" id="cancelArtifactBtn">Cancel</button>
+                    <button class="btn" id="saveArtifactBtn">Save Note</button>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="modal" id="syncModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Sync Your Data</h3>
-                <button class="close-btn" data-modal="syncModal">×</button>
             </div>
-            <!-- Sync modal content remains the same -->
         </div>
     </div>
 
-    <div class="tooltip" id="tooltip"></div>
     <script src="main.js"></script>
 </body>
 </html>

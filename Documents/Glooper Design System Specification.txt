@@ -1,0 +1,1577 @@
+# Glooper Design System Specification
+
+## Overview
+
+The Glooper Design System is a comprehensive, accessibility-first design framework optimized for neurodiverse users. It establishes visual identity, interaction patterns, and implementation guidelines that prioritize cognitive accessibility, ADHD-friendly interfaces, and inclusive design principles.
+
+## Table of Contents
+1. [Design Philosophy](#design-philosophy)
+2. [Color System](#color-system)
+3. [Typography](#typography)
+4. [Spacing & Layout](#spacing--layout)
+5. [Component Library](#component-library)
+6. [Accessibility Standards](#accessibility-standards)
+7. [Motion & Animation](#motion--animation)
+8. [Responsive Design](#responsive-design)
+9. [Implementation Guidelines](#implementation-guidelines)
+10. [Brand Voice & Content](#brand-voice--content)
+
+---
+
+## Design Philosophy
+
+### Core Principles
+
+#### 1. Cognitive Load Reduction
+- **Minimize decision fatigue** through clear hierarchies and smart defaults
+- **Progressive disclosure** - show only essential information initially
+- **Single-task focus** - each interface serves one primary purpose
+- **Predictable patterns** - consistent interactions across all touchpoints
+
+#### 2. Neurodiverse Optimization
+- **ADHD-friendly** - high contrast, clear focus states, minimal distractions
+- **ASD-supportive** - predictable navigation, literal language, consistent layouts
+- **Executive function support** - clear next steps, progress indicators, gentle guidance
+- **Sensory considerations** - calm colors, controlled motion, user-controlled stimulation
+
+#### 3. Inclusive by Default
+- **WCAG AAA compliance** where possible, AA minimum
+- **Universal design** - beneficial for all users, essential for some
+- **Multiple interaction methods** - keyboard, mouse, touch, voice
+- **Customizable experience** - user control over visual presentation
+
+#### 4. Trust Through Transparency
+- **Clear communication** - no hidden costs or complex terms
+- **Data transparency** - obvious privacy controls and data handling
+- **Cost visibility** - upfront pricing with no surprises
+- **Honest messaging** - realistic expectations and genuine benefits
+
+---
+
+## Color System
+
+### Primary Color Schemes
+
+#### Scheme 1: Professional Blue (Default)
+```css
+/* Light Mode */
+:root[data-scheme="professional"][data-mode="light"] {
+  /* Primary */
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --primary-200: #bfdbfe;
+  --primary-300: #93c5fd;
+  --primary-400: #60a5fa;
+  --primary-500: #3b82f6;  /* Main brand color */
+  --primary-600: #2563eb;
+  --primary-700: #1d4ed8;
+  --primary-800: #1e40af;
+  --primary-900: #1e3a8a;
+  --primary-950: #172554;
+  
+  /* Background & Surface */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --surface-primary: #ffffff;
+  --surface-secondary: #f8fafc;
+  --surface-elevated: #ffffff;
+  
+  /* Text */
+  --text-primary: #0f172a;     /* 21:1 contrast */
+  --text-secondary: #334155;   /* 12.6:1 contrast */
+  --text-tertiary: #64748b;    /* 7:1 contrast */
+  --text-inverse: #ffffff;
+  
+  /* Borders & Dividers */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --border-focus: #3b82f6;
+  --border-error: #ef4444;
+  
+  /* Semantic Colors */
+  --success: #059669;
+  --success-light: #d1fae5;
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+  --error: #dc2626;
+  --error-light: #fee2e2;
+  --info: #0891b2;
+  --info-light: #cffafe;
+}
+
+/* Dark Mode */
+:root[data-scheme="professional"][data-mode="dark"] {
+  /* Primary */
+  --primary-50: #172554;
+  --primary-100: #1e3a8a;
+  --primary-200: #1e40af;
+  --primary-300: #1d4ed8;
+  --primary-400: #2563eb;
+  --primary-500: #3b82f6;  /* Main brand color */
+  --primary-600: #60a5fa;
+  --primary-700: #93c5fd;
+  --primary-800: #bfdbfe;
+  --primary-900: #dbeafe;
+  --primary-950: #eff6ff;
+  
+  /* Background & Surface */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --surface-primary: #1e293b;
+  --surface-secondary: #334155;
+  --surface-elevated: #475569;
+  
+  /* Text */
+  --text-primary: #f8fafc;     /* 21:1 contrast */
+  --text-secondary: #cbd5e1;   /* 12.6:1 contrast */
+  --text-tertiary: #94a3b8;    /* 7:1 contrast */
+  --text-inverse: #0f172a;
+  
+  /* Borders & Dividers */
+  --border-primary: #475569;
+  --border-secondary: #64748b;
+  --border-focus: #60a5fa;
+  --border-error: #f87171;
+}
+```
+
+#### Scheme 2: Warm Earth
+```css
+/* Light Mode */
+:root[data-scheme="warm"][data-mode="light"] {
+  /* Primary */
+  --primary-500: #d97706;  /* Amber 600 */
+  --primary-600: #b45309;
+  --primary-700: #92400e;
+  
+  /* Backgrounds - warm whites and creams */
+  --bg-primary: #fffef7;    /* Warm white */
+  --bg-secondary: #fef7ed;  /* Orange 50 */
+  --bg-tertiary: #fed7aa;   /* Orange 200 */
+  
+  /* Text - warm grays */
+  --text-primary: #1c1917;   /* Stone 900 */
+  --text-secondary: #44403c; /* Stone 700 */
+  --text-tertiary: #78716c;  /* Stone 500 */
+}
+
+/* Dark Mode */
+:root[data-scheme="warm"][data-mode="dark"] {
+  /* Primary */
+  --primary-500: #f59e0b;  /* Amber 500 */
+  --primary-600: #fbbf24;
+  --primary-700: #fcd34d;
+  
+  /* Backgrounds - warm darks */
+  --bg-primary: #1c1917;    /* Stone 900 */
+  --bg-secondary: #292524;  /* Stone 800 */
+  --bg-tertiary: #44403c;   /* Stone 700 */
+  
+  /* Text */
+  --text-primary: #fafaf9;   /* Stone 50 */
+  --text-secondary: #e7e5e4; /* Stone 200 */
+  --text-tertiary: #d6d3d1;  /* Stone 300 */
+}
+```
+
+#### Scheme 3: Cool Mint
+```css
+/* Light Mode */
+:root[data-scheme="cool"][data-mode="light"] {
+  /* Primary */
+  --primary-500: #059669;  /* Emerald 600 */
+  --primary-600: #047857;
+  --primary-700: #065f46;
+  
+  /* Backgrounds - cool blues and greens */
+  --bg-primary: #f7fffe;    /* Cool white */
+  --bg-secondary: #f0fdfa;  /* Emerald 50 */
+  --bg-tertiary: #ccfbf1;   /* Teal 100 */
+  
+  /* Text - cool grays */
+  --text-primary: #0f172a;   /* Slate 900 */
+  --text-secondary: #334155; /* Slate 700 */
+  --text-tertiary: #64748b;  /* Slate 500 */
+}
+
+/* Dark Mode */
+:root[data-scheme="cool"][data-mode="dark"] {
+  /* Primary */
+  --primary-500: #10b981;  /* Emerald 500 */
+  --primary-600: #34d399;
+  --primary-700: #6ee7b7;
+  
+  /* Backgrounds - cool darks */
+  --bg-primary: #0f172a;    /* Slate 900 */
+  --bg-secondary: #1e293b;  /* Slate 800 */
+  --bg-tertiary: #334155;   /* Slate 700 */
+  
+  /* Text */
+  --text-primary: #f8fafc;   /* Slate 50 */
+  --text-secondary: #cbd5e1; /* Slate 300 */
+  --text-tertiary: #94a3b8;  /* Slate 400 */
+}
+```
+
+### High Contrast Mode
+```css
+@media (prefers-contrast: high) {
+  :root {
+    --text-primary: #000000;
+    --bg-primary: #ffffff;
+    --border-primary: #000000;
+    --border-focus: #0066cc;
+    
+    /* Ensure 21:1 contrast ratios */
+    --primary-500: #000066;
+    --success: #006600;
+    --error: #cc0000;
+    --warning: #cc6600;
+  }
+  
+  [data-mode="dark"] {
+    --text-primary: #ffffff;
+    --bg-primary: #000000;
+    --border-primary: #ffffff;
+  }
+}
+```
+
+### Color Usage Guidelines
+
+#### Primary Colors
+- **Main actions** - buttons, links, interactive elements
+- **Brand elements** - logos, headers, key visual elements
+- **Focus states** - always use primary color for focus indicators
+- **Progress indicators** - loading states, completion status
+
+#### Semantic Colors
+```css
+/* Success - for confirmations, completed states */
+.success {
+  color: var(--success);
+  background-color: var(--success-light);
+}
+
+/* Warning - for alerts, important information */
+.warning {
+  color: var(--warning);
+  background-color: var(--warning-light);
+}
+
+/* Error - for errors, destructive actions */
+.error {
+  color: var(--error);
+  background-color: var(--error-light);
+}
+
+/* Info - for neutral information */
+.info {
+  color: var(--info);
+  background-color: var(--info-light);
+}
+```
+
+#### Text Colors
+- **Primary text** - Main content, headings, important information
+- **Secondary text** - Supporting information, descriptions
+- **Tertiary text** - Meta information, timestamps, less important details
+- **Inverse text** - Text on colored backgrounds
+
+---
+
+## Typography
+
+### Font Families
+
+#### Option 1: Lexend (Primary/Default)
+```css
+/* Lexend - Designed for reading proficiency */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+
+.font-primary {
+  font-family: 'Lexend', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+```
+
+**Why Lexend:**
+- Scientifically proven to improve reading proficiency
+- Excellent for dyslexic users
+- Clear letter differentiation
+- Optimal character spacing
+- Supports 200+ languages
+
+#### Option 2: System Sans (Accessibility)
+```css
+.font-system {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 
+               'Oxygen', 'Ubuntu', 'Cantarell', 'Open Sans', 
+               'Helvetica Neue', sans-serif;
+}
+```
+
+**Why System Sans:**
+- Maximum familiarity for users
+- Optimized for each platform
+- Excellent accessibility support
+- No loading time
+- Native font rendering
+
+#### Option 3: Atkinson Hyperlegible (High Accessibility)
+```css
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap');
+
+.font-accessible {
+  font-family: 'Atkinson Hyperlegible', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+```
+
+**Why Atkinson Hyperlegible:**
+- Designed specifically for low vision users
+- Greater character recognition
+- Improved reading comprehension
+- Clear distinction between similar characters
+- Free and open source
+
+### Font Sizes
+
+#### Option 1: Compact (14px base)
+```css
+.font-size-compact {
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px - base */
+  --font-size-base: 0.875rem; /* 14px */
+  --font-size-lg: 1rem;       /* 16px */
+  --font-size-xl: 1.125rem;   /* 18px */
+  --font-size-2xl: 1.25rem;   /* 20px */
+  --font-size-3xl: 1.5rem;    /* 24px */
+  --font-size-4xl: 1.875rem;  /* 30px */
+  --font-size-5xl: 2.25rem;   /* 36px */
+}
+```
+
+#### Option 2: Standard (16px base) - Default
+```css
+.font-size-standard {
+  --font-size-xs: 0.75rem;    /* 12px */
+  --font-size-sm: 0.875rem;   /* 14px */
+  --font-size-base: 1rem;     /* 16px - base */
+  --font-size-lg: 1.125rem;   /* 18px */
+  --font-size-xl: 1.25rem;    /* 20px */
+  --font-size-2xl: 1.5rem;    /* 24px */
+  --font-size-3xl: 1.875rem;  /* 30px */
+  --font-size-4xl: 2.25rem;   /* 36px */
+  --font-size-5xl: 3rem;      /* 48px */
+}
+```
+
+#### Option 3: Large (18px base)
+```css
+.font-size-large {
+  --font-size-xs: 0.875rem;   /* 14px */
+  --font-size-sm: 1rem;       /* 16px */
+  --font-size-base: 1.125rem; /* 18px - base */
+  --font-size-lg: 1.25rem;    /* 20px */
+  --font-size-xl: 1.5rem;     /* 24px */
+  --font-size-2xl: 1.75rem;   /* 28px */
+  --font-size-3xl: 2rem;      /* 32px */
+  --font-size-4xl: 2.5rem;    /* 40px */
+  --font-size-5xl: 3.5rem;    /* 56px */
+}
+```
+
+#### Option 4: Extra Large (20px base)
+```css
+.font-size-xl {
+  --font-size-xs: 1rem;       /* 16px */
+  --font-size-sm: 1.125rem;   /* 18px */
+  --font-size-base: 1.25rem;  /* 20px - base */
+  --font-size-lg: 1.375rem;   /* 22px */
+  --font-size-xl: 1.625rem;   /* 26px */
+  --font-size-2xl: 2rem;      /* 32px */
+  --font-size-3xl: 2.25rem;   /* 36px */
+  --font-size-4xl: 2.75rem;   /* 44px */
+  --font-size-5xl: 4rem;      /* 64px */
+}
+```
+
+### Typography Scale
+```css
+/* Headings */
+.text-h1 {
+  font-size: var(--font-size-5xl);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.text-h2 {
+  font-size: var(--font-size-4xl);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+}
+
+.text-h3 {
+  font-size: var(--font-size-3xl);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.text-h4 {
+  font-size: var(--font-size-2xl);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.text-h5 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.text-h6 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+/* Body Text */
+.text-body {
+  font-size: var(--font-size-base);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.025em; /* Improved for dyslexia */
+}
+
+.text-body-large {
+  font-size: var(--font-size-lg);
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.025em;
+}
+
+.text-body-small {
+  font-size: var(--font-size-sm);
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.025em;
+}
+
+/* Labels and UI Text */
+.text-label {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.025em;
+}
+
+.text-caption {
+  font-size: var(--font-size-xs);
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.025em;
+  color: var(--text-tertiary);
+}
+```
+
+### Reading Optimization
+```css
+/* Optimized for neurodivergent readers */
+.readable-text {
+  /* Increased word spacing for dyslexia */
+  word-spacing: 0.16em;
+  
+  /* Optimal line length */
+  max-width: 65ch;
+  
+  /* Increased paragraph spacing */
+  margin-bottom: 1.5em;
+  
+  /* Left-aligned (never justified) */
+  text-align: left;
+  
+  /* Prevent hyphenation */
+  hyphens: none;
+  
+  /* Improve text rendering */
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+```
+
+---
+
+## Spacing & Layout
+
+### Spacing Scale
+```css
+:root {
+  --space-0: 0;
+  --space-px: 1px;
+  --space-0-5: 0.125rem;  /* 2px */
+  --space-1: 0.25rem;     /* 4px */
+  --space-1-5: 0.375rem;  /* 6px */
+  --space-2: 0.5rem;      /* 8px */
+  --space-2-5: 0.625rem;  /* 10px */
+  --space-3: 0.75rem;     /* 12px */
+  --space-3-5: 0.875rem;  /* 14px */
+  --space-4: 1rem;        /* 16px */
+  --space-5: 1.25rem;     /* 20px */
+  --space-6: 1.5rem;      /* 24px */
+  --space-7: 1.75rem;     /* 28px */
+  --space-8: 2rem;        /* 32px */
+  --space-10: 2.5rem;     /* 40px */
+  --space-12: 3rem;       /* 48px */
+  --space-16: 4rem;       /* 64px */
+  --space-20: 5rem;       /* 80px */
+  --space-24: 6rem;       /* 96px */
+  --space-32: 8rem;       /* 128px */
+}
+```
+
+### Layout Grid
+```css
+/* Container sizes */
+.container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--space-4);
+}
+
+.container-sm { max-width: 640px; }
+.container-md { max-width: 768px; }
+.container-lg { max-width: 1024px; }
+.container-xl { max-width: 1280px; }
+.container-2xl { max-width: 1536px; }
+
+/* Grid system */
+.grid {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.grid-1 { grid-template-columns: 1fr; }
+.grid-2 { grid-template-columns: repeat(2, 1fr); }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+
+/* Responsive grid */
+@media (max-width: 768px) {
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+}
+```
+
+### ADHD-Friendly Layout Principles
+```css
+/* Generous white space reduces cognitive load */
+.section {
+  padding: var(--space-16) 0;
+  margin-bottom: var(--space-12);
+}
+
+.card {
+  padding: var(--space-8);
+  margin-bottom: var(--space-6);
+  border-radius: var(--radius-lg);
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+}
+
+/* Clear visual boundaries */
+.section-divider {
+  height: 1px;
+  background: var(--border-primary);
+  margin: var(--space-16) 0;
+}
+
+/* Maximum content width for readability */
+.content-width {
+  max-width: 65ch;
+  margin: 0 auto;
+}
+```
+
+### Border Radius
+```css
+:root {
+  --radius-none: 0;
+  --radius-sm: 0.125rem;   /* 2px */
+  --radius-base: 0.25rem;  /* 4px */
+  --radius-md: 0.375rem;   /* 6px */
+  --radius-lg: 0.5rem;     /* 8px */
+  --radius-xl: 0.75rem;    /* 12px */
+  --radius-2xl: 1rem;      /* 16px */
+  --radius-3xl: 1.5rem;    /* 24px */
+  --radius-full: 9999px;
+}
+```
+
+---
+
+## Component Library
+
+### Buttons
+
+#### Primary Button
+```css
+.btn-primary {
+  /* Base styles */
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--font-size-base);
+  font-weight: 600;
+  line-height: 1.5;
+  border-radius: var(--radius-lg);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  /* Touch-friendly sizing */
+  min-height: 44px;
+  min-width: 44px;
+  
+  /* Colors */
+  background: var(--primary-500);
+  color: var(--text-inverse);
+  
+  /* Focus state */
+  outline: none;
+}
+
+.btn-primary:hover {
+  background: var(--primary-600);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+  background: var(--primary-700);
+}
+
+.btn-primary:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  background: var(--primary-300);
+}
+
+/* Size variations */
+.btn-sm {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--font-size-sm);
+  min-height: 36px;
+}
+
+.btn-lg {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-lg);
+  min-height: 52px;
+}
+
+.btn-xl {
+  padding: var(--space-5) var(--space-10);
+  font-size: var(--font-size-xl);
+  min-height: 60px;
+}
+```
+
+#### Secondary Button
+```css
+.btn-secondary {
+  background: transparent;
+  color: var(--primary-500);
+  border: 2px solid var(--primary-500);
+  
+  /* Inherit other styles from .btn-primary */
+}
+
+.btn-secondary:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-600);
+  color: var(--primary-600);
+}
+```
+
+#### Ghost Button
+```css
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  border: none;
+  
+  /* Inherit other styles from .btn-primary */
+}
+
+.btn-ghost:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+```
+
+### Form Elements
+
+#### Input Fields
+```css
+.input {
+  /* Base styles */
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--font-size-base);
+  font-family: inherit;
+  line-height: 1.5;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border-primary);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+  
+  /* Touch-friendly sizing */
+  min-height: 44px;
+  
+  /* Prevent zoom on iOS */
+  font-size: 16px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--bg-secondary);
+}
+
+.input::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Error state */
+.input.error {
+  border-color: var(--error);
+}
+
+.input.error:focus {
+  border-color: var(--error);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+```
+
+#### Labels
+```css
+.label {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.label-required::after {
+  content: " *";
+  color: var(--error);
+}
+
+/* Help text */
+.help-text {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  margin-top: var(--space-1);
+  line-height: 1.4;
+}
+
+/* Error message */
+.error-message {
+  font-size: var(--font-size-sm);
+  color: var(--error);
+  margin-top: var(--space-1);
+  line-height: 1.4;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+```
+
+### Cards
+```css
+.card {
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  transition: all 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.card-header {
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.card-title {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.card-description {
+  font-size: var(--font-size-base);
+  color: var(--text-secondary);
+  margin: var(--space-2) 0 0 0;
+}
+
+.card-content {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.card-footer {
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-primary);
+  display: flex;
+  gap: var(--space-3);
+}
+```
+
+### Navigation
+```css
+.nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) 0;
+}
+
+.nav-link {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+
+.nav-link:hover {
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+}
+
+.nav-link.active {
+  color: var(--primary-500);
+  background: var(--primary-50);
+  font-weight: 600;
+}
+
+.nav-link:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 2px;
+}
+
+/* Mobile navigation */
+@media (max-width: 768px) {
+  .nav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-2);
+  }
+  
+  .nav-link {
+    justify-content: center;
+    padding: var(--space-4);
+  }
+}
+```
+
+### Alerts and Notifications
+```css
+.alert {
+  padding: var(--space-4);
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.alert-success {
+  background: var(--success-light);
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.alert-warning {
+  background: var(--warning-light);
+  border-color: var(--warning);
+  color: var(--warning);
+}
+
+.alert-error {
+  background: var(--error-light);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.alert-info {
+  background: var(--info-light);
+  border-color: var(--info);
+  color: var(--info);
+}
+
+.alert-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-title {
+  font-weight: 600;
+  margin-bottom: var(--space-1);
+}
+
+.alert-message {
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+```
+
+---
+
+## Accessibility Standards
+
+### WCAG AAA Compliance
+
+#### Color Contrast Requirements
+- **Normal text**: Minimum 7:1 contrast ratio
+- **Large text** (18px+ or 14px+ bold): Minimum 4.5:1 contrast ratio
+- **Non-text elements**: Minimum 3:1 contrast ratio
+- **Focus indicators**: Minimum 3:1 contrast with adjacent colors
+
+#### Focus Management
+```css
+/* High-contrast focus indicators */
+.focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-base);
+}
+
+/* Skip links for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  padding: var(--space-2) var(--space-4);
+  text-decoration: none;
+  border-radius: var(--radius-base);
+  z-index: 1000;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+```
+
+#### Screen Reader Support
+```css
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Live regions for dynamic content */
+.live-region {
+  position: absolute;
+  left: -10000px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+```
+
+### Touch Target Guidelines
+```css
+/* Minimum 44x44px touch targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+  .touch-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  .btn {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  .input {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+```
+
+---
+
+## Motion & Animation
+
+### Reduced Motion Support
+```css
+/* Respect user preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Default animation settings */
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: fadeIn 0.3s ease-out;
+  }
+  
+  .slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+```
+
+### ADHD-Friendly Motion Guidelines
+- **Duration**: Keep under 300ms
+- **Easing**: Use gentle easing functions (ease-out)
+- **Purpose**: Only animate with clear purpose
+- **Frequency**: Avoid repetitive or distracting animations
+- **Control**: Always respect user preferences
+
+---
+
+## Responsive Design
+
+### Breakpoints
+```css
+:root {
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* Mobile-first approach */
+.responsive-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .responsive-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+  }
+}
+
+@media (min-width: 1024px) {
+  .responsive-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-8);
+  }
+}
+```
+
+### Mobile Optimization
+```css
+/* Touch-friendly spacing on mobile */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--space-4);
+  }
+  
+  .section {
+    padding: var(--space-12) 0;
+  }
+  
+  .card {
+    padding: var(--space-4);
+  }
+  
+  /* Larger text on mobile for readability */
+  .text-body {
+    font-size: var(--font-size-lg);
+  }
+  
+  /* Stack navigation vertically */
+  .nav {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+}
+```
+
+---
+
+## Implementation Guidelines
+
+### CSS Custom Properties Setup
+```css
+/* Theme switcher implementation */
+:root {
+  /* Default to professional scheme, light mode, standard size, Lexend font */
+  color-scheme: light;
+}
+
+[data-scheme="professional"] { /* Professional colors */ }
+[data-scheme="warm"] { /* Warm colors */ }
+[data-scheme="cool"] { /* Cool colors */ }
+
+[data-mode="dark"] {
+  color-scheme: dark;
+  /* Dark mode overrides */
+}
+
+[data-font="system"] { font-family: var(--font-system); }
+[data-font="accessible"] { font-family: var(--font-accessible); }
+[data-font="lexend"] { font-family: var(--font-primary); }
+
+[data-size="compact"] { /* Compact font sizes */ }
+[data-size="standard"] { /* Standard font sizes */ }
+[data-size="large"] { /* Large font sizes */ }
+[data-size="xl"] { /* Extra large font sizes */ }
+```
+
+### JavaScript Theme Controller
+```javascript
+class GlooperThemeController {
+  constructor() {
+    this.scheme = localStorage.getItem('glooper-scheme') || 'professional';
+    this.mode = localStorage.getItem('glooper-mode') || 'light';
+    this.font = localStorage.getItem('glooper-font') || 'lexend';
+    this.size = localStorage.getItem('glooper-size') || 'standard';
+    
+    this.apply();
+    this.detectSystemPreferences();
+  }
+  
+  setScheme(scheme) {
+    this.scheme = scheme;
+    localStorage.setItem('glooper-scheme', scheme);
+    this.apply();
+  }
+  
+  setMode(mode) {
+    this.mode = mode;
+    localStorage.setItem('glooper-mode', mode);
+    this.apply();
+  }
+  
+  setFont(font) {
+    this.font = font;
+    localStorage.setItem('glooper-font', font);
+    this.apply();
+  }
+  
+  setSize(size) {
+    this.size = size;
+    localStorage.setItem('glooper-size', size);
+    this.apply();
+  }
+  
+  apply() {
+    const root = document.documentElement;
+    root.setAttribute('data-scheme', this.scheme);
+    root.setAttribute('data-mode', this.mode);
+    root.setAttribute('data-font', this.font);
+    root.setAttribute('data-size', this.size);
+  }
+  
+  detectSystemPreferences() {
+    // Detect system dark mode preference
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      if (!localStorage.getItem('glooper-mode')) {
+        this.setMode('dark');
+      }
+    }
+    
+    // Listen for system preference changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      if (!localStorage.getItem('glooper-mode')) {
+        this.setMode(e.matches ? 'dark' : 'light');
+      }
+    });
+    
+    // Detect reduced motion preference
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.body.classList.add('reduce-motion');
+    }
+  }
+  
+  // Accessibility helpers
+  announceChange(message) {
+    const announcement = document.createElement('div');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.className = 'sr-only';
+    announcement.textContent = message;
+    document.body.appendChild(announcement);
+    
+    setTimeout(() => {
+      document.body.removeChild(announcement);
+    }, 1000);
+  }
+}
+
+// Initialize theme controller
+const themeController = new GlooperThemeController();
+```
+
+### React Hook Implementation
+```jsx
+import { useState, useEffect } from 'react';
+
+export function useGlooperTheme() {
+  const [theme, setTheme] = useState({
+    scheme: 'professional',
+    mode: 'light',
+    font: 'lexend',
+    size: 'standard'
+  });
+  
+  useEffect(() => {
+    // Load from localStorage
+    const saved = {
+      scheme: localStorage.getItem('glooper-scheme') || 'professional',
+      mode: localStorage.getItem('glooper-mode') || 'light',
+      font: localStorage.getItem('glooper-font') || 'lexend',
+      size: localStorage.getItem('glooper-size') || 'standard'
+    };
+    
+    setTheme(saved);
+    applyTheme(saved);
+  }, []);
+  
+  const updateTheme = (updates) => {
+    const newTheme = { ...theme, ...updates };
+    setTheme(newTheme);
+    
+    // Save to localStorage
+    Object.entries(updates).forEach(([key, value]) => {
+      localStorage.setItem(`glooper-${key}`, value);
+    });
+    
+    applyTheme(newTheme);
+  };
+  
+  const applyTheme = (themeConfig) => {
+    const root = document.documentElement;
+    Object.entries(themeConfig).forEach(([key, value]) => {
+      root.setAttribute(`data-${key}`, value);
+    });
+  };
+  
+  return [theme, updateTheme];
+}
+```
+
+### Component Example
+```jsx
+// Theme settings component
+export function ThemeSettings() {
+  const [theme, updateTheme] = useGlooperTheme();
+  
+  return (
+    <div className="theme-settings">
+      <h3>Appearance Settings</h3>
+      
+      {/* Color Scheme */}
+      <fieldset>
+        <legend>Color Scheme</legend>
+        <div className="radio-group">
+          {['professional', 'warm', 'cool'].map(scheme => (
+            <label key={scheme} className="radio-label">
+              <input
+                type="radio"
+                name="scheme"
+                value={scheme}
+                checked={theme.scheme === scheme}
+                onChange={(e) => updateTheme({ scheme: e.target.value })}
+              />
+              <span className="radio-custom"></span>
+              {scheme.charAt(0).toUpperCase() + scheme.slice(1)}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      
+      {/* Mode */}
+      <fieldset>
+        <legend>Mode</legend>
+        <div className="radio-group">
+          {['light', 'dark'].map(mode => (
+            <label key={mode} className="radio-label">
+              <input
+                type="radio"
+                name="mode"
+                value={mode}
+                checked={theme.mode === mode}
+                onChange={(e) => updateTheme({ mode: e.target.value })}
+              />
+              <span className="radio-custom"></span>
+              {mode.charAt(0).toUpperCase() + mode.slice(1)}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      
+      {/* Font */}
+      <fieldset>
+        <legend>Font Family</legend>
+        <select 
+          value={theme.font}
+          onChange={(e) => updateTheme({ font: e.target.value })}
+        >
+          <option value="lexend">Lexend (Reading optimized)</option>
+          <option value="system">System Font (Familiar)</option>
+          <option value="accessible">Atkinson Hyperlegible (High accessibility)</option>
+        </select>
+      </fieldset>
+      
+      {/* Size */}
+      <fieldset>
+        <legend>Font Size</legend>
+        <div className="radio-group">
+          {[
+            { value: 'compact', label: 'Compact (14px)' },
+            { value: 'standard', label: 'Standard (16px)' },
+            { value: 'large', label: 'Large (18px)' },
+            { value: 'xl', label: 'Extra Large (20px)' }
+          ].map(({ value, label }) => (
+            <label key={value} className="radio-label">
+              <input
+                type="radio"
+                name="size"
+                value={value}
+                checked={theme.size === value}
+                onChange={(e) => updateTheme({ size: e.target.value })}
+              />
+              <span className="radio-custom"></span>
+              {label}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+    </div>
+  );
+}
+```
+
+---
+
+## Brand Voice & Content
+
+### Tone Guidelines
+
+#### Core Personality
+- **Helpful**: Genuinely want to solve user problems
+- **Clear**: Use simple, direct language
+- **Honest**: Transparent about capabilities and limitations
+- **Inclusive**: Welcome users of all abilities and backgrounds
+- **Calm**: Never aggressive, pushy, or overwhelming
+
+#### Writing Style
+- **Active voice** preferred over passive
+- **Short sentences** - maximum 20 words when possible
+- **Simple vocabulary** - avoid jargon and complex terms
+- **Specific numbers** - "Save 85%" not "save money"
+- **Action-oriented** - tell users exactly what to do
+
+#### Content Structure
+```markdown
+<!-- Use clear headings -->
+# Main Topic (H1)
+## Key Sections (H2)
+### Details (H3)
+
+<!-- Short paragraphs -->
+One main idea per paragraph. 
+Keep it to 2-3 sentences maximum.
+
+<!-- Bullet points for lists -->
+Benefits:
+- Specific, measurable benefit
+- Clear, direct advantage
+- Concrete value proposition
+
+<!-- Call-to-action buttons -->
+[Get Started Free] [Learn More]
+```
+
+#### Accessibility in Content
+- **Link text**: Descriptive, not "click here" or "read more"
+- **Alt text**: Specific descriptions of images
+- **Headers**: Logical hierarchy that makes sense when read aloud
+- **Instructions**: Step-by-step with clear next actions
+
+#### Error Messages
+```markdown
+<!-- Bad -->
+"Error 404: Resource not found"
+
+<!-- Good -->
+"We couldn't find that page. Try checking the web address or return to our homepage."
+
+<!-- Bad -->
+"Invalid input"
+
+<!-- Good -->
+"Please enter a valid email address. Example: your.name@email.com"
+```
+
+#### Success Messages
+```markdown
+<!-- Encourage and guide next steps -->
+"✅ Account created successfully! Check your email to verify your account."
+
+"✅ Settings saved! Your changes will take effect immediately."
+
+"✅ Download complete! The file is in your Downloads folder."
+```
+
+---
+
+## Testing & Quality Assurance
+
+### Accessibility Testing Checklist
+
+#### Automated Testing
+- **jest-axe**: Run accessibility tests in CI/CD
+- **Pa11y**: Command-line accessibility testing
+- **Lighthouse**: Regular accessibility audits
+- **Wave**: Browser extension testing
+
+#### Manual Testing
+- **Keyboard navigation**: Tab through entire interface
+- **Screen reader**: Test with NVDA, JAWS, or VoiceOver
+- **Zoom testing**: Verify 200% zoom functionality
+- **Color contrast**: Use tools to verify ratios
+- **Focus management**: Check focus indicators
+
+#### Neurodiverse User Testing
+- **ADHD users**: Test for cognitive load and distractibility
+- **ASD users**: Verify predictability and clarity
+- **Dyslexic users**: Test readability and comprehension
+- **Low vision users**: Verify high contrast and magnification
+
+### Performance Standards
+- **First Contentful Paint**: < 1.5 seconds
+- **Largest Contentful Paint**: < 2.5 seconds
+- **Cumulative Layout Shift**: < 0.1
+- **Time to Interactive**: < 3.5 seconds
+
+### Browser Support
+- **Chrome**: Current and previous major version
+- **Firefox**: Current and previous major version
+- **Safari**: Current and previous major version
+- **Edge**: Current version
+- **Mobile browsers**: iOS Safari, Chrome Mobile
+
+---
+
+This design system establishes Glooper as a brand that genuinely cares about user experience, accessibility, and neurodiversity. By following these guidelines, all Glooper products will maintain consistency while providing an inclusive, calm, and effective user experience.
+
+The system is designed to be:
+- **Scalable**: Works for websites, web apps, and desktop applications
+- **Maintainable**: Clear structure and documentation
+- **Accessible**: WCAG AAA compliant with neurodiverse considerations
+- **Flexible**: Multiple themes while maintaining brand identity
+- **User-controlled**: Extensive customization options
+
+Use this specification as the foundation for the glooper.ai website and all future Glooper products.
