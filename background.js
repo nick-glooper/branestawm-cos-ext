@@ -196,6 +196,11 @@ async function performAutoSync() {
 
 // Context menu setup function
 function setupContextMenus() {
+    if (!chrome.contextMenus) {
+        console.log('Context menus API not available');
+        return;
+    }
+    
     try {
         chrome.contextMenus.create({
             id: 'branestawm-help',
