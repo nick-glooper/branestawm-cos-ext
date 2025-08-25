@@ -53,12 +53,17 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         // Handle any migration tasks here if needed
         await migrateDataIfNeeded();
     }
+    
+    // Set up context menus
+    setupContextMenus();
 });
 
 // Handle extension icon click - open or focus Branestawm tab
-chrome.action.onClicked.addListener(async (tab) => {
-    await openBranestawmTab();
-});
+if (chrome.action) {
+    chrome.action.onClicked.addListener(async (tab) => {
+        await openBranestawmTab();
+    });
+}
 
 // Open or focus Branestawm tab
 async function openBranestawmTab() {
@@ -189,26 +194,30 @@ async function performAutoSync() {
     }
 }
 
-// Context menu integration
-chrome.runtime.onInstalled.addListener(() => {
-    chrome.contextMenus.create({
-        id: 'branestawm-help',
-        title: 'Ask Branestawm about this',
-        contexts: ['selection']
-    });
-    
-    chrome.contextMenus.create({
-        id: 'branestawm-plan',
-        title: 'Help me plan this task',
-        contexts: ['selection']
-    });
-    
-    chrome.contextMenus.create({
-        id: 'branestawm-break-down',
-        title: 'Break this down into steps',
-        contexts: ['selection']
-    });
-});
+// Context menu setup function
+function setupContextMenus() {
+    try {
+        chrome.contextMenus.create({
+            id: 'branestawm-help',
+            title: 'Ask Branestawm about this',
+            contexts: ['selection']
+        });
+        
+        chrome.contextMenus.create({
+            id: 'branestawm-plan',
+            title: 'Help me plan this task',
+            contexts: ['selection']
+        });
+        
+        chrome.contextMenus.create({
+            id: 'branestawm-break-down',
+            title: 'Break this down into steps',
+            contexts: ['selection']
+        });
+    } catch (error) {
+        console.error('Error setting up context menus:', error);
+    }
+}
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     const selectedText = info.selectionText;
