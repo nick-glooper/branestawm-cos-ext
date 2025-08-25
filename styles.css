@@ -851,6 +851,10 @@ body {
   transition: all var(--duration-300) var(--ease-out);
   cursor: pointer;
   background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 300px;
 }
 
 .setup-option:hover {
@@ -895,6 +899,33 @@ body {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  margin-bottom: var(--space-4);
+}
+
+/* Setup option content structure */
+.setup-option-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.setup-option-text {
+  margin-bottom: var(--space-6);
+}
+
+.setup-option-button {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Ensure buttons are properly centered and aligned */
+.setup-option .btn {
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto;
 }
 
 /* ========== FORM ELEMENTS ========== */
