@@ -46,10 +46,18 @@ function isGoogleSearchResultsPage() {
 
 function findAIOverview() {
     // Try multiple selectors for Google AI Overview and other useful content
+    // Prioritize main content containers and exclude sidebar elements
     const selectors = [
-        // AI Overview specific
+        // AI Overview specific - prioritize main content containers
+        '[data-snc="ih6Jnb_4Hk7"] .yp', // AI Overview main content
+        '.yp:not([data-ved])', // AI Overview text without tracking attributes
+        '[data-testid="ai-overview"] .yp', // Direct AI Overview content
+        '.X5LH0c .yp', // AI-generated answer content
+        '.IZ6rdc .yp', // Search generative experience content
+        '.ujudUb .yp', // Another SGE content selector
+        
+        // Broader AI Overview containers (but exclude sidebars and thumbnails)
         '[data-snc="ih6Jnb_4Hk7"]', // Common AI Overview selector
-        '.yp', // Another AI Overview selector
         '[data-testid="ai-overview"]', // Direct AI Overview
         '.X5LH0c', // AI-generated answer
         '.IZ6rdc', // Search generative experience
@@ -100,6 +108,10 @@ function findAIOverview() {
         // Skip Google sharing dialog specifically
         if (element.closest('[data-ved]') && text.toLowerCase().includes('public link')) continue;
         
+        // Skip thumbnail/sidebar/reference containers
+        if (element.closest('.related-question-pair, .d4rhi, .dG2XIf, .cUnke, .mnr-c, .kno-ec, .wp-ms, .lhkB2f, .qmOF4d')) continue;
+        if (element.closest('[data-ved]') && (text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) || text.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}/) || text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/))) continue;
+        
         // Debug: log elements that pass initial filters
         console.log('🔍 Candidate element:', {
             tag: element.tagName,
@@ -125,6 +137,16 @@ function findAIOverview() {
         score += element.closest('#search, .g, .kp-blk') ? 2 : 0; // In search results area
         score += text.toLowerCase().includes('according to') ? 1 : 0;
         score += element.querySelector('cite, a[href]') ? 1 : 0; // Has sources
+        
+        // Boost score for elements that look like AI Overview main content
+        score += element.closest('[data-snc="ih6Jnb_4Hk7"], .X5LH0c, .IZ6rdc, .ujudUb') ? 3 : 0;
+        score += element.classList.contains('yp') ? 2 : 0;
+        score += !element.closest('[data-ved]') ? 1 : 0; // Prefer elements without tracking
+        
+        // Penalize elements that look like thumbnails or sidebar content
+        score -= element.closest('.related-question-pair, .d4rhi, .dG2XIf, .cUnke, .mnr-c') ? 2 : 0;
+        score -= text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) ? 1 : 0; // Has dates (thumbnail indicator)
+        score -= text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/) ? 1 : 0; // Has relative dates
         
         if (score > bestScore) {
             bestScore = score;
