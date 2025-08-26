@@ -293,6 +293,7 @@ function injectImportButton(aiResponse) {
 function handleImportClick() {
     if (isProcessing) return;
     
+    console.log('🔄 Import button clicked');
     isProcessing = true;
     importButton.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px; animation: spin 1s linear infinite;">
@@ -304,13 +305,27 @@ function handleImportClick() {
     // Find Perplexity response again
     const aiResponse = findPerplexityResponse();
     if (!aiResponse) {
+        console.error('❌ No AI response found for import');
         showError('Could not find Perplexity response to import');
         return;
     }
     
+    console.log('📄 Found AI response element:', aiResponse);
+    
     // Extract content
     const content = extractPerplexityContent(aiResponse);
     const searchQuery = extractSearchQuery();
+    
+    console.log('📝 Extracted content length:', content.length);
+    console.log('🔍 Extracted query:', searchQuery);
+    console.log('📄 Content preview:', content.substring(0, 200) + '...');
+    
+    if (!content || content.trim().length < 50) {
+        console.error('❌ Content too short or empty:', content);
+        showError('No substantial content found to import');
+        resetButton();
+        return;
+    }
     
     // Send to Branestawm extension
     sendToExtension(content, searchQuery);
@@ -401,15 +416,29 @@ function sendToExtension(content, searchQuery) {
         timestamp: new Date().toISOString()
     };
     
+    console.log('🚀 Sending import data to extension:', importData);
+    console.log('🆔 Extension ID:', chrome.runtime.id);
+    
+    // Verify chrome.runtime is available
+    if (!chrome.runtime || !chrome.runtime.sendMessage) {
+        console.error('❌ Chrome runtime not available');
+        showError('Extension communication unavailable');
+        resetButton();
+        return;
+    }
+    
     // Send message to extension
     chrome.runtime.sendMessage(importData, (response) => {
         if (chrome.runtime.lastError) {
-            console.error('Failed to send to extension:', chrome.runtime.lastError);
-            showError('Failed to connect to Branestawm extension');
+            console.error('Chrome runtime error:', chrome.runtime.lastError.message || chrome.runtime.lastError);
+            console.error('Full error object:', chrome.runtime.lastError);
+            showError('Connection failed - ensure Branestawm extension is active');
         } else if (response && response.success) {
+            console.log('✅ Import successful:', response);
             showSuccess('Content imported to Branestawm successfully!');
         } else {
-            showError('Failed to import content to Branestawm');
+            console.error('❌ Import failed - response:', response);
+            showError('Import failed - check Branestawm extension');
         }
         
         resetButton();

@@ -287,6 +287,8 @@ chrome.runtime.onConnect.addListener((port) => {
 
 // Handle messages from main tab
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+    console.log('📨 Background: Received message:', message.type, 'from:', sender.tab?.url || 'unknown');
+    
     if (message.type === 'SYNC_REQUEST') {
         // Handle sync requests from main tab
         try {
