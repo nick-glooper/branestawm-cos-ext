@@ -73,6 +73,13 @@ function findAIOverview() {
         const element = document.querySelector(selector);
         if (element && element.textContent.trim().length > 100) {
             console.log('🔍 Found content with selector:', selector);
+            console.log('🔍 Element tag:', element.tagName);
+            console.log('🔍 Element classes:', element.className);
+            console.log('🔍 Element ID:', element.id);
+            console.log('🔍 Element data attributes:', Array.from(element.attributes).filter(attr => attr.name.startsWith('data-')).map(attr => `${attr.name}="${attr.value}"`));
+            console.log('🔍 Element parent:', element.parentElement?.tagName, element.parentElement?.className);
+            console.log('🔍 First 300 chars of text:', element.textContent.trim().substring(0, 300));
+            console.log('🔍 Element HTML structure:', element.outerHTML.substring(0, 500));
             return element;
         }
     }
@@ -87,14 +94,30 @@ function findAIOverview() {
         if (text.length < 200) continue;
         
         // Skip navigation, ads, dialogs, and other non-content
-        if (element.closest('.gb_f, .FeRdKc, .commercial, nav, header, footer, .N6Sb2c, .VfPpkd, .shared-links')) continue;
+        if (element.closest('.gb_f, .FeRdKc, .commercial, nav, header, footer, .N6Sb2c, .VfPpkd, .shared-links, [role="dialog"], [role="alertdialog"], .modal, .popup')) continue;
         if (element.querySelector('nav, button, input, select, textarea')) continue;
+        
+        // Skip Google sharing dialog specifically
+        if (element.closest('[data-ved]') && text.toLowerCase().includes('public link')) continue;
+        
+        // Debug: log elements that pass initial filters
+        console.log('🔍 Candidate element:', {
+            tag: element.tagName,
+            classes: element.className,
+            id: element.id,
+            textLength: text.length,
+            textPreview: text.substring(0, 100) + '...'
+        });
         
         // Skip elements that contain UI text
         if (text.toLowerCase().includes('delete all') || 
             text.toLowerCase().includes('shared public') ||
             text.toLowerCase().includes('learn more') ||
-            text.toLowerCase().includes('cancel')) continue;
+            text.toLowerCase().includes('cancel') ||
+            text.toLowerCase().includes('public link shares') ||
+            text.toLowerCase().includes('personal information') ||
+            text.toLowerCase().includes('third parties') ||
+            text.toLowerCase().includes('their policies apply')) continue;
         
         let score = 0;
         score += text.length > 400 ? 2 : 1;
@@ -110,7 +133,14 @@ function findAIOverview() {
     }
     
     if (bestMatch && bestScore >= 3) {
-        console.log('🔍 Found best content match with score:', bestScore, bestMatch);
+        console.log('🔍 Found best content match with score:', bestScore);
+        console.log('🔍 Fallback element tag:', bestMatch.tagName);
+        console.log('🔍 Fallback element classes:', bestMatch.className);
+        console.log('🔍 Fallback element ID:', bestMatch.id);
+        console.log('🔍 Fallback element data attributes:', Array.from(bestMatch.attributes).filter(attr => attr.name.startsWith('data-')).map(attr => `${attr.name}="${attr.value}"`));
+        console.log('🔍 Fallback element parent:', bestMatch.parentElement?.tagName, bestMatch.parentElement?.className);
+        console.log('🔍 Fallback first 300 chars of text:', bestMatch.textContent.trim().substring(0, 300));
+        console.log('🔍 Fallback element HTML structure:', bestMatch.outerHTML.substring(0, 500));
         return bestMatch;
     }
     
@@ -263,7 +293,15 @@ function extractAIOverviewContent(aiOverview) {
         /Delete all public links\?/gi,
         /If you delete all of your shared links/gi,
         /Delete all.*Cancel/gi,
-        /\d+ months?\./gi
+        /\d+ months?\./gi,
+        /This public link shares a thread/gi,
+        /including any personal information you added/gi,
+        /You can delete a public link at any time/gi,
+        /but not copies made by others/gi,
+        /If you share with third parties/gi,
+        /their policies apply/gi,
+        /public link/gi,
+        /shares a thread/gi
     ];
     
     uiPatterns.forEach(pattern => {
@@ -278,7 +316,12 @@ function extractAIOverviewContent(aiOverview) {
         .trim();
     
     // If content is too short or looks like UI text, try to find actual content
-    if (content.length < 100 || content.toLowerCase().includes('delete') || content.toLowerCase().includes('cancel')) {
+    if (content.length < 100 || 
+        content.toLowerCase().includes('delete') || 
+        content.toLowerCase().includes('cancel') ||
+        content.toLowerCase().includes('public link') ||
+        content.toLowerCase().includes('personal information') ||
+        content.toLowerCase().includes('third parties')) {
         console.log('⚠️ Content appears to be UI elements, searching for better content...');
         
         // Try to find actual AI response content within the element
@@ -291,7 +334,11 @@ function extractAIOverviewContent(aiOverview) {
                 !text.toLowerCase().includes('delete') &&
                 !text.toLowerCase().includes('cancel') &&
                 !text.toLowerCase().includes('shared') &&
-                !text.toLowerCase().includes('learn more')) {
+                !text.toLowerCase().includes('learn more') &&
+                !text.toLowerCase().includes('public link') &&
+                !text.toLowerCase().includes('personal information') &&
+                !text.toLowerCase().includes('third parties') &&
+                !text.toLowerCase().includes('policies apply')) {
                 candidates.push(text);
             }
         }
