@@ -92,7 +92,19 @@ function findAIOverview() {
         }
     }
     
+    // Try a more targeted search for AI Overview content first
+    console.log('🔍 Trying more targeted AI Overview search...');
+    const aiContainers = document.querySelectorAll('[data-snc*="ih6Jnb"], .X5LH0c, .IZ6rdc, .ujudUb, [data-testid*="ai"], .ai-overview, .generative-ai');
+    for (const container of aiContainers) {
+        const textContent = container.textContent.trim();
+        if (textContent.length > 100 && !textContent.includes('google.') && !textContent.includes('xsrf')) {
+            console.log('🔍 Found targeted AI container:', container.tagName, container.className, textContent.substring(0, 200));
+            return container;
+        }
+    }
+    
     // Enhanced fallback: look for the most substantial content block
+    console.log('🔍 Falling back to general content search...');
     const allElements = document.querySelectorAll('div, p, section, article');
     let bestMatch = null;
     let bestScore = 0;
@@ -101,16 +113,19 @@ function findAIOverview() {
         const text = element.textContent.trim();
         if (text.length < 200) continue;
         
-        // Skip navigation, ads, dialogs, and other non-content
+        // Skip navigation, ads, dialogs, footer scripts, and other non-content
         if (element.closest('.gb_f, .FeRdKc, .commercial, nav, header, footer, .N6Sb2c, .VfPpkd, .shared-links, [role="dialog"], [role="alertdialog"], .modal, .popup')) continue;
         if (element.querySelector('nav, button, input, select, textarea')) continue;
+        if (element.id === 'lfootercc' || element.closest('#lfootercc')) continue; // Skip Google footer scripts
+        if (element.querySelector('script') && element.textContent.includes('google.')) continue; // Skip Google script containers
         
         // Skip Google sharing dialog specifically
         if (element.closest('[data-ved]') && text.toLowerCase().includes('public link')) continue;
         
-        // Skip thumbnail/sidebar/reference containers
-        if (element.closest('.related-question-pair, .d4rhi, .dG2XIf, .cUnke, .mnr-c, .kno-ec, .wp-ms, .lhkB2f, .qmOF4d')) continue;
-        if (element.closest('[data-ved]') && (text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) || text.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}/) || text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/))) continue;
+        // Skip thumbnail/sidebar/reference containers - but be more selective
+        if (element.closest('.related-question-pair, .d4rhi, .dG2XIf, .cUnke, .mnr-c, .kno-ec')) continue;
+        // Only skip [data-ved] elements if they clearly contain date patterns (not all [data-ved] elements)
+        if (element.closest('[data-ved]') && text.length < 500 && (text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) || text.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}/) || text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/))) continue;
         
         // Debug: log elements that pass initial filters
         console.log('🔍 Candidate element:', {
@@ -139,14 +154,14 @@ function findAIOverview() {
         score += element.querySelector('cite, a[href]') ? 1 : 0; // Has sources
         
         // Boost score for elements that look like AI Overview main content
-        score += element.closest('[data-snc="ih6Jnb_4Hk7"], .X5LH0c, .IZ6rdc, .ujudUb') ? 3 : 0;
-        score += element.classList.contains('yp') ? 2 : 0;
-        score += !element.closest('[data-ved]') ? 1 : 0; // Prefer elements without tracking
+        score += element.closest('[data-snc="ih6Jnb_4Hk7"], .X5LH0c, .IZ6rdc, .ujudUb') ? 5 : 0; // Higher boost for AI containers
+        score += element.classList.contains('yp') ? 3 : 0; // Higher boost for AI content
+        score += element.closest('[data-testid="ai-overview"]') ? 4 : 0; // Boost for direct AI overview
         
-        // Penalize elements that look like thumbnails or sidebar content
-        score -= element.closest('.related-question-pair, .d4rhi, .dG2XIf, .cUnke, .mnr-c') ? 2 : 0;
-        score -= text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) ? 1 : 0; // Has dates (thumbnail indicator)
-        score -= text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/) ? 1 : 0; // Has relative dates
+        // Moderate penalties for potential sidebar content - but don't exclude AI content
+        score -= element.closest('.related-question-pair, .d4rhi, .dG2XIf, .cUnke, .mnr-c') ? 1 : 0; // Reduced penalty
+        score -= text.length < 300 && text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) ? 1 : 0; // Only penalize short text with dates
+        score -= text.length < 300 && text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/) ? 1 : 0; // Only penalize short text with relative dates
         
         if (score > bestScore) {
             bestScore = score;
@@ -154,7 +169,7 @@ function findAIOverview() {
         }
     }
     
-    if (bestMatch && bestScore >= 3) {
+    if (bestMatch && bestScore >= 2) { // Lower threshold since we have better filtering
         console.log('🔍 Found best content match with score:', bestScore);
         console.log('🔍 Fallback element tag:', bestMatch.tagName);
         console.log('🔍 Fallback element classes:', bestMatch.className);
