@@ -16,15 +16,19 @@ function initializePerplexityImport() {
     setTimeout(findAndInjectImportButton, 3000);
     
     // Watch for dynamic content changes (Perplexity is heavily dynamic)
+    let lastReinjectionTime = 0;
     const observer = new MutationObserver((mutations) => {
-        // Check if our button or wrapper was removed
-        const existingButton = document.querySelector('#branestawm-import-btn');
-        const existingWrapper = document.querySelector('#branestawm-import-wrapper');
+        // Throttle re-injection attempts to avoid spam
+        const now = Date.now();
+        if (now - lastReinjectionTime < 3000) return; // Wait at least 3 seconds between attempts
         
-        if (!existingButton && !existingWrapper) {
-            console.log('🔄 Import button was removed, re-injecting...');
-            importButton = null;
-            setTimeout(findAndInjectImportButton, 1000);
+        // Check if our button exists
+        const existingButton = document.querySelector('#branestawm-import-btn');
+        
+        if (!existingButton && !importButton) {
+            console.log('🔄 Import button missing, re-injecting...');
+            lastReinjectionTime = now;
+            setTimeout(findAndInjectImportButton, 1500);
         } else if (!importButton && existingButton) {
             // Reconnect to existing button
             importButton = existingButton;
@@ -39,15 +43,17 @@ function initializePerplexityImport() {
         characterData: false
     });
     
-    // Also try periodically in case mutations aren't caught
+    // Also try periodically in case mutations aren't caught (less frequently)
     setInterval(() => {
         const existingButton = document.querySelector('#branestawm-import-btn');
-        if (!existingButton) {
+        if (!existingButton && !importButton) {
+            console.log('🔄 Periodic check: Button missing, attempting injection');
             findAndInjectImportButton();
-        } else if (!importButton) {
+        } else if (!importButton && existingButton) {
             importButton = existingButton;
+            console.log('🔗 Periodic check: Reconnected to existing button');
         }
-    }, 5000);
+    }, 10000); // Check every 10 seconds instead of 5
 }
 
 function findAndInjectImportButton() {
@@ -179,14 +185,6 @@ function injectImportButton(aiResponse) {
         max-width: 300px !important;
     `;
     
-    importButton.addEventListener('mouseenter', () => {
-        importButton.style.background = '#1a6d78';
-    });
-    
-    importButton.addEventListener('mouseleave', () => {
-        importButton.style.background = '#20808d';
-    });
-    
     importButton.addEventListener('click', handleImportClick);
     
     // Find a stable container to insert the button
@@ -213,28 +211,80 @@ function injectImportButton(aiResponse) {
     // If no good container found, use the response element
     if (!container) container = aiResponse;
     
-    // Create a wrapper div to contain our button and make it less likely to be removed
-    const buttonWrapper = document.createElement('div');
-    buttonWrapper.id = 'branestawm-import-wrapper';
-    buttonWrapper.setAttribute('data-branestawm', 'wrapper');
-    buttonWrapper.style.cssText = `
-        position: relative !important;
-        z-index: 10000 !important;
-        margin: 20px 0 !important;
-        padding: 10px !important;
-        background: rgba(255, 255, 255, 0.02) !important;
-        border-radius: 12px !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        backdrop-filter: blur(10px) !important;
-    `;
+    // Try fixed positioning as a fallback to avoid being removed by dynamic content
+    const useFixedPosition = true; // Change to false to test other positioning
     
-    buttonWrapper.appendChild(importButton);
-    
-    // Insert the wrapper after the AI response
-    if (container === aiResponse) {
-        container.parentNode.insertBefore(buttonWrapper, container.nextSibling);
+    if (useFixedPosition) {
+        // Position button as a fixed overlay
+        importButton.style.cssText = `
+            position: fixed !important;
+            top: 100px !important;
+            right: 20px !important;
+            background: #20808d !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 8px !important;
+            padding: 12px 20px !important;
+            font-size: 14px !important;
+            font-weight: 600 !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            transition: all 0.2s ease !important;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+            box-shadow: 0 4px 12px rgba(32, 128, 141, 0.3) !important;
+            z-index: 999999 !important;
+            opacity: 0.95 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            width: auto !important;
+            min-width: 200px !important;
+            max-width: 280px !important;
+            transform: translateZ(0) !important;
+            will-change: transform !important;
+        `;
+        
+        // Add hover effects
+        importButton.addEventListener('mouseenter', () => {
+            importButton.style.background = '#1a6d78 !important';
+            importButton.style.opacity = '1 !important';
+            importButton.style.transform = 'translateZ(0) scale(1.02) !important';
+        });
+        
+        importButton.addEventListener('mouseleave', () => {
+            importButton.style.background = '#20808d !important';
+            importButton.style.opacity = '0.95 !important';
+            importButton.style.transform = 'translateZ(0) scale(1) !important';
+        });
+        
+        // Append directly to body so it can't be removed by content updates
+        document.body.appendChild(importButton);
+        
     } else {
-        container.appendChild(buttonWrapper);
+        // Create a wrapper div for inline positioning
+        const buttonWrapper = document.createElement('div');
+        buttonWrapper.id = 'branestawm-import-wrapper';
+        buttonWrapper.setAttribute('data-branestawm', 'wrapper');
+        buttonWrapper.style.cssText = `
+            position: relative !important;
+            z-index: 10000 !important;
+            margin: 20px 0 !important;
+            padding: 15px !important;
+            background: rgba(32, 128, 141, 0.05) !important;
+            border-radius: 12px !important;
+            border: 2px solid rgba(32, 128, 141, 0.2) !important;
+            backdrop-filter: blur(10px) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+        `;
+        
+        buttonWrapper.appendChild(importButton);
+        
+        // Insert the wrapper after the AI response
+        if (container === aiResponse) {
+            container.parentNode.insertBefore(buttonWrapper, container.nextSibling);
+        } else {
+            container.appendChild(buttonWrapper);
+        }
     }
     
     console.log('✅ Import button injected successfully');
