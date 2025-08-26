@@ -14,6 +14,19 @@
     "https://*/*"
   ],
   
+  "content_scripts": [
+    {
+      "matches": ["https://www.google.com/search*"],
+      "js": ["content-google.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.perplexity.ai/*"],
+      "js": ["content-perplexity.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  
   "background": {
     "service_worker": "background.js"
   },

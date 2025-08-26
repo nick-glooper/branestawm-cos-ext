@@ -58,7 +58,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupEventListeners();
     setupTooltips();
     updateUI();
-    updateWebSearchButton();
+    
+    // Start monitoring for search result imports
+    startImportMonitoring();
     
     // Check if user needs initial setup
     if (!settings.googleToken && !settings.apiKey) {
@@ -422,70 +424,7 @@ IMPORTANT: When users reference relative dates like "yesterday", "Saturday just 
         const recentMessages = conversations[currentConversation].messages.slice(-10);
         messages = messages.concat(recentMessages);
         
-        // Handle web search if needed
-        const searchQuery = extractSearchQuery(message);
-        const shouldSearch = searchQuery || settings.webSearchEnabled;
-        
-        console.log(`🔍 Web search check:`, {
-            searchQuery,
-            webSearchEnabled: settings.webSearchEnabled,
-            shouldSearch
-        });
-        
-        if (shouldSearch) {
-            const query = searchQuery || message;
-            console.log(`🌐 Initiating web search for: "${query}"`);
-            
-            // Show user that search is happening
-            displayMessage({
-                role: 'system', 
-                content: `🔍 **Basic Web Search Active** - Searching for: "${query}"...\n\n*Note: This provides basic contextual information. For comprehensive current data, consider supplementing with Perplexity, Google, or other dedicated search tools.*`
-            });
-            
-            const searchResults = await performWebSearch(query);
-            
-            console.log(`📊 Search results:`, searchResults ? 'Found results' : 'No results');
-            console.log(`🔍 Full search results content:`, searchResults);
-            
-            if (searchResults) {
-                const searchContext = `=== WEB SEARCH RESULTS FOR USER QUERY ===
-Query: "${query}"
-
-${searchResults}
-
-=== CRITICAL: USE THE SEARCH RESULTS ABOVE ===
-
-STOP. READ THE SEARCH RESULTS ABOVE CAREFULLY.
-
-If the search results contain SPECIFIC DATA (scores, statistics, exact information):
-- Use that data directly in your response
-- Do NOT say you cannot find the information
-- Do NOT suggest manual searching
-- Provide the specific answer from the search results
-
-If the search results say "Limited Results Available":
-- Then explain the limitations honestly
-- Suggest manual search alternatives
-
-The search results above contain either SPECIFIC DATA or a "Limited Results" message. Read them and respond accordingly.`;
-                
-                messages.push({
-                    role: 'system',
-                    content: searchContext
-                });
-                
-                // Show user that search completed
-                displayMessage({
-                    role: 'system',
-                    content: `✅ **Basic web search completed** - Processing contextual information...\n\n*For real-time scores, breaking news, or detailed current events, manual searches via Google/Perplexity may provide more comprehensive results.*`
-                });
-            } else {
-                displayMessage({
-                    role: 'system',
-                    content: `⚠️ Web search completed but no results found.`
-                });
-            }
-        }
+        // Note: Web search is now handled via external import system
         
         // Get AI response
         const response = await callLLMAPI(messages);
@@ -524,89 +463,7 @@ The search results above contain either SPECIFIC DATA or a "Limited Results" mes
     }
 }
 
-// ========== WEB SEARCH INTEGRATION ==========
-
-function extractSearchQuery(message) {
-    const searchMatch = message.match(/^search:\s*(.+)/i);
-    return searchMatch ? searchMatch[1].trim() : null;
-}
-
-// This function is no longer used with the new toggle system
-// but kept for backward compatibility if needed
-function shouldSearchWeb(message) {
-    return false; // Disabled - web search is now controlled by the toggle
-}
-
-async function performWebSearch(query) {
-    console.log(`🔍 Main: Requesting web search from background script for: "${query}"`);
-    
-    const searchId = `search_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    try {
-        // Send search request to background script
-        const response = await new Promise((resolve, reject) => {
-            chrome.runtime.sendMessage(
-                { type: 'WEB_SEARCH', query: query, searchId: searchId },
-                (response) => {
-                    if (chrome.runtime.lastError) {
-                        reject(new Error(chrome.runtime.lastError.message));
-                    } else {
-                        resolve(response);
-                    }
-                }
-            );
-        });
-        
-        if (response.success && response.status === 'started') {
-            console.log(`✅ Main: Web search started with ID: ${response.searchId}`);
-            
-            // Poll for results using storage
-            return await pollForWebSearchResults(response.searchId);
-        } else {
-            console.error('❌ Main: Failed to start web search:', response);
-            return `🌐 Web search failed to start.`;
-        }
-        
-    } catch (error) {
-        console.error('❌ Main: Failed to communicate with background script:', error);
-        return `🌐 Web search unavailable: Could not communicate with background service.`;
-    }
-}
-
-async function pollForWebSearchResults(searchId, maxAttempts = 30) {
-    console.log(`🔄 Main: Polling for search results (ID: ${searchId})`);
-    
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        try {
-            const data = await chrome.storage.local.get([`webSearch_${searchId}`]);
-            const searchResult = data[`webSearch_${searchId}`];
-            
-            if (searchResult) {
-                if (searchResult.status === 'completed') {
-                    console.log('✅ Main: Web search results received');
-                    // Clean up storage
-                    chrome.storage.local.remove([`webSearch_${searchId}`]);
-                    return searchResult.results;
-                } else if (searchResult.status === 'error') {
-                    console.error('❌ Main: Web search failed:', searchResult.error);
-                    // Clean up storage
-                    chrome.storage.local.remove([`webSearch_${searchId}`]);
-                    return `🌐 Web search failed: ${searchResult.error}`;
-                }
-            }
-            
-            // Wait 500ms before next attempt
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-        } catch (error) {
-            console.error('❌ Main: Error polling for results:', error);
-            break;
-        }
-    }
-    
-    console.warn('⚠️ Main: Web search timed out');
-    return `🌐 Web search timed out after ${maxAttempts * 0.5} seconds.`;
-}
+// Note: Old web search integration removed - now handled via external import system
 
 // ========== UI HELPER FUNCTIONS ==========
 
@@ -714,7 +571,7 @@ function setupEventListeners() {
     });
     
     // Other UI events
-    document.getElementById('webSearchToggle').addEventListener('click', toggleWebSearch);
+    document.getElementById('webSearchBtn').addEventListener('click', showWebSearchModal);
     document.getElementById('settingsBtn').addEventListener('click', openSettings);
     document.getElementById('syncBtn').addEventListener('click', () => showModal('syncModal'));
     document.getElementById('newProjectBtn').addEventListener('click', () => showModal('projectModal'));
@@ -1061,31 +918,124 @@ function saveArtifact() {
     saveData();
 }
 
-function toggleWebSearch() {
-    settings.webSearchEnabled = !settings.webSearchEnabled;
-    updateWebSearchButton();
-    saveData();
+// ========== SEARCH RESULT IMPORT MONITORING ==========
+
+let importCheckInterval = null;
+
+function startImportMonitoring() {
+    if (importCheckInterval) return;
     
-    const status = settings.webSearchEnabled ? 'enabled' : 'disabled';
-    const message = settings.webSearchEnabled 
-        ? 'Basic web search enabled - provides contextual information (supplement with manual search for comprehensive data)'
-        : 'Web search disabled';
-    showMessage(message, 'info');
+    // Check for imported search results every 2 seconds
+    importCheckInterval = setInterval(checkForImportedResults, 2000);
+    console.log('📥 Started monitoring for search result imports');
 }
 
-function updateWebSearchButton() {
-    const toggleBtn = document.getElementById('webSearchToggle');
-    const tooltipContent = toggleBtn.parentElement.querySelector('.tooltip-content');
-    
-    if (settings.webSearchEnabled) {
-        toggleBtn.classList.add('active');
-        toggleBtn.setAttribute('aria-label', 'Basic web search enabled - click to disable');
-        tooltipContent.textContent = 'Basic web search: ON (provides contextual info - supplement with manual search for comprehensive data)';
-    } else {
-        toggleBtn.classList.remove('active');
-        toggleBtn.setAttribute('aria-label', 'Web search disabled - click to enable');
-        tooltipContent.textContent = 'Web search: OFF';
+function stopImportMonitoring() {
+    if (importCheckInterval) {
+        clearInterval(importCheckInterval);
+        importCheckInterval = null;
+        console.log('📥 Stopped monitoring for search result imports');
     }
+}
+
+async function checkForImportedResults() {
+    try {
+        // Get all storage keys that start with 'searchImport_'
+        const storage = await chrome.storage.local.get();
+        const importKeys = Object.keys(storage).filter(key => key.startsWith('searchImport_'));
+        
+        for (const key of importKeys) {
+            const importData = storage[key];
+            if (importData && importData.status === 'ready') {
+                // Process the import
+                await processSearchImport(importData, key);
+                
+                // Clean up the storage
+                chrome.storage.local.remove([key]);
+            }
+        }
+    } catch (error) {
+        console.error('❌ Error checking for imported results:', error);
+    }
+}
+
+async function processSearchImport(importData, storageKey) {
+    console.log('📥 Processing search import from:', importData.source);
+    
+    // Ensure we have a current conversation
+    if (!currentConversation) {
+        newConversation();
+    }
+    
+    // Format the imported content as a system message
+    const importMessage = `🌐 **Search Results Imported from ${importData.source}**
+
+**Query:** "${importData.query}"
+
+**Content:**
+${importData.content}
+
+**Source:** ${importData.url}
+**Imported:** ${new Date(importData.timestamp).toLocaleString()}
+
+---
+
+The above search results have been imported from ${importData.source}. You can now ask questions about this content or request analysis of the information provided.`;
+    
+    // Add to current conversation as a system message
+    addMessage(currentConversation, 'system', importMessage);
+    
+    // Show user notification
+    showMessage(`Search results imported from ${importData.source}!`, 'success');
+    
+    // Auto-focus on message input
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.focus();
+        messageInput.placeholder = `Ask about the ${importData.source} results...`;
+        
+        // Reset placeholder after a few seconds
+        setTimeout(() => {
+            messageInput.placeholder = 'Type your message...';
+        }, 5000);
+    }
+}
+
+// ========== WEB SEARCH MODAL FUNCTIONS ==========
+
+function showWebSearchModal() {
+    showModal('webSearchModal');
+    setupWebSearchEventListeners();
+}
+
+function setupWebSearchEventListeners() {
+    // Remove existing listeners to avoid duplicates
+    document.getElementById('searchGoogleBtn')?.removeEventListener('click', handleGoogleSearch);
+    document.getElementById('searchPerplexityBtn')?.removeEventListener('click', handlePerplexitySearch);
+    
+    // Add new listeners
+    document.getElementById('searchGoogleBtn')?.addEventListener('click', handleGoogleSearch);
+    document.getElementById('searchPerplexityBtn')?.addEventListener('click', handlePerplexitySearch);
+}
+
+function handleGoogleSearch() {
+    const googleUrl = 'https://www.google.com/search';
+    chrome.tabs.create({ 
+        url: googleUrl,
+        active: true 
+    });
+    closeModal('webSearchModal');
+    showMessage('Google search opened. Look for the "Import to Branestawm" button after searching.', 'info');
+}
+
+function handlePerplexitySearch() {
+    const perplexityUrl = 'https://www.perplexity.ai/';
+    chrome.tabs.create({ 
+        url: perplexityUrl,
+        active: true 
+    });
+    closeModal('webSearchModal');
+    showMessage('Perplexity opened. Look for the "Import to Branestawm" button after searching.', 'info');
 }
 
 function setupTooltips() {
@@ -1407,7 +1357,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     setupEventListeners();
     setupTooltips();
     updateUI();
-    updateWebSearchButton();
+    
+    // Start monitoring for search result imports
+    startImportMonitoring();
     
     // Check if user needs initial setup
     if (!settings.googleToken && !settings.apiKey) {

@@ -302,6 +302,32 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         sendResponse({ tabId: branestawmTabId });
     }
     
+    if (message.type === 'IMPORT_SEARCH_RESULTS') {
+        console.log('📥 Background: Received search results import from:', message.source);
+        
+        // Store the imported content for pickup by main tab
+        const importId = `import_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        chrome.storage.local.set({
+            [`searchImport_${importId}`]: {
+                source: message.source,
+                query: message.query,
+                content: message.content,
+                url: message.url,
+                timestamp: message.timestamp,
+                status: 'ready'
+            }
+        }).then(() => {
+            console.log('✅ Background: Import data stored with ID:', importId);
+            sendResponse({ success: true, importId: importId });
+        }).catch(error => {
+            console.error('❌ Background: Failed to store import data:', error);
+            sendResponse({ success: false, error: error.message });
+        });
+        
+        return true; // Will respond asynchronously
+    }
+    
     if (message.type === 'WEB_SEARCH') {
         console.log('🔍 Background: Performing web search for:', message.query);
         
