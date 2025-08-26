@@ -45,40 +45,70 @@ function isGoogleSearchResultsPage() {
 }
 
 function findAIOverview() {
-    // Try multiple selectors for Google AI Overview
+    // Try multiple selectors for Google AI Overview and other useful content
     const selectors = [
+        // AI Overview specific
         '[data-snc="ih6Jnb_4Hk7"]', // Common AI Overview selector
         '.yp', // Another AI Overview selector
-        '[data-attrid="wa:/description"]', // Knowledge panel descriptions
-        '.kno-rdesc', // Knowledge panel content
-        '.LGOjhe', // Featured snippet
-        '.hgKElc', // Featured snippet text
+        '[data-testid="ai-overview"]', // Direct AI Overview
         '.X5LH0c', // AI-generated answer
         '.IZ6rdc', // Search generative experience
         '.ujudUb', // Another SGE selector
+        
+        // Featured snippets and knowledge panels
+        '.LGOjhe', // Featured snippet
+        '.hgKElc', // Featured snippet text
+        '[data-attrid="wa:/description"]', // Knowledge panel descriptions
+        '.kno-rdesc', // Knowledge panel content
+        '.kp-blk', // Knowledge panel block
+        '.xpdopen', // Expanded knowledge panel
+        
+        // General search results with substantial content
+        '.g .VwiC3b', // Search result snippets
+        '.s .st', // Search result descriptions
+        '.rc .s', // Result container descriptions
     ];
     
     for (const selector of selectors) {
         const element = document.querySelector(selector);
         if (element && element.textContent.trim().length > 100) {
-            console.log('🔍 Found AI Overview with selector:', selector);
+            console.log('🔍 Found content with selector:', selector);
             return element;
         }
     }
     
-    // Fallback: look for any element that looks like an AI summary
-    const potentialElements = document.querySelectorAll('[data-attrid], [data-snc], .X5LH0c, .LGOjhe');
-    for (const element of potentialElements) {
-        if (element.textContent.trim().length > 200 && 
-            element.textContent.toLowerCase().includes('according to') ||
-            element.textContent.toLowerCase().includes('based on') ||
-            element.querySelector('cite, .source, [href]')) {
-            console.log('🔍 Found potential AI Overview:', element);
-            return element;
+    // Enhanced fallback: look for the most substantial content block
+    const allElements = document.querySelectorAll('div, p, section, article');
+    let bestMatch = null;
+    let bestScore = 0;
+    
+    for (const element of allElements) {
+        const text = element.textContent.trim();
+        if (text.length < 200) continue;
+        
+        // Skip navigation, ads, and other non-content
+        if (element.closest('.gb_f, .FeRdKc, .commercial, nav, header, footer')) continue;
+        if (element.querySelector('nav, button[role="button"], input')) continue;
+        
+        let score = 0;
+        score += text.length > 400 ? 2 : 1;
+        score += text.includes('.') ? 1 : 0; // Has sentences
+        score += element.closest('#search, .g, .kp-blk') ? 2 : 0; // In search results area
+        score += text.toLowerCase().includes('according to') ? 1 : 0;
+        score += element.querySelector('cite, a[href]') ? 1 : 0; // Has sources
+        
+        if (score > bestScore) {
+            bestScore = score;
+            bestMatch = element;
         }
     }
     
-    console.log('❌ No AI Overview found on this page');
+    if (bestMatch && bestScore >= 3) {
+        console.log('🔍 Found best content match with score:', bestScore, bestMatch);
+        return bestMatch;
+    }
+    
+    console.log('❌ No suitable content found on this page');
     return null;
 }
 
@@ -92,35 +122,54 @@ function injectImportButton(aiOverview) {
         Import to Branestawm
     `;
     
+    importButton.id = 'branestawm-import-btn-google';
+    importButton.className = 'branestawm-import-button-google';
+    importButton.setAttribute('data-branestawm', 'import-button-google');
+    
     importButton.style.cssText = `
-        background: #4285f4;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 8px 16px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        margin: 12px 0;
-        transition: background 0.2s ease;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        position: fixed !important;
+        top: 100px !important;
+        right: 20px !important;
+        background: #4285f4 !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 12px 20px !important;
+        font-size: 14px !important;
+        font-weight: 600 !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        transition: all 0.2s ease !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+        box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3) !important;
+        z-index: 999999 !important;
+        opacity: 0.95 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        width: auto !important;
+        min-width: 220px !important;
+        max-width: 280px !important;
+        transform: translateZ(0) !important;
+        will-change: transform !important;
     `;
     
     importButton.addEventListener('mouseenter', () => {
-        importButton.style.background = '#3367d6';
+        importButton.style.background = '#3367d6 !important';
+        importButton.style.opacity = '1 !important';
+        importButton.style.transform = 'translateZ(0) scale(1.02) !important';
     });
     
     importButton.addEventListener('mouseleave', () => {
-        importButton.style.background = '#4285f4';
+        importButton.style.background = '#4285f4 !important';
+        importButton.style.opacity = '0.95 !important';
+        importButton.style.transform = 'translateZ(0) scale(1) !important';
     });
     
     importButton.addEventListener('click', handleImportClick);
     
-    // Insert button after the AI Overview
-    aiOverview.parentNode.insertBefore(importButton, aiOverview.nextSibling);
+    // Append directly to body so it can't be removed by page updates
+    document.body.appendChild(importButton);
     
     console.log('✅ Import button injected successfully');
 }

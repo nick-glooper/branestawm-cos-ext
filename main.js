@@ -1019,13 +1019,14 @@ function setupWebSearchEventListeners() {
 }
 
 function handleGoogleSearch() {
-    const googleUrl = 'https://www.google.com/search';
+    // Open Google with AI Overview enabled by default (using udm=50 parameter)
+    const googleUrl = 'https://www.google.com/search?udm=50';
     chrome.tabs.create({ 
         url: googleUrl,
         active: true 
     });
     closeModal('webSearchModal');
-    showMessage('Google search opened. Look for the "Import to Branestawm" button after searching.', 'info');
+    showMessage('Google AI search opened. The "Import to Branestawm" button will appear after you search with AI Overview enabled.', 'info');
 }
 
 function handlePerplexitySearch() {
