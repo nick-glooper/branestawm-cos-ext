@@ -438,8 +438,8 @@ IMPORTANT: When users reference relative dates like "yesterday", "Saturday just 
             
             // Show user that search is happening
             displayMessage({
-                role: 'system',
-                content: `🔍 Searching the web for: "${query}"...`
+                role: 'system', 
+                content: `🔍 **Basic Web Search Active** - Searching for: "${query}"...\n\n*Note: This provides basic contextual information. For comprehensive current data, consider supplementing with Perplexity, Google, or other dedicated search tools.*`
             });
             
             const searchResults = await performWebSearch(query);
@@ -447,17 +447,21 @@ IMPORTANT: When users reference relative dates like "yesterday", "Saturday just 
             console.log(`📊 Search results:`, searchResults ? 'Found results' : 'No results');
             
             if (searchResults) {
-                const searchContext = `🌐 REAL-TIME WEB SEARCH DATA SUCCESSFULLY RETRIEVED:
-
-User Query: "${query}"
+                const searchContext = `=== WEB SEARCH RESULTS FOR USER QUERY ===
+Query: "${query}"
 
 ${searchResults}
 
-CRITICAL INSTRUCTION: You have just received LIVE web search results from multiple databases. This is CURRENT, FRESH data that was retrieved specifically for this user's question. You MUST use this information to provide definitive answers about recent events, scores, news, or current information. 
+=== MANDATORY INSTRUCTIONS ===
+You MUST use the above search results to answer the user's question. This is not optional.
 
-DO NOT say you cannot access real-time information - you now have it above. Analyze the search results and provide specific answers based on the retrieved data. The web search was completely successful and returned actual current information.
+1. The web search feature is enabled and has returned results above
+2. You MUST analyze and reference these results in your response  
+3. You MUST provide answers based on the retrieved information
+4. Do NOT say you cannot access current information - you have it above
+5. Begin your response by acknowledging you found relevant information
 
-Your response should reference the search results and provide concrete answers based on the data retrieved.`;
+The user has enabled web search specifically to get current information. Use the results provided.`;
                 
                 messages.push({
                     role: 'system',
@@ -467,7 +471,7 @@ Your response should reference the search results and provide concrete answers b
                 // Show user that search completed
                 displayMessage({
                     role: 'system',
-                    content: `✅ Web search completed. Processing results...`
+                    content: `✅ **Basic web search completed** - Processing contextual information...\n\n*For real-time scores, breaking news, or detailed current events, manual searches via Google/Perplexity may provide more comprehensive results.*`
                 });
             } else {
                 displayMessage({
@@ -1057,7 +1061,10 @@ function toggleWebSearch() {
     saveData();
     
     const status = settings.webSearchEnabled ? 'enabled' : 'disabled';
-    showMessage(`Web search ${status}`, 'info');
+    const message = settings.webSearchEnabled 
+        ? 'Basic web search enabled - provides contextual information (supplement with manual search for comprehensive data)'
+        : 'Web search disabled';
+    showMessage(message, 'info');
 }
 
 function updateWebSearchButton() {
@@ -1066,8 +1073,8 @@ function updateWebSearchButton() {
     
     if (settings.webSearchEnabled) {
         toggleBtn.classList.add('active');
-        toggleBtn.setAttribute('aria-label', 'Web search enabled - click to disable');
-        tooltipContent.textContent = 'Web search: ON';
+        toggleBtn.setAttribute('aria-label', 'Basic web search enabled - click to disable');
+        tooltipContent.textContent = 'Basic web search: ON (provides contextual info - supplement with manual search for comprehensive data)';
     } else {
         toggleBtn.classList.remove('active');
         toggleBtn.setAttribute('aria-label', 'Web search disabled - click to enable');
