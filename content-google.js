@@ -86,9 +86,15 @@ function findAIOverview() {
         const text = element.textContent.trim();
         if (text.length < 200) continue;
         
-        // Skip navigation, ads, and other non-content
-        if (element.closest('.gb_f, .FeRdKc, .commercial, nav, header, footer')) continue;
-        if (element.querySelector('nav, button[role="button"], input')) continue;
+        // Skip navigation, ads, dialogs, and other non-content
+        if (element.closest('.gb_f, .FeRdKc, .commercial, nav, header, footer, .N6Sb2c, .VfPpkd, .shared-links')) continue;
+        if (element.querySelector('nav, button, input, select, textarea')) continue;
+        
+        // Skip elements that contain UI text
+        if (text.toLowerCase().includes('delete all') || 
+            text.toLowerCase().includes('shared public') ||
+            text.toLowerCase().includes('learn more') ||
+            text.toLowerCase().includes('cancel')) continue;
         
         let score = 0;
         score += text.length > 400 ? 2 : 1;
@@ -177,6 +183,7 @@ function injectImportButton(aiOverview) {
 function handleImportClick() {
     if (isProcessing) return;
     
+    console.log('🔄 Google import button clicked');
     isProcessing = true;
     importButton.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px; animation: spin 1s linear infinite;">
@@ -188,13 +195,28 @@ function handleImportClick() {
     // Find AI Overview again (in case page changed)
     const aiOverview = findAIOverview();
     if (!aiOverview) {
-        showError('Could not find AI Overview content to import');
+        console.error('❌ No content found for Google import');
+        showError('Could not find content to import');
         return;
     }
+    
+    console.log('📄 Found content element:', aiOverview);
+    console.log('📄 Element HTML preview:', aiOverview.outerHTML.substring(0, 300) + '...');
     
     // Extract content
     const content = extractAIOverviewContent(aiOverview);
     const searchQuery = extractSearchQuery();
+    
+    console.log('📝 Extracted content length:', content.length);
+    console.log('🔍 Extracted query:', searchQuery);
+    console.log('📄 Content preview:', content.substring(0, 200) + '...');
+    
+    if (!content || content.trim().length < 50) {
+        console.error('❌ Content too short or empty after extraction:', content);
+        showError('No substantial content found to import');
+        resetButton();
+        return;
+    }
     
     // Send to Branestawm extension
     sendToExtension(content, searchQuery);
@@ -204,28 +226,102 @@ function extractAIOverviewContent(aiOverview) {
     // Clean up the content
     const cloned = aiOverview.cloneNode(true);
     
-    // Remove unwanted elements
-    const unwanted = cloned.querySelectorAll('script, style, .hidden, [style*="display: none"]');
-    unwanted.forEach(el => el.remove());
+    // Remove unwanted UI elements
+    const unwantedSelectors = [
+        'script', 'style', 'noscript',
+        '.hidden', '[style*="display: none"]', '[style*="visibility: hidden"]',
+        'button', 'input', 'select', 'textarea', 
+        '.gb_f', '.gb_g', '.gb_h', // Google toolbar
+        'nav', 'header', 'footer',
+        '[role="button"]', '[role="navigation"]',
+        '.FeRdKc', // Google ads
+        '.commercial', '.ads',
+        '[data-ved]', // Google tracking elements
+        '.g-blk', // Some Google blocks
+        '.s6JM6d', // Google UI elements
+        '.N6Sb2c', // Google dialogs
+        '.VfPpkd', // Material Design components
+        '.shared-links', // Shared links dialog
+        '[aria-label*="Delete"]', '[aria-label*="Cancel"]', // Dialog buttons
+        '[data-attrid*="action"]' // Action buttons
+    ];
+    
+    unwantedSelectors.forEach(selector => {
+        const elements = cloned.querySelectorAll(selector);
+        elements.forEach(el => el.remove());
+    });
     
     // Get text content and clean it up
     let content = cloned.textContent || cloned.innerText || '';
+    
+    // Filter out common Google UI text patterns
+    const uiPatterns = [
+        /Shared public links/gi,
+        /Delete all links/gi,
+        /Your public links are automatically deleted/gi,
+        /Learn more/gi,
+        /Delete all public links\?/gi,
+        /If you delete all of your shared links/gi,
+        /Delete all.*Cancel/gi,
+        /\d+ months?\./gi
+    ];
+    
+    uiPatterns.forEach(pattern => {
+        content = content.replace(pattern, '');
+    });
     
     // Clean up whitespace and formatting
     content = content
         .replace(/\s+/g, ' ')
         .replace(/\n\s*\n/g, '\n')
+        .replace(/^\s*Sources?:?\s*/gi, '') // Remove standalone "Sources:" at start
         .trim();
     
-    // Add source attribution if available
-    const sources = aiOverview.querySelectorAll('cite, [href], .source');
+    // If content is too short or looks like UI text, try to find actual content
+    if (content.length < 100 || content.toLowerCase().includes('delete') || content.toLowerCase().includes('cancel')) {
+        console.log('⚠️ Content appears to be UI elements, searching for better content...');
+        
+        // Try to find actual AI response content within the element
+        const contentElements = aiOverview.querySelectorAll('p, div, span');
+        const candidates = [];
+        
+        for (const element of contentElements) {
+            const text = element.textContent.trim();
+            if (text.length > 50 && 
+                !text.toLowerCase().includes('delete') &&
+                !text.toLowerCase().includes('cancel') &&
+                !text.toLowerCase().includes('shared') &&
+                !text.toLowerCase().includes('learn more')) {
+                candidates.push(text);
+            }
+        }
+        
+        if (candidates.length > 0) {
+            content = candidates.join('\n\n');
+            console.log('✅ Found better content candidates');
+        }
+    }
+    
+    // Add source attribution if available (but filter out UI sources)
+    const sources = aiOverview.querySelectorAll('cite, a[href]:not([href*="support.google"]):not([href*="policies.google"])');
     if (sources.length > 0) {
-        content += '\n\nSources: ';
         const sourceList = Array.from(sources)
-            .map(source => source.textContent || source.href)
+            .map(source => {
+                const text = source.textContent.trim();
+                const href = source.href;
+                if (text && !text.toLowerCase().includes('learn more') && !text.toLowerCase().includes('delete')) {
+                    return text;
+                } else if (href && !href.includes('google.com')) {
+                    return href;
+                }
+                return null;
+            })
             .filter(Boolean)
-            .slice(0, 3); // Limit to 3 sources
-        content += sourceList.join(', ');
+            .slice(0, 5); // Limit to 5 sources
+            
+        if (sourceList.length > 0) {
+            content += '\n\nSources:\n' + sourceList.map(s => `• ${s}`).join('\n');
+        }
     }
     
     return content;
