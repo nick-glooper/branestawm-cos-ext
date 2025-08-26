@@ -310,6 +310,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         // Store the imported content for pickup by main tab
         const importId = `import_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
+        // Respond immediately to prevent timeout
+        sendResponse({ success: true, importId: importId, status: 'processing' });
+        
+        // Store data asynchronously
         chrome.storage.local.set({
             [`searchImport_${importId}`]: {
                 source: message.source,
@@ -321,13 +325,23 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             }
         }).then(() => {
             console.log('✅ Background: Import data stored with ID:', importId);
-            sendResponse({ success: true, importId: importId });
         }).catch(error => {
             console.error('❌ Background: Failed to store import data:', error);
-            sendResponse({ success: false, error: error.message });
+            // Update status to error
+            chrome.storage.local.set({
+                [`searchImport_${importId}`]: {
+                    source: message.source,
+                    query: message.query,
+                    content: message.content,
+                    url: message.url,
+                    timestamp: message.timestamp,
+                    status: 'error',
+                    error: error.message
+                }
+            });
         });
         
-        return true; // Will respond asynchronously
+        return false; // Response sent immediately
     }
     
     if (message.type === 'WEB_SEARCH') {
