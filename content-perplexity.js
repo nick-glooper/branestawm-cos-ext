@@ -16,25 +16,62 @@ function initializePerplexityImport() {
     setTimeout(findAndInjectImportButton, 3000);
     
     // Watch for dynamic content changes (Perplexity is heavily dynamic)
-    const observer = new MutationObserver(() => {
-        if (!importButton) {
+    const observer = new MutationObserver((mutations) => {
+        // Check if our button or wrapper was removed
+        const existingButton = document.querySelector('#branestawm-import-btn');
+        const existingWrapper = document.querySelector('#branestawm-import-wrapper');
+        
+        if (!existingButton && !existingWrapper) {
+            console.log('🔄 Import button was removed, re-injecting...');
+            importButton = null;
             setTimeout(findAndInjectImportButton, 1000);
+        } else if (!importButton && existingButton) {
+            // Reconnect to existing button
+            importButton = existingButton;
+            console.log('🔗 Reconnected to existing import button');
         }
     });
     
     observer.observe(document.body, {
         childList: true,
-        subtree: true
+        subtree: true,
+        attributes: false,
+        characterData: false
     });
+    
+    // Also try periodically in case mutations aren't caught
+    setInterval(() => {
+        const existingButton = document.querySelector('#branestawm-import-btn');
+        if (!existingButton) {
+            findAndInjectImportButton();
+        } else if (!importButton) {
+            importButton = existingButton;
+        }
+    }, 5000);
 }
 
 function findAndInjectImportButton() {
-    if (importButton || !isPerplexityPage()) return;
+    if (!isPerplexityPage()) return;
+    
+    // Check if we already have a button in the DOM
+    const existingButton = document.querySelector('#branestawm-import-btn');
+    if (existingButton) {
+        importButton = existingButton;
+        return;
+    }
+    
+    // If we have a reference to the button but it's not in DOM, reset it
+    if (importButton && !document.contains(importButton)) {
+        importButton = null;
+    }
     
     // Look for Perplexity AI response
     const aiResponse = findPerplexityResponse();
     if (aiResponse) {
+        console.log('✅ Found Perplexity response, injecting import button');
         injectImportButton(aiResponse);
+    } else {
+        console.log('❌ No suitable Perplexity response found for import');
     }
 }
 
@@ -55,6 +92,8 @@ function findPerplexityResponse() {
         '.copilot-answer', // Copilot specific answer
         '.streaming-answer', // Streaming response
         '.markdown-content', // Markdown formatted content
+        'main .prose', // Main prose content
+        '[role="main"] .prose', // Main role prose
     ];
     
     for (const selector of selectors) {
@@ -65,28 +104,48 @@ function findPerplexityResponse() {
         }
     }
     
-    // Fallback: look for the main content area with substantial text
-    const mainContent = document.querySelector('main [role="main"], main .prose, .main-content');
-    if (mainContent) {
-        // Look for the first substantial text block within main content
-        const textBlocks = mainContent.querySelectorAll('div, p, section');
-        for (const block of textBlocks) {
-            if (block.textContent.trim().length > 200 && 
-                !block.querySelector('input, button, nav') &&
-                !block.classList.contains('sidebar')) {
-                console.log('🔍 Found potential Perplexity response:', block);
-                return block;
-            }
+    // Enhanced fallback: look for paragraphs that look like AI responses
+    const allParagraphs = document.querySelectorAll('p, div[class*="my-"], div[class*="prose"], .text-content, [class*="answer"]');
+    let bestMatch = null;
+    let bestScore = 0;
+    
+    for (const element of allParagraphs) {
+        const text = element.textContent.trim();
+        if (text.length < 150) continue; // Too short
+        
+        // Skip elements that are clearly not responses
+        if (element.querySelector('input, button, nav, select, textarea')) continue;
+        if (element.closest('.sidebar, .header, .footer, nav')) continue;
+        
+        // Score based on content characteristics
+        let score = 0;
+        score += text.length > 300 ? 2 : 1; // Length bonus
+        score += text.includes('.') ? 1 : 0; // Has sentences
+        score += text.split(/[.!?]/).length > 3 ? 1 : 0; // Multiple sentences
+        score += element.classList.toString().includes('animate') ? 1 : 0; // Animated content (like streaming)
+        score += element.closest('[role="main"], main') ? 2 : 0; // In main content area
+        
+        if (score > bestScore) {
+            bestScore = score;
+            bestMatch = element;
         }
     }
     
-    console.log('❌ No Perplexity response found on this page');
+    if (bestMatch && bestScore >= 3) {
+        console.log('🔍 Found best Perplexity response candidate with score:', bestScore, bestMatch);
+        return bestMatch;
+    }
+    
+    console.log('❌ No suitable Perplexity response found on this page');
     return null;
 }
 
 function injectImportButton(aiResponse) {
     // Create import button
     importButton = document.createElement('button');
+    importButton.id = 'branestawm-import-btn';
+    importButton.className = 'branestawm-import-button';
+    importButton.setAttribute('data-branestawm', 'import-button');
     importButton.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
             <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
@@ -95,22 +154,29 @@ function injectImportButton(aiResponse) {
     `;
     
     importButton.style.cssText = `
-        background: #20808d;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 10px 18px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        margin: 16px 0;
-        transition: background 0.2s ease;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
-        box-shadow: 0 2px 8px rgba(32, 128, 141, 0.2);
-        position: relative;
-        z-index: 1000;
+        background: #20808d !important;
+        color: white !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 10px 18px !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        cursor: pointer !important;
+        display: flex !important;
+        align-items: center !important;
+        margin: 16px 0 !important;
+        transition: background 0.2s ease !important;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+        box-shadow: 0 2px 8px rgba(32, 128, 141, 0.2) !important;
+        position: sticky !important;
+        top: 20px !important;
+        z-index: 10000 !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        width: fit-content !important;
+        min-width: 200px !important;
+        max-width: 300px !important;
     `;
     
     importButton.addEventListener('mouseenter', () => {
@@ -123,35 +189,52 @@ function injectImportButton(aiResponse) {
     
     importButton.addEventListener('click', handleImportClick);
     
-    // Try to insert button in a good location
-    const targetContainer = aiResponse.parentElement || aiResponse;
+    // Find a stable container to insert the button
+    let container = null;
     
-    // Look for a good insertion point
-    const insertionPoints = [
-        targetContainer.querySelector('.answer-footer'),
-        targetContainer.querySelector('.sources'),
-        aiResponse.nextElementSibling,
+    // Try to find a stable parent container
+    const candidateContainers = [
+        document.querySelector('main'),
+        document.querySelector('[role="main"]'),
+        document.querySelector('.prose')?.parentElement,
+        aiResponse.closest('div[class*="container"]'),
+        aiResponse.closest('div[class*="content"]'),
+        aiResponse.parentElement,
         aiResponse
     ];
     
-    let inserted = false;
-    for (const point of insertionPoints) {
-        if (point) {
-            if (point === aiResponse) {
-                // Insert after the response
-                targetContainer.insertBefore(importButton, aiResponse.nextSibling);
-            } else {
-                // Insert before the point
-                point.parentNode.insertBefore(importButton, point);
-            }
-            inserted = true;
+    for (const candidate of candidateContainers) {
+        if (candidate && candidate !== aiResponse) {
+            container = candidate;
             break;
         }
     }
     
-    if (!inserted) {
-        // Fallback: append to parent
-        targetContainer.appendChild(importButton);
+    // If no good container found, use the response element
+    if (!container) container = aiResponse;
+    
+    // Create a wrapper div to contain our button and make it less likely to be removed
+    const buttonWrapper = document.createElement('div');
+    buttonWrapper.id = 'branestawm-import-wrapper';
+    buttonWrapper.setAttribute('data-branestawm', 'wrapper');
+    buttonWrapper.style.cssText = `
+        position: relative !important;
+        z-index: 10000 !important;
+        margin: 20px 0 !important;
+        padding: 10px !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(10px) !important;
+    `;
+    
+    buttonWrapper.appendChild(importButton);
+    
+    // Insert the wrapper after the AI response
+    if (container === aiResponse) {
+        container.parentNode.insertBefore(buttonWrapper, container.nextSibling);
+    } else {
+        container.appendChild(buttonWrapper);
     }
     
     console.log('✅ Import button injected successfully');
