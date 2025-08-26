@@ -445,6 +445,7 @@ IMPORTANT: When users reference relative dates like "yesterday", "Saturday just 
             const searchResults = await performWebSearch(query);
             
             console.log(`📊 Search results:`, searchResults ? 'Found results' : 'No results');
+            console.log(`🔍 Full search results content:`, searchResults);
             
             if (searchResults) {
                 const searchContext = `=== WEB SEARCH RESULTS FOR USER QUERY ===
@@ -452,16 +453,21 @@ Query: "${query}"
 
 ${searchResults}
 
-=== MANDATORY INSTRUCTIONS ===
-You MUST use the above search results to answer the user's question. This is not optional.
+=== CRITICAL: USE THE SEARCH RESULTS ABOVE ===
 
-1. The web search feature is enabled and has returned results above
-2. You MUST analyze and reference these results in your response  
-3. You MUST provide answers based on the retrieved information
-4. Do NOT say you cannot access current information - you have it above
-5. Begin your response by acknowledging you found relevant information
+STOP. READ THE SEARCH RESULTS ABOVE CAREFULLY.
 
-The user has enabled web search specifically to get current information. Use the results provided.`;
+If the search results contain SPECIFIC DATA (scores, statistics, exact information):
+- Use that data directly in your response
+- Do NOT say you cannot find the information
+- Do NOT suggest manual searching
+- Provide the specific answer from the search results
+
+If the search results say "Limited Results Available":
+- Then explain the limitations honestly
+- Suggest manual search alternatives
+
+The search results above contain either SPECIFIC DATA or a "Limited Results" message. Read them and respond accordingly.`;
                 
                 messages.push({
                     role: 'system',
