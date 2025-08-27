@@ -14,13 +14,21 @@ if (document.readyState === 'loading') {
 
 function initializeGoogleImport() {
     // Wait a bit for Google to load AI Overview
-    setTimeout(findAndInjectImportButton, 2000);
+    console.log('🚀 initializeGoogleImport called, setting timeout...');
+    setTimeout(() => {
+        console.log('🚀 Initial timeout executing, calling findAndInjectImportButton...');
+        findAndInjectImportButton();
+    }, 2000);
     
     // Also watch for dynamic content changes
-    const observer = new MutationObserver(() => {
+    const observer = new MutationObserver((mutations) => {
+        console.log('🔍 MutationObserver triggered, mutations:', mutations.length);
         if (!importButton) {
+            console.log('🔍 No import button, clearing cache and trying injection');
             cachedAIContent = null; // Clear cache when page changes
             findAndInjectImportButton();
+        } else {
+            console.log('🔍 Import button exists, skipping re-injection');
         }
     });
     
@@ -31,12 +39,26 @@ function initializeGoogleImport() {
 }
 
 function findAndInjectImportButton() {
-    if (importButton || !isGoogleSearchResultsPage()) return;
+    console.log('🔍 findAndInjectImportButton called');
+    console.log('🔍 Current state - importButton exists:', !!importButton);
+    console.log('🔍 Is Google search results page:', isGoogleSearchResultsPage());
+    
+    if (importButton || !isGoogleSearchResultsPage()) {
+        console.log('🔍 Skipping injection - button exists or not search page');
+        return;
+    }
     
     // Look for Google AI Overview container
+    console.log('🔍 Looking for AI Overview container...');
     const aiOverview = findAIOverview();
     if (aiOverview) {
+        console.log('🔍 AI Overview found, injecting button...');
         injectImportButton(aiOverview);
+    } else {
+        console.log('❌ No AI Overview found');
+        // Temporary fallback: inject button anyway for testing
+        console.log('🔧 Injecting button anyway for testing...');
+        injectImportButton(null);
     }
 }
 
@@ -248,8 +270,11 @@ function findAIOverview() {
 }
 
 function injectImportButton(aiOverview) {
+    console.log('🔧 injectImportButton called with element:', aiOverview?.tagName, aiOverview?.className);
+    
     // Create import button
     importButton = document.createElement('button');
+    console.log('🔧 Created button element:', importButton);
     importButton.innerHTML = `
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
             <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
@@ -307,6 +332,8 @@ function injectImportButton(aiOverview) {
     document.body.appendChild(importButton);
     
     console.log('✅ Import button injected successfully');
+    console.log('🔧 Button in DOM:', document.body.contains(importButton));
+    console.log('🔧 Button element:', document.querySelector('#branestawm-import-btn-google'));
 }
 
 function handleImportClick() {
@@ -551,7 +578,9 @@ function showError(message) {
 }
 
 function resetButton() {
+    console.log('🔄 resetButton called');
     setTimeout(() => {
+        console.log('🔄 resetButton timeout executing, button exists:', !!importButton);
         if (importButton) {
             importButton.innerHTML = `
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 8px;">
