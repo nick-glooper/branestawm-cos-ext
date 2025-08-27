@@ -94,6 +94,35 @@ function findAIOverview() {
     
     // Try a more targeted search for AI Overview content first
     console.log('🔍 Trying more targeted AI Overview search...');
+    
+    // Method 1: Look for elements that contain the typical AI Overview response patterns
+    const possibleAIElements = document.querySelectorAll('div, section, article');
+    for (const element of possibleAIElements) {
+        const text = element.textContent.trim();
+        if (text.length > 200 && 
+            // AI Overview content typically has structured information
+            (text.includes('Current conditions') || 
+             text.includes('As of ') || 
+             text.includes('°C') ||
+             text.includes('Temperature:') ||
+             text.includes('according to') ||
+             text.includes('Based on') ||
+             text.includes('Forecast') ||
+             text.match(/\d+°[CF]:/)) &&
+            // Exclude search result snippets and UI elements
+            !element.closest('.MFrAxb, .g, .related-question-pair, .commercial') &&
+            !text.includes('Weather2Travel.com') &&
+            !text.includes('Met Office') &&
+            !text.includes('Show all') &&
+            !text.includes('AI responses may include mistakes')) {
+            
+            console.log('🔍 Found potential AI Overview by content pattern:', element.tagName, element.className);
+            console.log('🔍 Content preview:', text.substring(0, 300));
+            return element;
+        }
+    }
+    
+    // Method 2: Traditional container-based search
     const aiContainers = document.querySelectorAll('[data-snc*="ih6Jnb"], .X5LH0c, .IZ6rdc, .ujudUb, [data-testid*="ai"], .ai-overview, .generative-ai');
     for (const container of aiContainers) {
         const textContent = container.textContent.trim();
@@ -124,6 +153,8 @@ function findAIOverview() {
         
         // Skip thumbnail/sidebar/reference containers - but be more selective
         if (element.closest('.related-question-pair, .d4rhi, .dG2XIf, .cUnke, .mnr-c, .kno-ec')) continue;
+        // Skip search result snippets that look like external sites
+        if (element.closest('.MFrAxb, .g') && (text.includes('.com') || text.includes('Met Office') || text.includes('Weather2Travel'))) continue;
         // Only skip [data-ved] elements if they clearly contain date patterns (not all [data-ved] elements)
         if (element.closest('[data-ved]') && text.length < 500 && (text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) || text.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}/) || text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/))) continue;
         
@@ -158,8 +189,16 @@ function findAIOverview() {
         score += element.classList.contains('yp') ? 3 : 0; // Higher boost for AI content
         score += element.closest('[data-testid="ai-overview"]') ? 4 : 0; // Boost for direct AI overview
         
-        // Moderate penalties for potential sidebar content - but don't exclude AI content
-        score -= element.closest('.related-question-pair, .d4rhi, .dG2XIf, .cUnke, .mnr-c') ? 1 : 0; // Reduced penalty
+        // Boost for content that looks like AI Overview responses
+        score += text.includes('Current conditions') ? 3 : 0;
+        score += text.includes('As of ') || text.includes('Based on') ? 2 : 0;
+        score += text.includes('Temperature:') || text.match(/\d+°[CF]:/) ? 2 : 0;
+        score += text.includes('Forecast') && text.length > 500 ? 2 : 0; // Long forecast content
+        score += !text.includes('.com') && !text.includes('Show all') ? 1 : 0; // Not external links
+        
+        // Penalize search result snippets
+        score -= element.closest('.MFrAxb, .g') ? 3 : 0; // Strong penalty for search snippets
+        score -= text.includes('Weather2Travel.com') || text.includes('Met Office') ? 2 : 0;
         score -= text.length < 300 && text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) ? 1 : 0; // Only penalize short text with dates
         score -= text.length < 300 && text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/) ? 1 : 0; // Only penalize short text with relative dates
         
