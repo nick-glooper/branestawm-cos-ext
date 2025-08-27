@@ -114,7 +114,15 @@ function findAIOverview() {
             !text.includes('Weather2Travel.com') &&
             !text.includes('Met Office') &&
             !text.includes('Show all') &&
-            !text.includes('AI responses may include mistakes')) {
+            !text.includes('AI responses may include mistakes') &&
+            !text.includes('Meet AI Mode') &&
+            !text.includes('Ask detailed questions') &&
+            !text.includes('Dismiss') &&
+            !text.includes('Upload image') &&
+            !text.includes('Microphone') &&
+            !text.includes('Send') &&
+            !text.includes('Google activity') &&
+            !text.includes('Sources:')) {
             
             console.log('🔍 Found potential AI Overview by content pattern:', element.tagName, element.className);
             console.log('🔍 Content preview:', text.substring(0, 300));
@@ -175,7 +183,15 @@ function findAIOverview() {
             text.toLowerCase().includes('public link shares') ||
             text.toLowerCase().includes('personal information') ||
             text.toLowerCase().includes('third parties') ||
-            text.toLowerCase().includes('their policies apply')) continue;
+            text.toLowerCase().includes('their policies apply') ||
+            text.toLowerCase().includes('meet ai mode') ||
+            text.toLowerCase().includes('ask detailed questions') ||
+            text.toLowerCase().includes('dismiss') ||
+            text.toLowerCase().includes('upload image') ||
+            text.toLowerCase().includes('microphone') ||
+            text.toLowerCase().includes('send') ||
+            text.toLowerCase().includes('google activity') ||
+            text.toLowerCase().includes('sources:')) continue;
         
         let score = 0;
         score += text.length > 400 ? 2 : 1;
@@ -196,9 +212,11 @@ function findAIOverview() {
         score += text.includes('Forecast') && text.length > 500 ? 2 : 0; // Long forecast content
         score += !text.includes('.com') && !text.includes('Show all') ? 1 : 0; // Not external links
         
-        // Penalize search result snippets
+        // Penalize search result snippets and UI elements
         score -= element.closest('.MFrAxb, .g') ? 3 : 0; // Strong penalty for search snippets
         score -= text.includes('Weather2Travel.com') || text.includes('Met Office') ? 2 : 0;
+        score -= text.includes('Meet AI Mode') || text.includes('Ask detailed questions') ? 5 : 0; // Heavy penalty for UI elements
+        score -= text.includes('Upload image') || text.includes('Microphone') || text.includes('Send') ? 3 : 0;
         score -= text.length < 300 && text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) ? 1 : 0; // Only penalize short text with dates
         score -= text.length < 300 && text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/) ? 1 : 0; // Only penalize short text with relative dates
         
@@ -377,7 +395,16 @@ function extractAIOverviewContent(aiOverview) {
         /If you share with third parties/gi,
         /their policies apply/gi,
         /public link/gi,
-        /shares a thread/gi
+        /shares a thread/gi,
+        /Meet AI Mode/gi,
+        /Ask detailed questions for better responses/gi,
+        /Ask detailed questions/gi,
+        /Dismiss/gi,
+        /Upload image/gi,
+        /Microphone/gi,
+        /Send/gi,
+        /Google activity/gi,
+        /Sources:/gi
     ];
     
     uiPatterns.forEach(pattern => {
@@ -397,7 +424,11 @@ function extractAIOverviewContent(aiOverview) {
         content.toLowerCase().includes('cancel') ||
         content.toLowerCase().includes('public link') ||
         content.toLowerCase().includes('personal information') ||
-        content.toLowerCase().includes('third parties')) {
+        content.toLowerCase().includes('third parties') ||
+        content.toLowerCase().includes('meet ai mode') ||
+        content.toLowerCase().includes('upload image') ||
+        content.toLowerCase().includes('microphone') ||
+        content.toLowerCase().includes('google activity')) {
         console.log('⚠️ Content appears to be UI elements, searching for better content...');
         
         // Try to find actual AI response content within the element
@@ -414,7 +445,13 @@ function extractAIOverviewContent(aiOverview) {
                 !text.toLowerCase().includes('public link') &&
                 !text.toLowerCase().includes('personal information') &&
                 !text.toLowerCase().includes('third parties') &&
-                !text.toLowerCase().includes('policies apply')) {
+                !text.toLowerCase().includes('policies apply') &&
+                !text.toLowerCase().includes('meet ai mode') &&
+                !text.toLowerCase().includes('upload image') &&
+                !text.toLowerCase().includes('microphone') &&
+                !text.toLowerCase().includes('google activity') &&
+                !text.toLowerCase().includes('dismiss') &&
+                !text.toLowerCase().includes('send')) {
                 candidates.push(text);
             }
         }
