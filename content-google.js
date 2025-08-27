@@ -50,16 +50,62 @@ function findAndInjectImportButton() {
     
     // Look for Google AI Overview container
     console.log('🔍 Looking for AI Overview container...');
+    
+    // First, let's analyze the page structure to understand the DOM better
+    analyzePage();
+    
     const aiOverview = findAIOverview();
     if (aiOverview) {
         console.log('🔍 AI Overview found, injecting button...');
         injectImportButton(aiOverview);
     } else {
-        console.log('❌ No AI Overview found');
-        // Temporary fallback: inject button anyway for testing
-        console.log('🔧 Injecting button anyway for testing...');
-        injectImportButton(null);
+        console.log('❌ No AI Overview found, button not injected');
     }
+}
+
+function analyzePage() {
+    console.log('📊 === GOOGLE PAGE ANALYSIS ===');
+    console.log('📊 URL:', window.location.href);
+    console.log('📊 Title:', document.title);
+    
+    // Look for main search container
+    const searchContainer = document.querySelector('#search, #main, #center_col, #rcnt');
+    console.log('📊 Main search container:', searchContainer?.tagName, searchContainer?.id, searchContainer?.className);
+    
+    // Look for all elements containing substantial text
+    console.log('📊 Elements with substantial text (>200 chars):');
+    const textElements = Array.from(document.querySelectorAll('*')).filter(el => {
+        const text = el.textContent?.trim();
+        return text && text.length > 200 && text.length < 2000 && !el.querySelector('script, style');
+    });
+    
+    textElements.slice(0, 10).forEach((el, i) => {
+        console.log(`📊 [${i}] ${el.tagName}.${el.className} (${el.id}) - ${el.textContent.substring(0, 100)}...`);
+        console.log(`📊     Parent: ${el.parentElement?.tagName}.${el.parentElement?.className}`);
+        console.log(`📊     Data attrs: ${Array.from(el.attributes).filter(a => a.name.startsWith('data-')).map(a => a.name).join(', ')}`);
+    });
+    
+    // Look for AI-specific indicators
+    console.log('📊 AI-specific elements:');
+    const aiSelectors = [
+        '[data-testid*="ai"]', '[data-testid*="overview"]',
+        '[class*="ai"]', '[class*="overview"]', '[class*="generative"]',
+        '[aria-label*="AI"]', '[aria-label*="overview"]'
+    ];
+    
+    aiSelectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        if (elements.length > 0) {
+            console.log(`📊 Found ${elements.length} elements matching: ${selector}`);
+            elements.forEach((el, i) => {
+                if (i < 3) { // Only show first 3
+                    console.log(`📊   [${i}] ${el.tagName}.${el.className} - ${el.textContent?.substring(0, 80)}...`);
+                }
+            });
+        }
+    });
+    
+    console.log('📊 === END ANALYSIS ===');
 }
 
 function isGoogleSearchResultsPage() {
@@ -69,203 +115,55 @@ function isGoogleSearchResultsPage() {
 }
 
 function findAIOverview() {
-    // Try multiple selectors for Google AI Overview and other useful content
-    // Prioritize main content containers and exclude sidebar elements
-    const selectors = [
-        // AI Overview specific - prioritize main content containers
-        '[data-snc="ih6Jnb_4Hk7"] .yp', // AI Overview main content
-        '.yp:not([data-ved])', // AI Overview text without tracking attributes
-        '[data-testid="ai-overview"] .yp', // Direct AI Overview content
-        '.X5LH0c .yp', // AI-generated answer content
-        '.IZ6rdc .yp', // Search generative experience content
-        '.ujudUb .yp', // Another SGE content selector
+    console.log('🎯 === SIMPLIFIED AI OVERVIEW DETECTION ===');
+    
+    // Instead of guessing, let's systematically check what's actually on the page
+    // Look for the most likely AI content containers based on common patterns
+    
+    const candidates = [
+        // Known AI Overview patterns from analysis
+        { selector: '[data-snc="ih6Jnb_4Hk7"]', name: 'AI Overview main container' },
+        { selector: '.X5LH0c', name: 'AI generated answer' },
+        { selector: '.IZ6rdc', name: 'Search generative experience' },
+        { selector: '[data-testid*="ai"]', name: 'AI testid elements' },
+        { selector: '[aria-label*="AI"]', name: 'AI aria-label elements' },
         
-        // Broader AI Overview containers (but exclude sidebars and thumbnails)
-        '[data-snc="ih6Jnb_4Hk7"]', // Common AI Overview selector
-        '[data-testid="ai-overview"]', // Direct AI Overview
-        '.X5LH0c', // AI-generated answer
-        '.IZ6rdc', // Search generative experience
-        '.ujudUb', // Another SGE selector
-        
-        // Featured snippets and knowledge panels
-        '.LGOjhe', // Featured snippet
-        '.hgKElc', // Featured snippet text
-        '[data-attrid="wa:/description"]', // Knowledge panel descriptions
-        '.kno-rdesc', // Knowledge panel content
-        '.kp-blk', // Knowledge panel block
-        '.xpdopen', // Expanded knowledge panel
-        
-        // General search results with substantial content
-        '.g .VwiC3b', // Search result snippets
-        '.s .st', // Search result descriptions
-        '.rc .s', // Result container descriptions
+        // Look for elements that contain AI-like content patterns
+        { selector: 'div:has-text("As of")', name: 'Elements with AI intro phrases', manual: true },
+        { selector: 'div:has-text("Based on")', name: 'Elements with AI intro phrases', manual: true },
+        { selector: 'div:has-text("According to")', name: 'Elements with AI intro phrases', manual: true },
     ];
     
-    for (const selector of selectors) {
-        const element = document.querySelector(selector);
-        if (element && element.textContent.trim().length > 100) {
-            console.log('🔍 Found content with selector:', selector);
-            console.log('🔍 Element tag:', element.tagName);
-            console.log('🔍 Element classes:', element.className);
-            console.log('🔍 Element ID:', element.id);
-            console.log('🔍 Element data attributes:', Array.from(element.attributes).filter(attr => attr.name.startsWith('data-')).map(attr => `${attr.name}="${attr.value}"`));
-            console.log('🔍 Element parent:', element.parentElement?.tagName, element.parentElement?.className);
-            console.log('🔍 First 300 chars of text:', element.textContent.trim().substring(0, 300));
-            console.log('🔍 Element HTML structure:', element.outerHTML.substring(0, 500));
-            return element;
-        }
-    }
-    
-    // Try a more targeted search for AI Overview content first
-    console.log('🔍 Trying more targeted AI Overview search...');
-    
-    // Method 1: Look for elements that contain the typical AI Overview response patterns
-    const possibleAIElements = document.querySelectorAll('div, section, article');
-    for (const element of possibleAIElements) {
-        const text = element.textContent.trim();
-        if (text.length > 200 && 
-            // AI Overview content typically has structured information
-            (text.includes('Current conditions') || 
-             text.includes('As of ') || 
-             text.includes('°C') ||
-             text.includes('Temperature:') ||
-             text.includes('according to') ||
-             text.includes('Based on') ||
-             text.includes('Forecast') ||
-             text.match(/\d+°[CF]:/)) &&
-            // Exclude search result snippets and UI elements
-            !element.closest('.MFrAxb, .g, .related-question-pair, .commercial') &&
-            !text.includes('Weather2Travel.com') &&
-            !text.includes('Met Office') &&
-            !text.includes('Show all') &&
-            !text.includes('AI responses may include mistakes') &&
-            !text.includes('Meet AI Mode') &&
-            !text.includes('Ask detailed questions') &&
-            !text.includes('Dismiss') &&
-            !text.includes('Upload image') &&
-            !text.includes('Microphone') &&
-            !text.includes('Send') &&
-            !text.includes('Google activity') &&
-            !text.includes('Sources:')) {
+    for (const candidate of candidates) {
+        if (candidate.manual) {
+            // For text-based searches, we need to manually search
+            const elements = Array.from(document.querySelectorAll('div')).filter(el => {
+                const text = el.textContent?.trim();
+                return text && (
+                    text.includes('As of ') || 
+                    text.includes('Based on ') || 
+                    text.includes('According to ')
+                ) && text.length > 100 && text.length < 2000;
+            });
             
-            console.log('🔍 Found potential AI Overview by content pattern:', element.tagName, element.className);
-            console.log('🔍 Content preview:', text.substring(0, 300));
-            cachedAIContent = element; // Cache the found element
-            return element;
+            if (elements.length > 0) {
+                const element = elements[0];
+                console.log(`🎯 Found via ${candidate.name}:`, element.tagName, element.className);
+                console.log(`🎯 Text preview:`, element.textContent.substring(0, 200));
+                cachedAIContent = element;
+                return element;
+            }
+        } else {
+            const element = document.querySelector(candidate.selector);
+            if (element && element.textContent?.trim().length > 100) {
+                console.log(`🎯 Found via ${candidate.name}:`, element.tagName, element.className);
+                console.log(`🎯 Text preview:`, element.textContent.substring(0, 200));
+                cachedAIContent = element;
+                return element;
+            }
         }
     }
-    
-    // Method 2: Traditional container-based search
-    const aiContainers = document.querySelectorAll('[data-snc*="ih6Jnb"], .X5LH0c, .IZ6rdc, .ujudUb, [data-testid*="ai"], .ai-overview, .generative-ai');
-    for (const container of aiContainers) {
-        const textContent = container.textContent.trim();
-        if (textContent.length > 100 && !textContent.includes('google.') && !textContent.includes('xsrf')) {
-            console.log('🔍 Found targeted AI container:', container.tagName, container.className, textContent.substring(0, 200));
-            cachedAIContent = container; // Cache the found element
-            return container;
-        }
-    }
-    
-    // Enhanced fallback: look for the most substantial content block
-    console.log('🔍 Falling back to general content search...');
-    const allElements = document.querySelectorAll('div, p, section, article');
-    let bestMatch = null;
-    let bestScore = 0;
-    
-    for (const element of allElements) {
-        const text = element.textContent.trim();
-        if (text.length < 200) continue;
-        
-        // Skip navigation, ads, dialogs, footer scripts, and other non-content
-        if (element.closest('.gb_f, .FeRdKc, .commercial, nav, header, footer, .N6Sb2c, .VfPpkd, .shared-links, [role="dialog"], [role="alertdialog"], .modal, .popup')) continue;
-        if (element.querySelector('nav, button, input, select, textarea')) continue;
-        if (element.id === 'lfootercc' || element.closest('#lfootercc')) continue; // Skip Google footer scripts
-        if (element.querySelector('script') && element.textContent.includes('google.')) continue; // Skip Google script containers
-        
-        // Skip Google sharing dialog specifically
-        if (element.closest('[data-ved]') && text.toLowerCase().includes('public link')) continue;
-        
-        // Skip thumbnail/sidebar/reference containers - but be more selective
-        if (element.closest('.related-question-pair, .d4rhi, .dG2XIf, .cUnke, .mnr-c, .kno-ec')) continue;
-        // Skip search result snippets that look like external sites
-        if (element.closest('.MFrAxb, .g') && (text.includes('.com') || text.includes('Met Office') || text.includes('Weather2Travel'))) continue;
-        // Only skip [data-ved] elements if they clearly contain date patterns (not all [data-ved] elements)
-        if (element.closest('[data-ved]') && text.length < 500 && (text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) || text.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}/) || text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/))) continue;
-        
-        // Debug: log elements that pass initial filters
-        console.log('🔍 Candidate element:', {
-            tag: element.tagName,
-            classes: element.className,
-            id: element.id,
-            textLength: text.length,
-            textPreview: text.substring(0, 100) + '...'
-        });
-        
-        // Skip elements that contain UI text
-        if (text.toLowerCase().includes('delete all') || 
-            text.toLowerCase().includes('shared public') ||
-            text.toLowerCase().includes('learn more') ||
-            text.toLowerCase().includes('cancel') ||
-            text.toLowerCase().includes('public link shares') ||
-            text.toLowerCase().includes('personal information') ||
-            text.toLowerCase().includes('third parties') ||
-            text.toLowerCase().includes('their policies apply') ||
-            text.toLowerCase().includes('meet ai mode') ||
-            text.toLowerCase().includes('ask detailed questions') ||
-            text.toLowerCase().includes('dismiss') ||
-            text.toLowerCase().includes('upload image') ||
-            text.toLowerCase().includes('microphone') ||
-            text.toLowerCase().includes('send') ||
-            text.toLowerCase().includes('google activity') ||
-            text.toLowerCase().includes('sources:')) continue;
-        
-        let score = 0;
-        score += text.length > 400 ? 2 : 1;
-        score += text.includes('.') ? 1 : 0; // Has sentences
-        score += element.closest('#search, .g, .kp-blk') ? 2 : 0; // In search results area
-        score += text.toLowerCase().includes('according to') ? 1 : 0;
-        score += element.querySelector('cite, a[href]') ? 1 : 0; // Has sources
-        
-        // Boost score for elements that look like AI Overview main content
-        score += element.closest('[data-snc="ih6Jnb_4Hk7"], .X5LH0c, .IZ6rdc, .ujudUb') ? 5 : 0; // Higher boost for AI containers
-        score += element.classList.contains('yp') ? 3 : 0; // Higher boost for AI content
-        score += element.closest('[data-testid="ai-overview"]') ? 4 : 0; // Boost for direct AI overview
-        
-        // Boost for content that looks like AI Overview responses
-        score += text.includes('Current conditions') ? 3 : 0;
-        score += text.includes('As of ') || text.includes('Based on') ? 2 : 0;
-        score += text.includes('Temperature:') || text.match(/\d+°[CF]:/) ? 2 : 0;
-        score += text.includes('Forecast') && text.length > 500 ? 2 : 0; // Long forecast content
-        score += !text.includes('.com') && !text.includes('Show all') ? 1 : 0; // Not external links
-        
-        // Penalize search result snippets and UI elements
-        score -= element.closest('.MFrAxb, .g') ? 3 : 0; // Strong penalty for search snippets
-        score -= text.includes('Weather2Travel.com') || text.includes('Met Office') ? 2 : 0;
-        score -= text.includes('Meet AI Mode') || text.includes('Ask detailed questions') ? 5 : 0; // Heavy penalty for UI elements
-        score -= text.includes('Upload image') || text.includes('Microphone') || text.includes('Send') ? 3 : 0;
-        score -= text.length < 300 && text.match(/\b\d{1,2}[\/\-\.]\d{1,2}[\/\-\.]\d{2,4}\b/) ? 1 : 0; // Only penalize short text with dates
-        score -= text.length < 300 && text.match(/\d+\s+(hour|day|week|month|year)s?\s+ago/) ? 1 : 0; // Only penalize short text with relative dates
-        
-        if (score > bestScore) {
-            bestScore = score;
-            bestMatch = element;
-        }
-    }
-    
-    if (bestMatch && bestScore >= 2) { // Lower threshold since we have better filtering
-        console.log('🔍 Found best content match with score:', bestScore);
-        console.log('🔍 Fallback element tag:', bestMatch.tagName);
-        console.log('🔍 Fallback element classes:', bestMatch.className);
-        console.log('🔍 Fallback element ID:', bestMatch.id);
-        console.log('🔍 Fallback element data attributes:', Array.from(bestMatch.attributes).filter(attr => attr.name.startsWith('data-')).map(attr => `${attr.name}="${attr.value}"`));
-        console.log('🔍 Fallback element parent:', bestMatch.parentElement?.tagName, bestMatch.parentElement?.className);
-        console.log('🔍 Fallback first 300 chars of text:', bestMatch.textContent.trim().substring(0, 300));
-        console.log('🔍 Fallback element HTML structure:', bestMatch.outerHTML.substring(0, 500));
-        cachedAIContent = bestMatch; // Cache the found element
-        return bestMatch;
-    }
-    
-    console.log('❌ No suitable content found on this page');
+    console.log('🎯 No AI Overview found with specific targeting');
     return null;
 }
 
@@ -388,7 +286,7 @@ function extractAIOverviewContent(aiOverview) {
     // Clean up the content
     const cloned = aiOverview.cloneNode(true);
     
-    // Remove unwanted UI elements
+    // Remove unwanted UI elements including CSS-heavy containers
     const unwantedSelectors = [
         'script', 'style', 'noscript',
         '.hidden', '[style*="display: none"]', '[style*="visibility: hidden"]',
@@ -398,14 +296,17 @@ function extractAIOverviewContent(aiOverview) {
         '[role="button"]', '[role="navigation"]',
         '.FeRdKc', // Google ads
         '.commercial', '.ads',
-        '[data-ved]', // Google tracking elements
+        '[data-ved]', // Google tracking elements - these contain CSS
         '.g-blk', // Some Google blocks
         '.s6JM6d', // Google UI elements
         '.N6Sb2c', // Google dialogs
         '.VfPpkd', // Material Design components
         '.shared-links', // Shared links dialog
         '[aria-label*="Delete"]', '[aria-label*="Cancel"]', // Dialog buttons
-        '[data-attrid*="action"]' // Action buttons
+        '[data-attrid*="action"]', // Action buttons
+        '[class*="SPo9yc"]', '[class*="uqGSn"]', // CSS class containers
+        '[class*="KrKx0b"]', '[class*="tA3WHf"]', // More CSS containers
+        'div[class][style]', // Divs with both class and style attributes (likely CSS containers)
     ];
     
     unwantedSelectors.forEach(selector => {
@@ -415,6 +316,19 @@ function extractAIOverviewContent(aiOverview) {
     
     // Get text content and clean it up
     let content = cloned.textContent || cloned.innerText || '';
+    
+    // Filter out CSS-like content and styling information
+    content = content.replace(/\.[A-Z][a-zA-Z0-9]+[,{][^}]*}/g, ''); // CSS rules
+    content = content.replace(/width:\s*\d+%/g, ''); // CSS width properties
+    content = content.replace(/height:\s*\d+[px|%]/g, ''); // CSS height properties
+    content = content.replace(/margin[^;]*;/g, ''); // CSS margin properties
+    content = content.replace(/padding[^;]*;/g, ''); // CSS padding properties
+    content = content.replace(/background[^;]*;/g, ''); // CSS background properties
+    content = content.replace(/transform[^;]*;/g, ''); // CSS transform properties
+    content = content.replace(/position:\s*(absolute|fixed|relative)/g, ''); // CSS position
+    content = content.replace(/display:\s*(flex|grid|inline-block)/g, ''); // CSS display
+    content = content.replace(/@media[^{]*{[^}]*}/g, ''); // CSS media queries
+    content = content.replace(/calc\([^)]+\)/g, ''); // CSS calc functions
     
     // Filter out common Google UI text patterns
     const uiPatterns = [
@@ -456,8 +370,14 @@ function extractAIOverviewContent(aiOverview) {
         .replace(/^\s*Sources?:?\s*/gi, '') // Remove standalone "Sources:" at start
         .trim();
     
-    // If content is too short or looks like UI text, try to find actual content
+    // Check if content looks like CSS or styling information
+    const cssIndicators = content.match(/\.(SPo9yc|uqGSn|KrKx0b|tA3WHf|WVV5ke|PLq9Je)/g);
+    const cssPropertyCount = (content.match(/(width|height|margin|padding|position|display|background|transform):/g) || []).length;
+    
+    // If content is too short, looks like UI text, or contains CSS, try to find actual content
     if (content.length < 100 || 
+        cssIndicators?.length > 5 || 
+        cssPropertyCount > 10 ||
         content.toLowerCase().includes('delete') || 
         content.toLowerCase().includes('cancel') ||
         content.toLowerCase().includes('public link') ||
