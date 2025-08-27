@@ -3,6 +3,7 @@
 
 let importButton = null;
 let isProcessing = false;
+let cachedAIContent = null; // Cache the AI content element when found
 
 // Initialize when page loads
 if (document.readyState === 'loading') {
@@ -18,6 +19,7 @@ function initializeGoogleImport() {
     // Also watch for dynamic content changes
     const observer = new MutationObserver(() => {
         if (!importButton) {
+            cachedAIContent = null; // Clear cache when page changes
             findAndInjectImportButton();
         }
     });
@@ -126,6 +128,7 @@ function findAIOverview() {
             
             console.log('🔍 Found potential AI Overview by content pattern:', element.tagName, element.className);
             console.log('🔍 Content preview:', text.substring(0, 300));
+            cachedAIContent = element; // Cache the found element
             return element;
         }
     }
@@ -136,6 +139,7 @@ function findAIOverview() {
         const textContent = container.textContent.trim();
         if (textContent.length > 100 && !textContent.includes('google.') && !textContent.includes('xsrf')) {
             console.log('🔍 Found targeted AI container:', container.tagName, container.className, textContent.substring(0, 200));
+            cachedAIContent = container; // Cache the found element
             return container;
         }
     }
@@ -235,6 +239,7 @@ function findAIOverview() {
         console.log('🔍 Fallback element parent:', bestMatch.parentElement?.tagName, bestMatch.parentElement?.className);
         console.log('🔍 Fallback first 300 chars of text:', bestMatch.textContent.trim().substring(0, 300));
         console.log('🔍 Fallback element HTML structure:', bestMatch.outerHTML.substring(0, 500));
+        cachedAIContent = bestMatch; // Cache the found element
         return bestMatch;
     }
     
@@ -316,12 +321,18 @@ function handleImportClick() {
         Importing...
     `;
     
-    // Find AI Overview again (in case page changed)
-    const aiOverview = findAIOverview();
-    if (!aiOverview) {
-        console.error('❌ No content found for Google import');
-        showError('Could not find content to import');
-        return;
+    // Use cached content if available, otherwise search again
+    let aiOverview = cachedAIContent;
+    if (!aiOverview || !document.contains(aiOverview)) {
+        console.log('🔍 Cached content not available or removed, searching again...');
+        aiOverview = findAIOverview();
+        if (!aiOverview) {
+            console.error('❌ No content found for Google import');
+            showError('Could not find content to import');
+            return;
+        }
+    } else {
+        console.log('✅ Using cached AI Overview content');
     }
     
     console.log('📄 Found content element:', aiOverview);
