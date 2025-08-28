@@ -23,7 +23,7 @@ let settings = {
     model: 'llama3.1-8b',
     systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
     showTooltips: true,
-    webSearchEnabled: true
+    webSearchEnabled: true,
     syncKey: '',
     syncId: '',
     jsonbinApiKey: '',
@@ -40,39 +40,6 @@ let settings = {
 let isProcessing = false;
 let keepAlivePort = null;
 
-// Initialize application
-document.addEventListener('DOMContentLoaded', async function() {
-    console.log('Branestawm initializing...');
-    
-    // Establish keepalive connection with service worker
-    keepAlivePort = chrome.runtime.connect({ name: 'branestawm-keepalive' });
-    
-    // Load data and check setup status
-    await loadData();
-    
-    // Check for pending query from context menu
-    await checkPendingQuery();
-    
-    // Setup UI
-    setupEventListeners();
-    setupTooltips();
-    updateUI();
-    
-    // Start monitoring for search result imports
-    startImportMonitoring();
-    
-    // Check if user needs initial setup
-    if (!settings.googleToken && !settings.apiKey) {
-        showSetupModal();
-    } else {
-        // Create first conversation if none exist
-        if (Object.keys(conversations).length === 0) {
-            newConversation();
-        }
-    }
-    
-    console.log('Branestawm initialized successfully');
-});
 
 // ========== GOOGLE OAUTH AUTHENTICATION ==========
 
@@ -1334,7 +1301,7 @@ function updateArtifactsList() {
     });
 }
 
-// Update the initialization to include new features
+// Initialize application with all features
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Branestawm initializing...');
     
