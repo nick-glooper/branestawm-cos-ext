@@ -17,17 +17,15 @@ async function sendMessage() {
         return;
     }
     
-    if (!currentConversation) {
-        newConversation();
-    }
+    // No need to create conversations - each folio has continuous dialogue
     
     isProcessing = true;
     messageInput.value = '';
     messageInput.style.height = 'auto';
     
     try {
-        // Add user message
-        addMessage(currentConversation, 'user', message);
+        // Add user message to current folio's dialogue
+        addMessage(currentFolio, 'user', message);
         
         // Show typing indicator
         const typingDiv = addTypingIndicator();
@@ -56,8 +54,8 @@ async function sendMessage() {
             }
         ];
         
-        // Add conversation history (last 10 messages to stay within context limits)
-        const recentMessages = conversations[currentConversation].messages.slice(-10);
+        // Add dialogue history (last 20 messages - no context limits due to full data lake access)
+        const recentMessages = folios[currentFolio].messages.slice(-20);
         messages = messages.concat(recentMessages);
         
         // Get AI response
@@ -66,15 +64,14 @@ async function sendMessage() {
         // Remove typing indicator
         removeTypingIndicator(typingDiv);
         
-        // Add AI response
-        addMessage(currentConversation, 'assistant', response);
+        // Add AI response to current folio's dialogue
+        addMessage(currentFolio, 'assistant', response);
         
-        // Update conversation title if it's the first exchange
-        const conv = conversations[currentConversation];
-        if (conv.messages.length === 2 && conv.title === 'New Chat') {
-            conv.title = generateConversationTitle(message);
-            conv.updatedAt = new Date().toISOString();
-            updateRecentConversationsWidget();
+        // Update folio title if it's the first exchange
+        const folio = folios[currentFolio];
+        if (folio.messages.length === 2 && folio.title === 'General Folio') {
+            folio.title = generateConversationTitle(message);
+            folio.lastUsed = new Date().toISOString();
         }
         
         // Save data
@@ -90,7 +87,7 @@ async function sendMessage() {
         }
         
         // Show error message
-        addMessage(currentConversation, 'system', `Sorry, I encountered an error: ${error.message}. Please check your connection and try again.`);
+        addMessage(currentFolio, 'system', `Sorry, I encountered an error: ${error.message}. Please check your connection and try again.`);
         showMessage('Error: ' + error.message, 'error');
     } finally {
         isProcessing = false;
@@ -99,8 +96,8 @@ async function sendMessage() {
 
 // ========== MESSAGE MANAGEMENT ==========
 
-function addMessage(conversationId, role, content) {
-    if (!conversations[conversationId]) return;
+function addMessage(folioId, role, content) {
+    if (!folios[folioId]) return;
     
     const message = {
         id: generateId(),
@@ -109,14 +106,9 @@ function addMessage(conversationId, role, content) {
         timestamp: new Date().toISOString()
     };
     
-    conversations[conversationId].messages.push(message);
-    conversations[conversationId].updatedAt = new Date().toISOString();
-    
-    // Update folio last used time
-    const conversation = conversations[conversationId];
-    if (conversation && folios[conversation.folioId]) {
-        folios[conversation.folioId].lastUsed = new Date().toISOString();
-    }
+    // Add to folio's continuous dialogue
+    folios[folioId].messages.push(message);
+    folios[folioId].lastUsed = new Date().toISOString();
     
     // Update UI
     displayMessage(message);

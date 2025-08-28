@@ -1,6 +1,73 @@
 /* Branestawm - Component Styles */
 /* Buttons, cards, modals, forms, and reusable UI components */
 
+/* ========== SIDEBAR IMPROVEMENTS ========== */
+
+.sidebar-section {
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-3);
+}
+
+.section-title {
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.browse-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--space-1);
+    border-radius: var(--radius-base);
+    transition: all var(--transition-fast) var(--ease-out);
+}
+
+.browse-btn:hover {
+    color: var(--primary-500);
+    background: var(--surface-secondary);
+}
+
+.section-actions {
+    margin-top: var(--space-3);
+}
+
+.current-folio-info {
+    background: var(--surface-secondary);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-primary);
+}
+
+.folio-title {
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.folio-persona {
+    font-size: var(--text-sm);
+    color: var(--primary-600);
+    font-weight: var(--font-medium);
+    margin-bottom: var(--space-2);
+}
+
+.folio-description {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: var(--leading-relaxed);
+}
+
 /* ========== ENHANCED ARTIFACT STYLES ========== */
 
 .artifacts-actions {

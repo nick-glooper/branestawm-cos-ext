@@ -68,10 +68,10 @@
         </header>
 
         <main class="main-content" id="main-content">
-            <aside class="sidebar" role="complementary" aria-label="Folios and conversations">
+            <aside class="sidebar" role="complementary" aria-label="Folios">
                 <!-- Folios Section -->
                 <div class="sidebar-section">
-                    <div class="section-header" data-tooltip="Browse All">
+                    <div class="section-header">
                         <h3 class="section-title">Folios</h3>
                         <button class="browse-btn" id="browseFoliosBtn" aria-label="Browse all folios">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -84,34 +84,20 @@
                     </div>
                     <div class="section-actions">
                         <div class="tooltip">
-                            <button class="btn small" id="newFolioBtn" aria-label="Create a new folio to organize your chats">
+                            <button class="btn small" id="newFolioBtn" aria-label="Create a new folio with continuous dialogue">
                                 New Folio
                             </button>
-                            <div class="tooltip-content">Create a new folio to organize your chats with assigned personas</div>
+                            <div class="tooltip-content">Create a new folio with assigned persona for continuous dialogue</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Conversations Section -->
+                <!-- Current Folio Info -->
                 <div class="sidebar-section">
-                    <div class="section-header" data-tooltip="Browse All">
-                        <h3 class="section-title">Conversations</h3>
-                        <button class="browse-btn" id="browseConversationsBtn" aria-label="Browse all conversations">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="recent-conversations-list" id="recentConversationsList" role="list" aria-label="Recent conversations">
-                        <!-- Recent conversations will be populated here -->
-                    </div>
-                    <div class="section-actions">
-                        <div class="tooltip">
-                            <button class="btn small" id="newChatBtn" aria-label="Start a new conversation in this folio">
-                                New Chat
-                            </button>
-                            <div class="tooltip-content">Start a new conversation in this folio</div>
-                        </div>
+                    <div class="current-folio-info" id="currentFolioInfo">
+                        <div class="folio-title" id="currentFolioTitle">General Folio</div>
+                        <div class="folio-persona" id="currentFolioPersona">Core Persona</div>
+                        <div class="folio-description" id="currentFolioDescription">General purpose folio for continuous dialogue</div>
                     </div>
                 </div>
             </aside>
@@ -130,7 +116,7 @@
                         <strong>Getting Started:</strong><br>
                         • If you haven't set up yet, I'll guide you through the simple process<br>
                         • Use the Import button on Google AI Mode for web search<br>
-                        • Use the notes panel to save important information<br>
+                        • Generate documents from our conversations<br>
                         <br>
                         <em>Designed as a cognitive prosthetic to support neurodivergent users with executive function challenges.</em>
                     </div>
@@ -141,7 +127,7 @@
                         <textarea 
                             class="message-input" 
                             id="messageInput" 
-                            placeholder="Tell Branestawm what you need help with... (Tip: Visit Google AI Mode for web search, then import results)"
+                            placeholder="Continue your dialogue with Branestawm..."
                             aria-label="Type your message here"
                             rows="3"
                         ></textarea>
@@ -158,33 +144,37 @@
                 </div>
             </section>
 
-            <aside class="artifacts-panel" role="complementary" aria-label="Documents and artifacts">
-                <div class="artifacts-header">
-                    <h3>Documents</h3>
-                    <div class="artifacts-actions">
+            <aside class="artifact-canvas" role="complementary" aria-label="Dynamic document canvas">
+                <div class="canvas-header">
+                    <h3>Artifact Canvas</h3>
+                    <div class="canvas-actions">
                         <div class="tooltip">
-                            <button class="btn small" id="generateArtifactBtn" aria-label="Generate document from conversation">
+                            <button class="btn small" id="generateArtifactBtn" aria-label="Generate document from dialogue">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19Z"/>
                                     <path d="M16.5,16.25L16.5,14.75L15,14.75L15,16.25L13.5,16.25L13.5,17.75L15,17.75L15,19.25L16.5,19.25L16.5,17.75L18,17.75L18,16.25L16.5,16.25Z"/>
                                 </svg>
-                                Generate
                             </button>
-                            <div class="tooltip-content">Generate document from current conversation</div>
+                            <div class="tooltip-content">Generate document from current dialogue</div>
                         </div>
                         <div class="tooltip">
                             <button class="btn small secondary" id="newArtifactBtn" aria-label="Create a new document">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                                 </svg>
-                                New
                             </button>
                             <div class="tooltip-content">Create a new document</div>
                         </div>
                     </div>
                 </div>
-                <div class="artifacts-list" id="artifactsList" role="list" aria-label="Documents and artifacts">
-                    <!-- Documents will be populated here -->
+                <div class="canvas-content" id="canvasContent">
+                    <div class="canvas-empty" id="canvasEmpty">
+                        <div class="canvas-empty-icon">🎨</div>
+                        <div class="canvas-empty-text">Dynamic Canvas</div>
+                        <div class="canvas-empty-description">
+                            Create and edit documents on the fly. Generate artifacts from your dialogue or start with a blank template.
+                        </div>
+                    </div>
                 </div>
             </aside>
         </main>

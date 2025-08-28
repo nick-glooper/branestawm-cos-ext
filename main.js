@@ -4,21 +4,22 @@
 // ========== GLOBAL STATE ==========
 
 let currentFolio = 'general';
-let currentConversation = null;
-let conversations = {};
 let folios = {
     'general': {
         id: 'general',
         title: 'General Folio',
-        description: 'General purpose folio for random questions and unstructured conversations',
+        description: 'General purpose folio for continuous dialogue',
         guidelines: '', // Inherits from assigned persona
         assignedPersona: 'core',
-        conversations: [],
+        messages: [], // Single continuous dialogue
         artifacts: [],
+        sharedArtifacts: [],
         createdAt: new Date().toISOString(),
         lastUsed: new Date().toISOString()
     }
 };
+// Remove conversations concept - each folio has one continuous dialogue
+// let conversations = {}; // No longer needed
 let artifacts = {};
 let artifactTemplates = {
     'note': { name: 'General Note', icon: '📝', description: 'Simple markdown note' },
@@ -67,7 +68,7 @@ let settings = {
 let isProcessing = false;
 let keepAlivePort = null;
 let recentFolios = [];
-let recentConversations = [];
+// let recentConversations = []; // No longer needed - folios track their own dialogue
 let deleteTarget = null;
 
 // ========== SETUP AND INITIALIZATION ==========
@@ -271,8 +272,41 @@ function handlePerplexitySearch() {
 function updateUI() {
     updateCurrentFolioDisplay();
     updateRecentFoliosWidget();
-    updateRecentConversationsWidget();
-    updateArtifactsList();
+    updateCanvasContent();
+}
+
+function updateCurrentFolioDisplay() {
+    const folio = folios[currentFolio];
+    if (!folio) return;
+    
+    const titleElement = document.getElementById('currentFolioTitle');
+    const personaElement = document.getElementById('currentFolioPersona');
+    const descriptionElement = document.getElementById('currentFolioDescription');
+    
+    if (titleElement) titleElement.textContent = folio.title;
+    if (personaElement) {
+        const persona = settings.personas[folio.assignedPersona] || settings.personas['core'];
+        personaElement.textContent = persona.name;
+    }
+    if (descriptionElement) descriptionElement.textContent = folio.description || 'No description';
+}
+
+function updateCanvasContent() {
+    const canvasContent = document.getElementById('canvasContent');
+    const canvasEmpty = document.getElementById('canvasEmpty');
+    
+    if (!canvasContent) return;
+    
+    const currentFolioArtifacts = folios[currentFolio]?.artifacts || [];
+    const sharedArtifacts = folios[currentFolio]?.sharedArtifacts || [];
+    const allArtifactIds = [...new Set([...currentFolioArtifacts, ...sharedArtifacts])];
+    
+    if (allArtifactIds.length === 0) {
+        if (canvasEmpty) canvasEmpty.style.display = 'flex';
+    } else {
+        if (canvasEmpty) canvasEmpty.style.display = 'none';
+        // Could show artifact list or editing interface here
+    }
 }
 
 function updateArtifactsList() {
@@ -601,9 +635,7 @@ function setupEventListeners() {
     document.getElementById('messageInput').addEventListener('input', autoResizeTextarea);
     
     // Navigation
-    document.getElementById('newChatBtn').addEventListener('click', newConversation);
     document.getElementById('browseFoliosBtn').addEventListener('click', showFolioSelectionModal);
-    document.getElementById('browseConversationsBtn').addEventListener('click', showConversationSelectionModal);
     
     // Modals and settings
     document.getElementById('settingsBtn').addEventListener('click', openSettings);
@@ -890,9 +922,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Check for pending queries from context menu/omnibox
         await checkPendingQuery();
         
-        // Create first conversation if none exist
-        if (Object.keys(conversations).length === 0) {
-            newConversation();
+        // Load existing folio dialogue if available
+        if (folios[currentFolio] && folios[currentFolio].messages) {
+            // Display existing messages
+            folios[currentFolio].messages.forEach(message => {
+                displayMessage(message);
+            });
+            scrollToBottom();
         }
         
         console.log('Branestawm initialized successfully');

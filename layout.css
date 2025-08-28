@@ -1,6 +1,27 @@
 /* Branestawm - Layout Styles */
 /* Base styles, grid layouts, and structural components */
 
+/* ========== ACCESSIBILITY ========== */
+
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--primary-500);
+  color: white;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-base);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  z-index: 1000;
+  transition: top var(--transition-fast) var(--ease-out);
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
 /* ========== BASE STYLES ========== */
 
 * {
@@ -65,25 +86,28 @@ body {
 
 .header-controls {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-2);
   align-items: center;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 .main-content {
-  display: flex;
+  display: grid;
+  grid-template-columns: 300px 1fr 400px;
   flex: 1;
   overflow: hidden;
+  gap: 0;
 }
 
 /* ========== SIDEBAR ========== */
 
 .sidebar {
-  width: 320px;
   background: var(--surface-primary);
   border-right: 1px solid var(--border-primary);
   display: flex;
   flex-direction: column;
-  transition: width var(--transition-normal) var(--ease-out);
+  overflow-y: auto;
 }
 
 .sidebar-header {
@@ -134,11 +158,11 @@ body {
 /* ========== CHAT CONTAINER ========== */
 
 .chat-container {
-  flex: 1;
   display: flex;
   flex-direction: column;
   background: var(--bg-primary);
   position: relative;
+  min-width: 0;
 }
 
 .chat-messages {
@@ -148,13 +172,13 @@ body {
   scroll-behavior: smooth;
 }
 
-.chat-input-container {
+.chat-input {
   padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--border-primary);
   background: var(--surface-primary);
 }
 
-.chat-input {
+.input-container {
   display: flex;
   gap: var(--space-3);
   align-items: flex-end;
@@ -222,6 +246,58 @@ body {
   transform: none;
 }
 
+/* ========== ARTIFACT CANVAS ========== */
+
+.artifact-canvas {
+  background: var(--surface-primary);
+  border-left: 1px solid var(--border-primary);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.canvas-header {
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--border-primary);
+  background: var(--surface-secondary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.canvas-content {
+  flex: 1;
+  padding: var(--space-4);
+  overflow-y: auto;
+}
+
+.canvas-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--text-secondary);
+  gap: var(--space-4);
+}
+
+.canvas-empty-icon {
+  font-size: 3rem;
+  opacity: 0.5;
+}
+
+.canvas-empty-text {
+  font-size: var(--text-lg);
+  font-weight: var(--font-medium);
+}
+
+.canvas-empty-description {
+  font-size: var(--text-sm);
+  max-width: 300px;
+  line-height: var(--leading-relaxed);
+}
+
 /* ========== GRID LAYOUTS ========== */
 
 .projects-grid {
@@ -252,17 +328,18 @@ body {
 /* ========== RESPONSIVE DESIGN ========== */
 
 @media (max-width: 768px) {
-  .sidebar {
-    width: 100%;
-    position: absolute;
-    z-index: 10;
-    height: 100%;
-    transform: translateX(-100%);
-    transition: transform var(--transition-normal) var(--ease-out);
+  .main-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
   }
   
-  .sidebar.open {
-    transform: translateX(0);
+  .sidebar, .artifact-canvas {
+    display: none;
+  }
+  
+  .chat-container {
+    grid-column: 1;
+    grid-row: 1;
   }
   
   .header {

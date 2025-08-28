@@ -1,31 +1,29 @@
-// Branestawm - Folios and Conversations Module
-// Handles folio and conversation management, creation, editing, and switching
+// Branestawm - Folios Module
+// Handles folio management, creation, editing, and switching (each folio = one continuous dialogue)
 
-// ========== CONVERSATION MANAGEMENT ==========
+// ========== FOLIO DIALOGUE MANAGEMENT ==========
+// Each folio has one continuous dialogue - no separate conversations
 
-function newConversation() {
-    const id = generateId();
-    const conversation = {
-        id: id,
-        title: 'New Chat',
-        messages: [],
-        folioId: currentFolio,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    };
+function switchFolio(folioId) {
+    if (!folios[folioId]) return;
     
-    conversations[id] = conversation;
-    folios[currentFolio].conversations.push(id);
+    currentFolio = folioId;
     
-    currentConversation = id;
+    // Update recent folios
+    updateRecentFolios(folioId);
     
-    // Add to recent conversations
-    updateRecentConversations(id);
-    
-    // Clear chat display
+    // Clear and reload chat display with folio's dialogue
     const chatMessages = document.getElementById('chatMessages');
     chatMessages.innerHTML = '';
     
+    // Display all messages from this folio's dialogue
+    if (folios[folioId].messages) {
+        folios[folioId].messages.forEach(message => {
+            displayMessage(message);
+        });
+    }
+    
+    scrollToBottom();
     updateUI();
     saveData();
 }
