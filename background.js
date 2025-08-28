@@ -18,7 +18,6 @@ chrome.runtime.onInstalled.addListener(async (details) => {
                 model: 'llama3.1-8b',
                 systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
                 showTooltips: true,
-                autoWebSearch: true,
                 syncKey: '',
                 syncId: '',
                 jsonbinApiKey: '',

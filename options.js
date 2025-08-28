@@ -9,7 +9,6 @@ let settings = {
     model: 'llama3.1-8b',
     systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
     showTooltips: true,
-    autoWebSearch: true,
     syncKey: '',
     syncId: '',
     jsonbinApiKey: '',
@@ -161,9 +160,6 @@ function setupEventListeners() {
         settings.systemPrompt = this.value;
     });
     
-    document.getElementById('autoWebSearch').addEventListener('change', function() {
-        settings.autoWebSearch = this.checked;
-    });
     
     // Sync settings
     document.getElementById('enableSync').addEventListener('change', function() {
@@ -615,7 +611,6 @@ function updateUI() {
     document.getElementById('apiModel').value = settings.model || '';
     document.getElementById('apiKey').value = settings.apiKey || '';
     document.getElementById('systemPrompt').value = settings.systemPrompt || '';
-    document.getElementById('autoWebSearch').checked = settings.autoWebSearch;
     document.getElementById('showTooltips').checked = settings.showTooltips;
     
     // Update appearance settings
@@ -645,7 +640,6 @@ function resetSettings() {
             model: 'llama3.1-8b',
             systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
             showTooltips: true,
-            autoWebSearch: true,
             syncKey: '',
             syncId: '',
             jsonbinApiKey: '',
