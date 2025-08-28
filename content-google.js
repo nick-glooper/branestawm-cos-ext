@@ -119,12 +119,14 @@ function findAIOverview() {
     
     // Enhanced detection strategy with better Google AI Mode support
     const candidates = [
-        // Google AI Mode specific selectors (highest priority) - visible elements only
+        // CORRECT Google AI Mode selector (highest priority)
+        { selector: 'div[data-subtree="aimc"]', name: 'Google AI Mode Container (CORRECT)' },
+        
+        // Backup Google AI Mode patterns
         { selector: '[data-testid*="conversation"][data-testid*="thread"]:not([style*="display: none"])', name: 'AI Mode conversation thread' },
         { selector: '[data-testid*="assistant-response"]:not([style*="display: none"])', name: 'AI Mode assistant response' },
         { selector: '[data-testid*="conversation-turn"]:not([style*="display: none"])', name: 'AI Mode conversation turn' },
         { selector: '[data-testid*="search-generative"]:not([style*="display: none"])', name: 'Search generative AI content' },
-        { selector: '[data-ved][role="region"] > div:not([style*="display: none"])', name: 'Google AI content region' },
         
         // Traditional Google AI Overview patterns (visible only)
         { selector: '[data-snc="ih6Jnb_4Hk7"]:not([style*="display: none"])', name: 'AI Overview main container' },
@@ -133,12 +135,7 @@ function findAIOverview() {
         { selector: '[data-testid*="ai"]:not([role="dialog"]):not([style*="display: none"])', name: 'AI testid elements' },
         { selector: '[aria-label*="AI"]:not([role="dialog"]):not([style*="display: none"])', name: 'AI aria-label elements' },
         
-        // Focus on visible elements in main content area
-        { selector: '#main div:not(.OkHxFe):not([style*="display: none"])', name: 'Main content divs (excluding share dialog)' },
-        { selector: '#center_col div:not(.OkHxFe):not([style*="display: none"])', name: 'Center column content' },
-        { selector: '[role="main"] div:not(.OkHxFe):not([style*="display: none"])', name: 'Main role content' },
-        
-        // Enhanced content detection with improved filtering
+        // Enhanced content detection with improved filtering (only as last resort)
         { selector: 'div:ai-conversation', name: 'AI conversation content', manual: true },
         { selector: 'div:substantial-content', name: 'Substantial content fallback', manual: true },
     ];
@@ -251,24 +248,31 @@ function findAIOverview() {
             }
         } else {
             const element = document.querySelector(candidate.selector);
-            if (element && element.textContent?.trim().length > 100) {
-                // Check if element is visible and not a UI dialog
+            if (element && element.textContent?.trim().length > 50) {
+                // For the correct AI Mode selector, be less strict about quality
                 const isVisible = element.style.display !== 'none' && 
                                  !element.hasAttribute('hidden') &&
                                  getComputedStyle(element).display !== 'none';
-                                 
+                
                 const qualityScore = calculateContentQuality(element.textContent);
                 
-                if (isVisible && qualityScore > 10) {
-                    console.log(`🎯 Found via ${candidate.name}:`, element.tagName, element.className);
-                    console.log(`🎯 Element visible:`, isVisible);
-                    console.log(`🎯 Content quality score:`, qualityScore);
-                    console.log(`🎯 Text preview:`, element.textContent.substring(0, 200));
+                // Special handling for the correct AI Mode container
+                const isAIModeContainer = candidate.selector === 'div[data-subtree="aimc"]';
+                const qualityThreshold = isAIModeContainer ? -50 : 10;  // Much lower threshold for AI Mode container
+                
+                if (isVisible && qualityScore > qualityThreshold) {
+                    console.log(`✅ Found via ${candidate.name}:`, element.tagName, element.className);
+                    console.log(`✅ Element visible:`, isVisible);
+                    console.log(`✅ Content quality score:`, qualityScore);
+                    console.log(`✅ Is AI Mode Container:`, isAIModeContainer);
+                    console.log(`✅ Text preview:`, element.textContent.substring(0, 200));
                     cachedAIContent = element;
                     return element;
                 } else {
-                    console.log(`⚠️ Skipping ${candidate.name}: visible=${isVisible}, quality=${qualityScore}`);
+                    console.log(`⚠️ Skipping ${candidate.name}: visible=${isVisible}, quality=${qualityScore} (threshold: ${qualityThreshold})`);
                 }
+            } else {
+                console.log(`⚠️ No element found or too short for selector: ${candidate.selector}`);
             }
         }
     }
@@ -481,7 +485,30 @@ function handleImportClick() {
 }
 
 function extractAIOverviewContent(aiOverview) {
-    // Clean up the content
+    console.log('📤 === EXTRACTING CONTENT ===');
+    console.log('📤 Original element:', aiOverview.tagName, aiOverview.className);
+    console.log('📤 Data subtree:', aiOverview.getAttribute('data-subtree'));
+    console.log('📤 Original text length:', aiOverview.textContent?.trim().length);
+    
+    // Special handling for AI Mode container
+    const isAIModeContainer = aiOverview.getAttribute('data-subtree') === 'aimc';
+    console.log('📤 Is AI Mode Container:', isAIModeContainer);
+    
+    // For AI Mode container, use simpler extraction
+    if (isAIModeContainer) {
+        console.log('📤 Using direct text extraction for AI Mode container');
+        let content = aiOverview.innerText || aiOverview.textContent || '';
+        content = content.replace(/^\s*Sources?\s*$/gim, '').trim(); // Remove isolated "Sources"
+        content = content.replace(/\s+/g, ' ').trim(); // Normalize whitespace
+        
+        console.log('📤 AI Mode direct extraction result:', content.length, 'chars');
+        console.log('📤 Preview:', content.substring(0, 300) + '...');
+        
+        return content.length > 10 ? content : 'AI Mode container found but appears empty.';
+    }
+    
+    // For other elements, use the existing cleaning logic
+    console.log('📤 Using standard extraction for non-AI Mode element');
     const cloned = aiOverview.cloneNode(true);
     
     // Remove unwanted UI elements including CSS-heavy containers and dialogs
