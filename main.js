@@ -747,6 +747,9 @@ function newConversation() {
     
     currentConversation = id;
     
+    // Add to recent conversations
+    updateRecentConversations(id);
+    
     // Clear chat display
     const chatMessages = document.getElementById('chatMessages');
     chatMessages.innerHTML = '';
@@ -1346,7 +1349,21 @@ function createProjectCard(project) {
     card.innerHTML = `
         <div class="project-card-header">
             <h4 class="project-card-title">${project.name}</h4>
-            ${project.id === currentProject ? '<div class="active-badge">Current</div>' : ''}
+            <div class="card-actions">
+                ${project.id === currentProject ? '<div class="active-badge">Current</div>' : ''}
+                <div class="card-action-buttons">
+                    <button class="action-btn edit-btn" aria-label="Edit project" onclick="editProject('${project.id}'); event.stopPropagation();">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/>
+                        </svg>
+                    </button>
+                    <button class="action-btn delete-btn" aria-label="Delete project" onclick="deleteProject('${project.id}'); event.stopPropagation();">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="project-card-description">${project.description || 'No description'}</div>
         <div class="project-card-stats">
@@ -1442,7 +1459,21 @@ function createConversationCard(conversation) {
     card.innerHTML = `
         <div class="conversation-card-header">
             <h4 class="conversation-card-title">${conversation.title}</h4>
-            ${conversation.id === currentConversation ? '<div class="active-badge">Current</div>' : ''}
+            <div class="card-actions">
+                ${conversation.id === currentConversation ? '<div class="active-badge">Current</div>' : ''}
+                <div class="card-action-buttons">
+                    <button class="action-btn edit-btn" aria-label="Edit conversation" onclick="editConversation('${conversation.id}'); event.stopPropagation();">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/>
+                        </svg>
+                    </button>
+                    <button class="action-btn delete-btn" aria-label="Delete conversation" onclick="deleteConversation('${conversation.id}'); event.stopPropagation();">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
         </div>
         <div class="conversation-card-preview">${preview}</div>
         <div class="conversation-card-stats">
