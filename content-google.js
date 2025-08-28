@@ -115,29 +115,34 @@ function isGoogleSearchResultsPage() {
 }
 
 function findAIOverview() {
-    console.log('🎯 === SIMPLIFIED AI OVERVIEW DETECTION ===');
+    console.log('🎯 === IMPROVED AI OVERVIEW DETECTION ===');
     
-    // Instead of guessing, let's systematically check what's actually on the page
-    // Look for the most likely AI content containers based on common patterns
-    
+    // Enhanced detection strategy with better Google AI Mode support
     const candidates = [
-        // Focus on actual AI Mode conversation structure (no content-specific patterns)
-        { selector: '[data-testid*="conversation"]:not([role="dialog"])', name: 'AI Mode conversation elements' },
-        { selector: '[data-testid*="response"]:not([role="dialog"])', name: 'AI Mode response elements' },
-        { selector: '[data-testid*="turn"]:not([role="dialog"])', name: 'AI Mode conversation turn' },
-        { selector: '[role="main"] div[data-testid]:not([role="dialog"])', name: 'Main area data-testid elements' },
-        { selector: '[class*="conversation"]:not([role="dialog"])', name: 'AI Mode conversation container' },
-        { selector: 'div[data-node-key]:not([role="dialog"])', name: 'AI Mode data-node-key elements' },
+        // Google AI Mode specific selectors (highest priority)
+        { selector: '[data-testid*="conversation"][data-testid*="thread"]', name: 'AI Mode conversation thread' },
+        { selector: '[data-testid*="assistant-response"]', name: 'AI Mode assistant response' },
+        { selector: '[data-testid*="conversation-turn"]', name: 'AI Mode conversation turn' },
+        { selector: '[data-testid*="search-generative"]', name: 'Search generative AI content' },
+        { selector: '[data-ved][role="region"] > div', name: 'Google AI content region' },
         
-        // Traditional AI Overview patterns  
+        // Traditional Google AI Overview patterns
         { selector: '[data-snc="ih6Jnb_4Hk7"]', name: 'AI Overview main container' },
         { selector: '.X5LH0c', name: 'AI generated answer' },
         { selector: '.IZ6rdc', name: 'Search generative experience' },
         { selector: '[data-testid*="ai"]:not([role="dialog"])', name: 'AI testid elements' },
         { selector: '[aria-label*="AI"]:not([role="dialog"])', name: 'AI aria-label elements' },
         
-        // Generic content detection - find substantial text that's not in dialogs
-        { selector: 'div:substantial-content', name: 'Elements with substantial non-dialog content', manual: true },
+        // Generic AI Mode conversation patterns
+        { selector: '[data-testid*="conversation"]:not([role="dialog"])', name: 'AI Mode conversation elements' },
+        { selector: '[data-testid*="response"]:not([role="dialog"])', name: 'AI Mode response elements' },
+        { selector: '[data-testid*="turn"]:not([role="dialog"])', name: 'AI Mode conversation turn' },
+        { selector: '[role="main"] div[data-testid]:not([role="dialog"])', name: 'Main area data-testid elements' },
+        { selector: 'div[data-node-key]:not([role="dialog"])', name: 'AI Mode data-node-key elements' },
+        
+        // Enhanced content detection
+        { selector: 'div:ai-conversation', name: 'AI conversation content', manual: true },
+        { selector: 'div:substantial-content', name: 'Substantial content fallback', manual: true },
     ];
     
     for (const candidate of candidates) {
@@ -145,12 +150,48 @@ function findAIOverview() {
             // Generic content detection - find substantial content not in UI dialogs
             let elements = [];
             
-            if (candidate.selector === 'div:substantial-content') {
-                // Look for elements with substantial content that are not UI dialogs
+            if (candidate.selector === 'div:ai-conversation') {
+                // Look specifically for AI conversation patterns
                 elements = Array.from(document.querySelectorAll('div')).filter(el => {
                     const text = el.textContent?.trim();
                     
-                    // Exclude known UI dialog containers by structure, not content
+                    // Must have substantial content
+                    if (!text || text.length < 200 || text.length > 5000) return false;
+                    
+                    // Exclude UI dialogs and navigation
+                    const isUIDialog = el.closest('[role="dialog"]') ||
+                                      el.closest('.wklPJe') ||
+                                      el.closest('[data-type="hovc"]') ||
+                                      el.closest('[data-type="vsh"]') ||
+                                      el.closest('nav, header, footer');
+                    
+                    if (isUIDialog) return false;
+                    
+                    // Look for AI conversation indicators
+                    const hasAIIndicators = text.toLowerCase().includes('according to') ||
+                                           text.toLowerCase().includes('based on') ||
+                                           text.toLowerCase().includes('as of') ||
+                                           text.match(/\b(however|therefore|additionally|furthermore)\b/i) ||
+                                           (text.includes('?') && text.includes('.') && text.split('.').length > 2);
+                    
+                    // Must be in main content area
+                    const inMainContent = el.closest('#search, #main, #center_col, [role="main"]');
+                    
+                    return hasAIIndicators && inMainContent;
+                });
+                
+                // Sort by content quality score
+                elements.sort((a, b) => {
+                    const scoreA = calculateContentQuality(a.textContent);
+                    const scoreB = calculateContentQuality(b.textContent);
+                    return scoreB - scoreA;
+                });
+            } else if (candidate.selector === 'div:substantial-content') {
+                // Enhanced fallback with better filtering
+                elements = Array.from(document.querySelectorAll('div')).filter(el => {
+                    const text = el.textContent?.trim();
+                    
+                    // Exclude known UI dialog containers by structure
                     const isUIDialog = el.closest('[role="dialog"]') ||
                                       el.closest('.wklPJe') ||
                                       el.closest('[data-type="hovc"]') ||
@@ -158,20 +199,23 @@ function findAIOverview() {
                                       el.closest('[jsaction*="vshDecision"]');
                     
                     // Look for substantial, meaningful content
-                    const hasSubstantialContent = text && text.length > 100 && text.length < 2000;
+                    const hasSubstantialContent = text && text.length > 150 && text.length < 3000;
                     
-                    // Exclude elements that are clearly UI/navigation by checking ancestors
-                    const isNavigation = el.closest('nav') || 
-                                        el.closest('header') || 
-                                        el.closest('footer') ||
-                                        el.closest('[role="navigation"]') ||
-                                        el.closest('[role="banner"]');
+                    // Exclude elements that are clearly UI/navigation
+                    const isNavigation = el.closest('nav, header, footer, [role="navigation"], [role="banner"]');
                     
-                    return hasSubstantialContent && !isUIDialog && !isNavigation;
+                    // Must be in main search content area
+                    const inSearchArea = el.closest('#search, #main, #center_col, [role="main"]');
+                    
+                    return hasSubstantialContent && !isUIDialog && !isNavigation && inSearchArea;
                 });
                 
-                // Sort by text length descending to prioritize more substantial content
-                elements.sort((a, b) => b.textContent.trim().length - a.textContent.trim().length);
+                // Sort by content quality and length
+                elements.sort((a, b) => {
+                    const qualityA = calculateContentQuality(a.textContent);
+                    const qualityB = calculateContentQuality(b.textContent);
+                    return qualityB - qualityA;
+                });
             }
             
             if (elements.length > 0) {
@@ -192,7 +236,86 @@ function findAIOverview() {
         }
     }
     console.log('🎯 No AI Overview found with specific targeting');
+    
+    // Last resort: enable debug mode to help identify the correct element
+    if (window.location.href.includes('debug=1')) {
+        console.log('🔍 DEBUG MODE: Analyzing page structure...');
+        debugPageStructure();
+    }
+    
     return null;
+}
+
+// Helper function to calculate content quality score
+function calculateContentQuality(text) {
+    if (!text) return 0;
+    
+    let score = 0;
+    
+    // Length score (optimal range 300-1500 chars)
+    const length = text.length;
+    if (length >= 300 && length <= 1500) {
+        score += 50;
+    } else if (length >= 150 && length < 300) {
+        score += 30;
+    } else if (length > 1500 && length < 3000) {
+        score += 20;
+    }
+    
+    // AI conversation indicators
+    const aiPhrases = [
+        /according to/i, /based on/i, /as of/i, /research shows/i,
+        /studies suggest/i, /experts say/i, /however/i, /therefore/i,
+        /additionally/i, /furthermore/i, /meanwhile/i
+    ];
+    
+    aiPhrases.forEach(phrase => {
+        if (phrase.test(text)) score += 10;
+    });
+    
+    // Question-answer pattern
+    if (text.includes('?') && text.includes('.')) {
+        const sentences = text.split('.').length;
+        if (sentences >= 3) score += 15;
+    }
+    
+    // Avoid UI text patterns
+    const uiPatterns = [
+        /learn more/i, /dismiss/i, /cancel/i, /delete/i,
+        /upload image/i, /microphone/i, /send/i, /sources?:/i
+    ];
+    
+    uiPatterns.forEach(pattern => {
+        if (pattern.test(text)) score -= 20;
+    });
+    
+    return score;
+}
+
+// Debug function to help identify correct elements
+function debugPageStructure() {
+    console.log('🔍 === DEBUG PAGE STRUCTURE ===');
+    
+    const substantialElements = Array.from(document.querySelectorAll('div'))
+        .filter(el => {
+            const text = el.textContent?.trim();
+            return text && text.length > 200 && text.length < 5000;
+        })
+        .sort((a, b) => calculateContentQuality(b.textContent) - calculateContentQuality(a.textContent));
+    
+    console.log('🔍 Top 5 content candidates:');
+    substantialElements.slice(0, 5).forEach((el, i) => {
+        console.log(`[${i + 1}]`, {
+            element: el,
+            tag: el.tagName,
+            classes: el.className.substring(0, 100),
+            textLength: el.textContent.trim().length,
+            qualityScore: calculateContentQuality(el.textContent),
+            preview: el.textContent.trim().substring(0, 150) + '...'
+        });
+    });
+    
+    console.log('🔍 === END DEBUG ===');
 }
 
 function injectImportButton(aiOverview) {
