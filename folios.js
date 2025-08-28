@@ -28,70 +28,6 @@ function switchFolio(folioId) {
     saveData();
 }
 
-function switchToConversation(conversationId) {
-    if (!conversations[conversationId]) return;
-    
-    currentConversation = conversationId;
-    
-    // Clear and populate chat messages
-    const chatMessages = document.getElementById('chatMessages');
-    chatMessages.innerHTML = '';
-    
-    // Display all messages from this conversation
-    conversations[conversationId].messages.forEach(message => {
-        displayMessage(message);
-    });
-    
-    scrollToBottom();
-    updateRecentConversationsWidget(); // Refresh to show active state
-    saveData();
-}
-
-function editConversation(conversationId) {
-    const conversation = conversations[conversationId];
-    if (!conversation) return;
-    
-    // Populate the conversation modal with existing data
-    document.getElementById('conversationTitle').value = conversation.title;
-    document.getElementById('editConversationModalTitle').textContent = 'Edit Conversation';
-    
-    // Store the conversation ID for saving
-    document.getElementById('editConversationModal').dataset.conversationId = conversationId;
-    
-    showModal('editConversationModal');
-}
-
-function saveConversationChanges() {
-    const title = document.getElementById('conversationTitle').value.trim();
-    const conversationModal = document.getElementById('editConversationModal');
-    const conversationId = conversationModal.dataset.conversationId;
-    
-    if (!title) {
-        showMessage('Conversation title is required', 'error');
-        return;
-    }
-    
-    if (!conversationId || !conversations[conversationId]) {
-        showMessage('Conversation not found', 'error');
-        return;
-    }
-    
-    conversations[conversationId].title = title;
-    conversations[conversationId].updatedAt = new Date().toISOString();
-    
-    // Clear modal data
-    delete conversationModal.dataset.conversationId;
-    
-    closeModal('editConversationModal');
-    updateUI();
-    showMessage('Conversation updated successfully!', 'success');
-    saveData();
-}
-
-function deleteConversation(conversationId) {
-    deleteTarget = { type: 'conversation', id: conversationId };
-    showModal('deleteConfirmationModal');
-}
 
 // ========== FOLIO MANAGEMENT ==========
 
@@ -136,7 +72,7 @@ function createFolio() {
             description: description,
             guidelines: guidelines,
             assignedPersona: assignedPersona,
-            conversations: [],
+            messages: [],
             artifacts: [],
             createdAt: new Date().toISOString(),
             lastUsed: new Date().toISOString()
@@ -180,7 +116,6 @@ function switchFolio(folioId) {
     if (!folios[folioId]) return;
     
     currentFolio = folioId;
-    currentConversation = null;
     
     // Update recent folios
     updateRecentFolios(folioId);
@@ -236,7 +171,6 @@ function createFolioCard(folio) {
     const lastUsedDate = getFolioLastUsed(folio.id);
     const lastUsedText = lastUsedDate ? new Date(lastUsedDate).toLocaleDateString() : 'Never';
     
-    const conversationCount = folio.conversations?.length || 0;
     const artifactCount = folio.artifacts?.length || 0;
     const persona = settings.personas[folio.assignedPersona];
     
@@ -264,7 +198,7 @@ function createFolioCard(folio) {
         </div>
         <div class="folio-card-description">${folio.description || 'No description'}</div>
         <div class="folio-card-stats">
-            <span class="stat">${conversationCount} chats</span>
+            <span class="stat">${folio.messages?.length || 0} messages</span>
             <span class="stat">${artifactCount} notes</span>
             ${persona ? `<span class="stat persona-indicator">${persona.name}</span>` : ''}
         </div>
@@ -285,81 +219,6 @@ function selectFolio(folioId) {
     closeModal('folioSelectionModal');
 }
 
-function showConversationSelectionModal() {
-    populateConversationsGrid();
-    showModal('conversationSelectionModal');
-}
-
-function populateConversationsGrid() {
-    const grid = document.getElementById('conversationsGrid');
-    grid.innerHTML = '';
-    
-    const folioConversations = folios[currentFolio]?.conversations || [];
-    
-    if (folioConversations.length === 0) {
-        grid.innerHTML = '<div class="empty-state">No conversations yet. Start a new chat!</div>';
-        return;
-    }
-    
-    // Sort conversations by last updated (most recent first)
-    const sortedConversations = folioConversations
-        .map(id => conversations[id])
-        .filter(conv => conv)
-        .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
-    
-    sortedConversations.forEach(conversation => {
-        const conversationCard = createConversationCard(conversation);
-        grid.appendChild(conversationCard);
-    });
-}
-
-function createConversationCard(conversation) {
-    const lastMessage = conversation.messages[conversation.messages.length - 1];
-    const preview = lastMessage ? generateConversationPreview(conversation) : 'No messages yet';
-    const lastUpdated = new Date(conversation.updatedAt || conversation.createdAt).toLocaleDateString();
-    
-    const card = document.createElement('div');
-    card.className = 'conversation-card';
-    if (conversation.id === currentConversation) {
-        card.classList.add('current');
-    }
-    
-    card.innerHTML = `
-        <div class="conversation-card-header">
-            <div class="conversation-card-title">${conversation.title}</div>
-            <div class="conversation-card-actions">
-                <button class="action-btn edit-btn" aria-label="Edit conversation" onclick="editConversation('${conversation.id}')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                    </svg>
-                </button>
-                <button class="action-btn delete-btn" aria-label="Delete conversation" onclick="deleteConversation('${conversation.id}')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                    </svg>
-                </button>
-            </div>
-        </div>
-        <div class="conversation-card-preview">${preview}</div>
-        <div class="conversation-card-meta">
-            <span class="message-count">${conversation.messages.length} messages</span>
-            <span class="last-updated">Updated ${lastUpdated}</span>
-        </div>
-    `;
-    
-    card.addEventListener('click', (e) => {
-        // Don't select if clicking on action buttons
-        if (e.target.closest('.action-btn')) return;
-        selectConversation(conversation.id);
-    });
-    
-    return card;
-}
-
-function selectConversation(conversationId) {
-    switchToConversation(conversationId);
-    closeModal('conversationSelectionModal');
-}
 
 // ========== RECENT ITEMS MANAGEMENT ==========
 
@@ -378,47 +237,14 @@ function updateRecentFolios(folioId) {
     saveData();
 }
 
-function updateRecentConversations(conversationId) {
-    if (!recentConversations) recentConversations = [];
-    
-    // Remove if already exists
-    recentConversations = recentConversations.filter(id => id !== conversationId);
-    
-    // Add to beginning
-    recentConversations.unshift(conversationId);
-    
-    // Keep only last 10
-    recentConversations = recentConversations.slice(0, 10);
-    
-    saveData();
-}
 
 // ========== UTILITY FUNCTIONS ==========
 
-function generateConversationPreview(conversation) {
-    if (!conversation.messages || conversation.messages.length === 0) {
-        return 'No messages yet';
-    }
-    
-    const lastMessage = conversation.messages[conversation.messages.length - 1];
-    const preview = lastMessage.content.substring(0, 100);
-    return preview + (lastMessage.content.length > 100 ? '...' : '');
-}
 
 function getFolioLastUsed(folioId) {
     const folio = folios[folioId];
-    if (!folio || !folio.conversations) return folio?.createdAt || new Date().toISOString();
+    if (!folio) return new Date().toISOString();
     
-    let lastUsed = folio.lastUsed || folio.createdAt || new Date().toISOString();
-    
-    folio.conversations.forEach(convId => {
-        const conversation = conversations[convId];
-        if (conversation && conversation.updatedAt) {
-            if (new Date(conversation.updatedAt) > new Date(lastUsed)) {
-                lastUsed = conversation.updatedAt;
-            }
-        }
-    });
-    
-    return lastUsed;
+    // For folios, use the lastUsed timestamp (updated when messages are added)
+    return folio.lastUsed || folio.createdAt || new Date().toISOString();
 }

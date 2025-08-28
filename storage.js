@@ -87,22 +87,28 @@ async function saveData() {
 
 // ========== EXPORT FUNCTIONALITY ==========
 
-async function exportConversationAsMarkdown(conversationId) {
-    const conversation = conversations[conversationId];
-    if (!conversation) {
-        showMessage('Conversation not found', 'error');
+async function exportFolioAsMarkdown(folioId) {
+    const folio = folios[folioId];
+    if (!folio) {
+        showMessage('Folio not found', 'error');
         return;
     }
     
-    let markdown = `# ${conversation.title}\n\n`;
-    markdown += `**Folio:** ${folios[conversation.folioId]?.title || 'Unknown'}\n`;
-    markdown += `**Created:** ${new Date(conversation.createdAt).toLocaleString()}\n`;
-    if (conversation.updatedAt) {
-        markdown += `**Last Updated:** ${new Date(conversation.updatedAt).toLocaleString()}\n`;
+    let markdown = `# ${folio.title}\n\n`;
+    if (folio.description) {
+        markdown += `**Description:** ${folio.description}\n`;
+    }
+    const persona = settings.personas[folio.assignedPersona];
+    if (persona) {
+        markdown += `**Persona:** ${persona.name}\n`;
+    }
+    markdown += `**Created:** ${new Date(folio.createdAt).toLocaleString()}\n`;
+    if (folio.lastUsed) {
+        markdown += `**Last Used:** ${new Date(folio.lastUsed).toLocaleString()}\n`;
     }
     markdown += `\n---\n\n`;
     
-    conversation.messages.forEach(message => {
+    folio.messages.forEach(message => {
         if (message.role === 'user') {
             markdown += `## You\n\n${message.content}\n\n`;
         } else if (message.role === 'assistant') {
@@ -119,7 +125,7 @@ async function exportConversationAsMarkdown(conversationId) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `branestawm-${conversation.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
+    a.download = `branestawm-${folio.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.md`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

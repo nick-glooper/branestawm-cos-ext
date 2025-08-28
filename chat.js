@@ -244,9 +244,9 @@ INSTRUCTIONS:
 }
 
 function getRelevantHistoricalContext(query, folioId, maxEntries = 5) {
-    // Future enhancement: Implement semantic search through conversation history
-    // For now, return recent messages from current conversation
-    const recentMessages = conversations[currentConversation]?.messages?.slice(-maxEntries) || [];
+    // Future enhancement: Implement semantic search through folio dialogue history
+    // For now, return recent messages from current folio
+    const recentMessages = folios[folioId]?.messages?.slice(-maxEntries) || [];
     return recentMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n');
 }
 

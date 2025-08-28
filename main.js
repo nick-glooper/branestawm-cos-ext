@@ -199,9 +199,9 @@ async function checkForImportedResults() {
 
 async function processSearchImport(importData, storageKey) {
     try {
-        // Ensure we have a current conversation
-        if (!currentConversation) {
-            newConversation();
+        // Ensure we have a current folio
+        if (!currentFolio || !folios[currentFolio]) {
+            return;
         }
         
         // Create a formatted message from the search data
@@ -225,7 +225,7 @@ async function processSearchImport(importData, storageKey) {
         }
         
         // Add the search results as a system message
-        addMessage(currentConversation, 'system', searchMessage);
+        addMessage(currentFolio, 'system', searchMessage);
         
         // Mark as processed and remove from storage
         await chrome.storage.local.remove(storageKey);
@@ -505,54 +505,6 @@ function updateRecentFoliosWidget() {
     });
 }
 
-function updateRecentConversationsWidget() {
-    const widget = document.getElementById('recentConversationsList');
-    const itemsList = widget;
-    
-    itemsList.innerHTML = '';
-    
-    if (!recentConversations || recentConversations.length === 0) {
-        itemsList.innerHTML = '<div class="empty-recent">No recent conversations</div>';
-        return;
-    }
-    
-    recentConversations.slice(0, 5).forEach(conversationId => {
-        const conversation = conversations[conversationId];
-        if (!conversation) return;
-        
-        const item = document.createElement('div');
-        item.className = 'recent-item';
-        if (conversation.id === currentConversation) {
-            item.classList.add('active');
-        }
-        
-        const preview = generateConversationPreview(conversation);
-        const lastUpdated = new Date(conversation.updatedAt || conversation.createdAt).toLocaleDateString();
-        
-        item.innerHTML = `
-            <div class="item-header">
-                <div class="item-title">${conversation.title}</div>
-                <div class="item-actions">
-                    <button class="action-btn edit-btn" aria-label="Edit conversation" onclick="editConversation('${conversationId}')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                        </svg>
-                    </button>
-                </div>
-            </div>
-            <div class="item-description">${preview}</div>
-            <div class="item-meta">Updated ${lastUpdated}</div>
-        `;
-        
-        item.addEventListener('click', (e) => {
-            if (!e.target.closest('.action-btn')) {
-                switchToConversation(conversationId);
-            }
-        });
-        
-        itemsList.appendChild(item);
-    });
-}
 
 // ========== DELETE CONFIRMATION ==========
 
@@ -585,7 +537,6 @@ function confirmDelete() {
             // Switch to general folio if we deleted the current one
             if (currentFolio === deleteTarget.id) {
                 currentFolio = 'general';
-                currentConversation = null;
             }
             
             showMessage(`Folio "${folio.title}" deleted successfully`, 'success');
@@ -602,11 +553,6 @@ function confirmDelete() {
             // Remove from recent conversations
             recentConversations = recentConversations.filter(id => id !== deleteTarget.id);
             
-            // Clear current conversation if it's the one being deleted
-            if (currentConversation === deleteTarget.id) {
-                currentConversation = null;
-                document.getElementById('chatMessages').innerHTML = '';
-            }
             
             // Delete the conversation
             delete conversations[deleteTarget.id];
@@ -644,11 +590,11 @@ function setupEventListeners() {
     document.getElementById('exportBtn').addEventListener('click', () => showModal('exportModal'));
     document.getElementById('cancelExportBtn').addEventListener('click', () => closeModal('exportModal'));
     document.getElementById('exportConversationBtn').addEventListener('click', () => {
-        if (!currentConversation) {
-            showMessage('No conversation selected to export', 'error');
+        if (!currentFolio) {
+            showMessage('No folio selected to export', 'error');
             return;
         }
-        exportConversationAsMarkdown(currentConversation);
+        exportFolioAsMarkdown(currentFolio);
         closeModal('exportModal');
     });
     document.getElementById('exportAllBtn').addEventListener('click', () => {
@@ -713,9 +659,9 @@ async function checkPendingQuery() {
             if (!settings.googleToken && !settings.apiKey) {
                 showSetupModal();
             } else {
-                // Create a new conversation if needed
-                if (!currentConversation) {
-                    newConversation();
+                // Ensure current folio exists
+                if (!currentFolio || !folios[currentFolio]) {
+                    return;
                 }
                 
                 // Auto-send the message
@@ -758,34 +704,34 @@ function removeFromSharedArtifacts(artifactId) {
     });
 }
 
-function generateArtifactFromConversation(conversationId, type = 'summary') {
-    if (!conversations[conversationId]) {
-        showMessage('Conversation not found', 'error');
+function generateArtifactFromFolio(folioId, type = 'summary') {
+    if (!folios[folioId]) {
+        showMessage('Folio not found', 'error');
         return;
     }
     
-    const conversation = conversations[conversationId];
+    const folio = folios[folioId];
     const template = artifactTemplates[type];
     
     // Create AI prompt for artifact generation
-    const prompt = buildArtifactGenerationPrompt(conversation, type);
+    const prompt = buildArtifactGenerationPrompt(folio, type);
     
     // Show loading state
-    showMessage('Generating document from conversation...', 'info');
+    showMessage('Generating document from folio dialogue...', 'info');
     
     // Call AI to generate artifact content
-    generateArtifactContent(prompt, type, conversation.title);
+    generateArtifactContent(prompt, type, folio.title);
 }
 
-function buildArtifactGenerationPrompt(conversation, type) {
-    const messages = conversation.messages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n');
+function buildArtifactGenerationPrompt(folio, type) {
+    const messages = folio.messages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n');
     
     const prompts = {
-        'summary': `Create a comprehensive summary document from this conversation. Include key points, decisions, and action items.\n\nConversation:\n${messages}`,
-        'plan': `Create a structured project plan based on this conversation. Include objectives, tasks, timeline, and resources.\n\nConversation:\n${messages}`,
-        'research': `Create a research document summarizing findings and insights from this conversation. Include key data points and conclusions.\n\nConversation:\n${messages}`,
-        'meeting': `Create meeting notes from this conversation. Include agenda items discussed, decisions made, and action items.\n\nConversation:\n${messages}`,
-        'report': `Create a formal report based on this conversation. Include executive summary, findings, and recommendations.\n\nConversation:\n${messages}`
+        'summary': `Create a comprehensive summary document from this folio dialogue. Include key points, decisions, and action items.\n\nDialogue:\n${messages}`,
+        'plan': `Create a structured project plan based on this folio dialogue. Include objectives, tasks, timeline, and resources.\n\nDialogue:\n${messages}`,
+        'research': `Create a research document summarizing findings and insights from this folio dialogue. Include key data points and conclusions.\n\nDialogue:\n${messages}`,
+        'meeting': `Create meeting notes from this folio dialogue. Include agenda items discussed, decisions made, and action items.\n\nDialogue:\n${messages}`,
+        'report': `Create a formal report based on this folio dialogue. Include executive summary, findings, and recommendations.\n\nDialogue:\n${messages}`
     };
     
     return prompts[type] || prompts['summary'];
@@ -812,7 +758,7 @@ async function generateArtifactContent(prompt, type, conversationTitle) {
             folioId: currentFolio,
             shared: false,
             generated: true,
-            sourceConversation: conversations[currentConversation]?.id,
+            sourceFolio: folios[currentFolio]?.id,
             createdAt: new Date().toISOString(),
             tags: ['ai-generated'],
             references: []
@@ -845,8 +791,8 @@ function clearArtifactModal() {
 }
 
 function showArtifactGenerationMenu() {
-    if (!currentConversation) {
-        showMessage('No active conversation to generate document from', 'error');
+    if (!currentFolio || !folios[currentFolio] || !folios[currentFolio].messages.length) {
+        showMessage('No active folio with messages to generate document from', 'error');
         return;
     }
     
@@ -947,6 +893,6 @@ window.addEventListener('beforeunload', () => {
 // Make functions globally accessible for HTML onclick handlers
 window.editArtifact = editArtifact;
 window.duplicateArtifact = duplicateArtifact;
-window.generateArtifactFromConversation = generateArtifactFromConversation;
+window.generateArtifactFromFolio = generateArtifactFromFolio;
 window.createArtifactFromTemplate = createArtifactFromTemplate;
 window.showArtifactGenerationMenu = showArtifactGenerationMenu;
