@@ -1,0 +1,294 @@
+/* Branestawm - Theme Styles */
+/* Theme-specific overrides and color scheme implementations */
+
+/* ========== THEME APPLICATION ========== */
+
+:root {
+  /* Default to professional dark theme */
+  color-scheme: dark;
+}
+
+:root.scheme-professional.theme-light {
+  color-scheme: light;
+}
+
+:root.scheme-professional.theme-dark {
+  color-scheme: dark;
+}
+
+/* ========== THEME-SPECIFIC OVERRIDES ========== */
+
+/* Professional Theme Dark Mode Enhancements */
+.scheme-professional.theme-dark {
+  /* Enhanced contrast for better readability */
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  
+  /* Improved surface hierarchy */
+  --surface-primary: #1e293b;
+  --surface-secondary: #334155;
+  --surface-elevated: #475569;
+  
+  /* Better border visibility */
+  --border-primary: #475569;
+  --border-secondary: #64748b;
+}
+
+/* Professional Theme Light Mode Enhancements */
+.scheme-professional.theme-light {
+  /* Ensure sufficient contrast */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  
+  /* Clean surface hierarchy */
+  --surface-primary: #ffffff;
+  --surface-secondary: #f8fafc;
+  --surface-elevated: #ffffff;
+  
+  /* Subtle borders */
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+}
+
+/* ========== WARM THEME ENHANCEMENTS ========== */
+
+.scheme-warm.theme-light {
+  /* Warm color temperature adjustments */
+  --shadow-sm: 0 1px 2px 0 rgba(194, 65, 12, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(194, 65, 12, 0.1), 0 2px 4px -2px rgba(194, 65, 12, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(194, 65, 12, 0.1), 0 4px 6px -4px rgba(194, 65, 12, 0.1);
+}
+
+.scheme-warm.theme-light .message.user {
+  background: linear-gradient(135deg, var(--primary-500), #ea580c);
+}
+
+.scheme-warm.theme-dark {
+  /* Warm dark mode with orange accents */
+  --shadow-sm: 0 1px 2px 0 rgba(249, 115, 22, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(249, 115, 22, 0.15), 0 2px 4px -2px rgba(249, 115, 22, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(249, 115, 22, 0.2), 0 4px 6px -4px rgba(249, 115, 22, 0.1);
+}
+
+.scheme-warm.theme-dark .message.user {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+}
+
+/* ========== COOL THEME ENHANCEMENTS ========== */
+
+.scheme-cool.theme-light {
+  /* Cool color temperature adjustments */
+  --shadow-sm: 0 1px 2px 0 rgba(8, 145, 178, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(8, 145, 178, 0.1), 0 2px 4px -2px rgba(8, 145, 178, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(8, 145, 178, 0.1), 0 4px 6px -4px rgba(8, 145, 178, 0.1);
+}
+
+.scheme-cool.theme-light .message.user {
+  background: linear-gradient(135deg, var(--primary-500), #0e7490);
+}
+
+.scheme-cool.theme-dark {
+  /* Cool dark mode with teal accents */
+  --shadow-sm: 0 1px 2px 0 rgba(6, 182, 212, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(6, 182, 212, 0.15), 0 2px 4px -2px rgba(6, 182, 212, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(6, 182, 212, 0.2), 0 4px 6px -4px rgba(6, 182, 212, 0.1);
+}
+
+.scheme-cool.theme-dark .message.user {
+  background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+}
+
+/* ========== HEADER THEME VARIATIONS ========== */
+
+.scheme-warm .header {
+  background: linear-gradient(135deg, var(--primary-500), #ea580c);
+}
+
+.scheme-cool .header {
+  background: linear-gradient(135deg, var(--primary-500), #0e7490);
+}
+
+/* ========== FOCUS RING THEME VARIATIONS ========== */
+
+.scheme-warm .btn:focus,
+.scheme-warm .input:focus,
+.scheme-warm .textarea:focus,
+.scheme-warm .project-selector:focus {
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3);
+}
+
+.scheme-cool .btn:focus,
+.scheme-cool .input:focus,
+.scheme-cool .textarea:focus,
+.scheme-cool .project-selector:focus {
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.3);
+}
+
+/* ========== SEMANTIC COLOR THEME VARIATIONS ========== */
+
+/* Success colors per theme */
+.scheme-warm {
+  --success: #16a34a;
+  --success-light: #dcfce7;
+}
+
+.scheme-cool {
+  --success: #059669;
+  --success-light: #d1fae5;
+}
+
+/* Warning colors per theme */
+.scheme-professional {
+  --warning: #d97706;
+  --warning-light: #fef3c7;
+}
+
+.scheme-warm {
+  --warning: #ea580c;
+  --warning-light: #fed7aa;
+}
+
+.scheme-cool {
+  --warning: #0891b2;
+  --warning-light: #cffafe;
+}
+
+/* ========== THEME TRANSITION ANIMATIONS ========== */
+
+* {
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: var(--transition-fast);
+  transition-timing-function: var(--ease-out);
+}
+
+/* Disable transitions during theme changes to prevent flashing */
+.theme-transitioning * {
+  transition: none !important;
+}
+
+/* ========== HIGH CONTRAST THEME OVERRIDES ========== */
+
+.high-contrast {
+  /* Force maximum contrast */
+  --primary-500: #0000ff;
+  --success: #00ff00;
+  --error: #ff0000;
+  --warning: #ffff00;
+  --info: #00ffff;
+  
+  /* Ensure all borders are visible */
+  --border-primary: currentColor;
+  --border-secondary: currentColor;
+  --border-focus: #0000ff;
+  
+  /* Remove all shadows and subtle effects */
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-inner: none;
+}
+
+.high-contrast .btn {
+  border: 2px solid currentColor !important;
+}
+
+.high-contrast .card,
+.high-contrast .modal-content,
+.high-contrast .message {
+  border: 2px solid currentColor !important;
+}
+
+.high-contrast .input,
+.high-contrast .textarea {
+  border: 2px solid currentColor !important;
+}
+
+/* ========== REDUCED MOTION OVERRIDES ========== */
+
+.reduced-motion .message {
+  animation: none;
+}
+
+.reduced-motion .typing-animation span {
+  animation: none;
+}
+
+.reduced-motion .card:hover,
+.reduced-motion .btn:hover,
+.reduced-motion .action-btn:hover {
+  transform: none !important;
+}
+
+/* ========== PRINT STYLES ========== */
+
+@media print {
+  .header,
+  .sidebar,
+  .chat-input-container,
+  .modal,
+  .btn,
+  .action-btn {
+    display: none !important;
+  }
+  
+  .main-content {
+    flex-direction: column;
+  }
+  
+  .chat-container {
+    width: 100%;
+  }
+  
+  .message {
+    break-inside: avoid;
+    max-width: 100%;
+    margin-bottom: var(--space-4);
+    border: 1px solid #000 !important;
+    color: #000 !important;
+    background: #fff !important;
+  }
+  
+  .message.user {
+    margin-left: 0;
+  }
+  
+  .message.assistant {
+    margin-right: 0;
+  }
+}
+
+/* ========== THEME PREFERENCE DETECTION ========== */
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.theme-light):not(.theme-auto) {
+    color-scheme: dark;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not(.theme-dark):not(.theme-auto) {
+    color-scheme: light;
+  }
+}
+
+/* ========== THEME UTILITIES ========== */
+
+.theme-transition {
+  transition: all var(--transition-slow) var(--ease-in-out);
+}
+
+.theme-no-transition {
+  transition: none !important;
+}
+
+/* Force theme application */
+.force-light {
+  color-scheme: light !important;
+}
+
+.force-dark {
+  color-scheme: dark !important;
+}
