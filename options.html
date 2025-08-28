@@ -336,6 +336,172 @@
             border-radius: var(--radius-base);
         }
         
+        /* Personas Section Styles */
+        .personas-list {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+            margin-bottom: var(--space-6);
+        }
+        
+        .persona-card {
+            padding: var(--space-4);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            transition: all var(--duration-200) var(--ease-out);
+        }
+        
+        .persona-card:hover {
+            border-color: var(--primary-500);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .persona-card.default {
+            border-color: var(--success);
+            background: var(--success-light);
+        }
+        
+        .persona-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: var(--space-3);
+        }
+        
+        .persona-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--text-primary);
+            line-height: var(--leading-snug);
+        }
+        
+        .persona-default-badge {
+            background: var(--success);
+            color: var(--text-inverse);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-full);
+            font-size: var(--font-size-xs);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .persona-actions {
+            display: flex;
+            gap: var(--space-2);
+        }
+        
+        .persona-identity {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            margin-bottom: var(--space-2);
+            line-height: var(--leading-normal);
+        }
+        
+        .persona-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+            font-size: var(--font-size-sm);
+        }
+        
+        .persona-meta-item {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-1);
+        }
+        
+        .persona-meta-label {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .persona-meta-value {
+            color: var(--text-secondary);
+            line-height: var(--leading-normal);
+        }
+        
+        /* Persona Modal Styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all var(--duration-300) var(--ease-out);
+        }
+        
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: var(--surface-primary);
+            border-radius: var(--radius-xl);
+            border: 1px solid var(--border-primary);
+            box-shadow: var(--shadow-2xl);
+            width: 90vw;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.95);
+            transition: transform var(--duration-300) var(--ease-out);
+        }
+        
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            padding: var(--space-6);
+            border-bottom: 1px solid var(--border-primary);
+            background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+            color: var(--text-inverse);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+            position: relative;
+        }
+        
+        .modal-header h3 {
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+            margin: 0;
+            line-height: var(--leading-snug);
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: var(--space-4);
+            right: var(--space-4);
+            background: none;
+            border: none;
+            color: var(--text-inverse);
+            font-size: var(--font-size-xl);
+            cursor: pointer;
+            padding: var(--space-2);
+            border-radius: var(--radius-base);
+            transition: background-color var(--duration-200) var(--ease-out);
+        }
+        
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-body {
+            padding: var(--space-6);
+        }
+        
         @media (max-width: 768px) {
             body {
                 padding: var(--space-4);
@@ -358,6 +524,22 @@
             
             .form-actions {
                 flex-direction: column;
+            }
+            
+            .persona-meta {
+                grid-template-columns: 1fr;
+            }
+            
+            .modal-content {
+                width: 95vw;
+            }
+            
+            .modal-header {
+                padding: var(--space-4);
+            }
+            
+            .modal-body {
+                padding: var(--space-4);
             }
             
             .settings-header {
@@ -577,9 +759,71 @@
                 
             </section>
             
+            <section class="settings-section">
+                <h3>
+                    <span class="section-icon">🎭</span>
+                    Personas
+                </h3>
+                <p class="help-text">Create and manage AI personas for different contexts and folios.</p>
+                
+                <div class="personas-list" id="personasList">
+                    <!-- Personas will be populated here -->
+                </div>
+                
+                <div class="form-actions">
+                    <button class="btn secondary" id="newPersonaBtn">Create New Persona</button>
+                </div>
+            </section>
+            
             <div class="form-actions">
                 <button class="btn secondary" id="resetSettingsBtn">Reset to Defaults</button>
                 <button class="btn" id="saveSettingsBtn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Persona Modal -->
+    <div class="modal" id="personaModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="personaModalTitle">New Persona</h3>
+                <button class="modal-close" aria-label="Close persona modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="personaName" class="label label-required">Persona Name</label>
+                    <input type="text" id="personaName" class="input" placeholder="e.g., Technical Expert, Creative Writer" required>
+                    <div class="help-text">A descriptive name for this persona</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="personaIdentity" class="label label-required">Identity</label>
+                    <textarea id="personaIdentity" class="input" rows="2" placeholder="e.g., Experienced software engineer and technical mentor" required></textarea>
+                    <div class="help-text">How should this persona identify itself?</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="personaCommunicationStyle" class="label label-required">Communication Style</label>
+                    <textarea id="personaCommunicationStyle" class="input" rows="2" placeholder="e.g., Direct, technical, with practical examples" required></textarea>
+                    <div class="help-text">How should this persona communicate?</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="personaTone" class="label label-required">Tone</label>
+                    <input type="text" id="personaTone" class="input" placeholder="e.g., Professional, friendly, encouraging" required>
+                    <div class="help-text">The overall tone this persona should use</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="personaRoleContext" class="label label-required">Role Context</label>
+                    <textarea id="personaRoleContext" class="input" rows="3" placeholder="e.g., Code reviews, architecture decisions, debugging assistance" required></textarea>
+                    <div class="help-text">What contexts or situations is this persona best suited for?</div>
+                </div>
+                
+                <div class="form-actions">
+                    <button class="btn secondary" id="cancelPersonaBtn">Cancel</button>
+                    <button class="btn" id="savePersonaBtn">Save Persona</button>
+                </div>
             </div>
         </div>
     </div>

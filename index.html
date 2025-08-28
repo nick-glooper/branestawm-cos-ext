@@ -68,26 +68,26 @@
         </header>
 
         <main class="main-content" id="main-content">
-            <aside class="sidebar" role="complementary" aria-label="Projects and conversations">
-                <!-- Projects Section -->
+            <aside class="sidebar" role="complementary" aria-label="Folios and conversations">
+                <!-- Folios Section -->
                 <div class="sidebar-section">
                     <div class="section-header" data-tooltip="Browse All">
-                        <h3 class="section-title">Projects</h3>
-                        <button class="browse-btn" id="browseProjectsBtn" aria-label="Browse all projects">
+                        <h3 class="section-title">Folios</h3>
+                        <button class="browse-btn" id="browseFoliosBtn" aria-label="Browse all folios">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"/>
                             </svg>
                         </button>
                     </div>
-                    <div class="recent-projects-list" id="recentProjectsList" role="list" aria-label="Recent projects">
-                        <!-- Recent projects will be populated here -->
+                    <div class="recent-folios-list" id="recentFoliosList" role="list" aria-label="Recent folios">
+                        <!-- Recent folios will be populated here -->
                     </div>
                     <div class="section-actions">
                         <div class="tooltip">
-                            <button class="btn small" id="newProjectBtn" aria-label="Create a new project to organize your chats">
-                                New Project
+                            <button class="btn small" id="newFolioBtn" aria-label="Create a new folio to organize your chats">
+                                New Folio
                             </button>
-                            <div class="tooltip-content">Create a new project to organize your chats</div>
+                            <div class="tooltip-content">Create a new folio to organize your chats with assigned personas</div>
                         </div>
                     </div>
                 </div>
@@ -107,10 +107,10 @@
                     </div>
                     <div class="section-actions">
                         <div class="tooltip">
-                            <button class="btn small" id="newChatBtn" aria-label="Start a new conversation in this project">
+                            <button class="btn small" id="newChatBtn" aria-label="Start a new conversation in this folio">
                                 New Chat
                             </button>
-                            <div class="tooltip-content">Start a new conversation in this project</div>
+                            <div class="tooltip-content">Start a new conversation in this folio</div>
                         </div>
                     </div>
                 </div>
@@ -158,18 +158,33 @@
                 </div>
             </section>
 
-            <aside class="artifacts-panel" role="complementary" aria-label="Notes and artifacts">
+            <aside class="artifacts-panel" role="complementary" aria-label="Documents and artifacts">
                 <div class="artifacts-header">
-                    <h3>Notes</h3>
-                    <div class="tooltip">
-                        <button class="btn small" id="newArtifactBtn" aria-label="Create a new markdown note">
-                            New Note
-                        </button>
-                        <div class="tooltip-content">Create a new markdown note</div>
+                    <h3>Documents</h3>
+                    <div class="artifacts-actions">
+                        <div class="tooltip">
+                            <button class="btn small" id="generateArtifactBtn" aria-label="Generate document from conversation">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,19H5V5H19V19Z"/>
+                                    <path d="M16.5,16.25L16.5,14.75L15,14.75L15,16.25L13.5,16.25L13.5,17.75L15,17.75L15,19.25L16.5,19.25L16.5,17.75L18,17.75L18,16.25L16.5,16.25Z"/>
+                                </svg>
+                                Generate
+                            </button>
+                            <div class="tooltip-content">Generate document from current conversation</div>
+                        </div>
+                        <div class="tooltip">
+                            <button class="btn small secondary" id="newArtifactBtn" aria-label="Create a new document">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                                </svg>
+                                New
+                            </button>
+                            <div class="tooltip-content">Create a new document</div>
+                        </div>
                     </div>
                 </div>
-                <div class="artifacts-list" id="artifactsList" role="list" aria-label="Notes and artifacts">
-                    <!-- Notes will be populated here -->
+                <div class="artifacts-list" id="artifactsList" role="list" aria-label="Documents and artifacts">
+                    <!-- Documents will be populated here -->
                 </div>
             </aside>
         </main>
@@ -264,32 +279,40 @@
         </div>
     </div>
 
-    <!-- Project Modal -->
-    <div class="modal" id="projectModal" role="dialog" aria-labelledby="projectModalTitle" aria-modal="true">
+    <!-- Folio Modal -->
+    <div class="modal" id="folioModal" role="dialog" aria-labelledby="folioModalTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="projectModalTitle">New Project</h3>
-                <button class="close-btn" aria-label="Close project modal">×</button>
+                <h3 id="folioModalTitle">New Folio</h3>
+                <button class="close-btn" aria-label="Close folio modal">×</button>
             </div>
-            <div id="projectContent">
+            <div id="folioContent">
                 <div class="form-group">
-                    <label for="projectName" class="label label-required">Project Name</label>
-                    <input type="text" id="projectName" class="input" placeholder="Enter project name" required>
-                    <div class="help-text">Choose a descriptive name for your project</div>
+                    <label for="folioTitle" class="label label-required">Folio Title</label>
+                    <input type="text" id="folioTitle" class="input" placeholder="Enter folio title" required>
+                    <div class="help-text">Choose a descriptive title for your folio</div>
                 </div>
                 <div class="form-group">
-                    <label for="projectDescription" class="label">Description</label>
-                    <textarea id="projectDescription" class="input" placeholder="Optional description" rows="3"></textarea>
-                    <div class="help-text">Briefly describe what this project is for</div>
+                    <label for="folioDescription" class="label">Description</label>
+                    <textarea id="folioDescription" class="input" placeholder="Optional description" rows="3"></textarea>
+                    <div class="help-text">Briefly describe what this folio is for</div>
                 </div>
                 <div class="form-group">
-                    <label for="projectInstructions" class="label">Custom Instructions</label>
-                    <textarea id="projectInstructions" class="input" placeholder="Enter custom instructions for AI behavior in this project..." rows="4"></textarea>
-                    <div class="help-text">These instructions will guide how Branestawm behaves in conversations within this project. For example: "Act as a technical expert", "Use a formal tone", "Focus on creative solutions", etc.</div>
+                    <label for="folioPersona" class="label label-required">Assigned Persona</label>
+                    <select id="folioPersona" class="input" required>
+                        <option value="core">Core Persona - General assistance and cognitive support</option>
+                        <!-- Additional personas will be populated dynamically -->
+                    </select>
+                    <div class="help-text">Select the persona that will handle conversations in this folio</div>
+                </div>
+                <div class="form-group">
+                    <label for="folioGuidelines" class="label">Custom Guidelines</label>
+                    <textarea id="folioGuidelines" class="input" placeholder="Enter custom guidelines for this folio..." rows="4"></textarea>
+                    <div class="help-text">These guidelines will guide how the assigned persona behaves in this folio. For example: "Focus on technical accuracy", "Use a formal tone", "Emphasize creative solutions", etc.</div>
                 </div>
                 <div class="form-actions">
-                    <button class="btn secondary" id="cancelProjectBtn">Cancel</button>
-                    <button class="btn" id="createProjectBtn">Create Project</button>
+                    <button class="btn secondary" id="cancelFolioBtn">Cancel</button>
+                    <button class="btn" id="createFolioBtn">Create Folio</button>
                 </div>
             </div>
         </div>
@@ -320,19 +343,19 @@
         </div>
     </div>
 
-    <!-- Project Selection Modal -->
-    <div class="modal" id="projectSelectionModal" role="dialog" aria-labelledby="projectSelectionModalTitle" aria-modal="true">
+    <!-- Folio Selection Modal -->
+    <div class="modal" id="folioSelectionModal" role="dialog" aria-labelledby="folioSelectionModalTitle" aria-modal="true">
         <div class="modal-content large">
             <div class="modal-header">
-                <h3 id="projectSelectionModalTitle">Select Project</h3>
-                <button class="close-btn" aria-label="Close project selection modal">×</button>
+                <h3 id="folioSelectionModalTitle">Select Folio</h3>
+                <button class="close-btn" aria-label="Close folio selection modal">×</button>
             </div>
             <div class="modal-body">
                 <div class="search-box">
-                    <input type="text" id="projectSearchInput" class="input" placeholder="Search projects..." aria-label="Search projects">
+                    <input type="text" id="folioSearchInput" class="input" placeholder="Search folios..." aria-label="Search folios">
                 </div>
-                <div class="projects-grid" id="projectsGrid">
-                    <!-- Projects will be populated here -->
+                <div class="folios-grid" id="foliosGrid">
+                    <!-- Folios will be populated here -->
                 </div>
             </div>
         </div>
@@ -450,11 +473,70 @@
         </div>
     </div>
 
+    <!-- Artifact Generation Modal -->
+    <div class="modal" id="artifactGenerationModal" role="dialog" aria-labelledby="artifactGenerationModalTitle" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="artifactGenerationModalTitle">Generate Document</h3>
+                <button class="close-btn" aria-label="Close generation modal">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="help-text">Generate a structured document from your current conversation using AI.</p>
+                
+                <div class="generation-options">
+                    <div class="generation-option" onclick="generateArtifactFromConversation(currentConversation, 'summary')">
+                        <div class="option-icon">📋</div>
+                        <div class="option-info">
+                            <h4>Summary Document</h4>
+                            <p>Comprehensive summary with key points and decisions</p>
+                        </div>
+                    </div>
+                    
+                    <div class="generation-option" onclick="generateArtifactFromConversation(currentConversation, 'plan')">
+                        <div class="option-icon">📈</div>
+                        <div class="option-info">
+                            <h4>Project Plan</h4>
+                            <p>Structured plan with objectives, tasks, and timeline</p>
+                        </div>
+                    </div>
+                    
+                    <div class="generation-option" onclick="generateArtifactFromConversation(currentConversation, 'meeting')">
+                        <div class="option-icon">👥</div>
+                        <div class="option-info">
+                            <h4>Meeting Notes</h4>
+                            <p>Formatted notes with decisions and action items</p>
+                        </div>
+                    </div>
+                    
+                    <div class="generation-option" onclick="generateArtifactFromConversation(currentConversation, 'research')">
+                        <div class="option-icon">🔬</div>
+                        <div class="option-info">
+                            <h4>Research Document</h4>
+                            <p>Analysis of findings and insights from discussion</p>
+                        </div>
+                    </div>
+                    
+                    <div class="generation-option" onclick="generateArtifactFromConversation(currentConversation, 'report')">
+                        <div class="option-icon">📊</div>
+                        <div class="option-info">
+                            <h4>Formal Report</h4>
+                            <p>Professional report with executive summary</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button class="btn secondary" onclick="closeModal('artifactGenerationModal')">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Modular JavaScript files -->
     <script src="api.js"></script>
     <script src="storage.js"></script>
     <script src="ui.js"></script>
-    <script src="projects.js"></script>
+    <script src="folios.js"></script>
     <script src="chat.js"></script>
     <script src="main.js"></script>
 </body>

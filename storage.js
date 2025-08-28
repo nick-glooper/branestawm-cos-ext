@@ -5,14 +5,29 @@
 
 async function loadData() {
     try {
-        const data = await chrome.storage.local.get(['settings', 'projects', 'conversations', 'artifacts', 'currentProject', 'recentProjects', 'recentConversations']);
+        const data = await chrome.storage.local.get(['settings', 'folios', 'conversations', 'artifacts', 'currentFolio', 'recentFolios', 'recentConversations', 'artifactTemplates']);
         
         if (data.settings) {
             settings = { ...settings, ...data.settings };
+            // Ensure personas exist in settings
+            if (!settings.personas) {
+                settings.personas = {
+                    'core': {
+                        id: 'core',
+                        name: 'Core Persona',
+                        identity: 'Helpful AI assistant and cognitive support specialist',
+                        communicationStyle: 'Clear, structured, and supportive',
+                        tone: 'Professional yet approachable',
+                        roleContext: 'General assistance, task breakdown, executive function support',
+                        isDefault: true,
+                        createdAt: new Date().toISOString()
+                    }
+                };
+            }
         }
         
-        if (data.projects) {
-            projects = data.projects;
+        if (data.folios) {
+            folios = data.folios;
         }
         
         if (data.conversations) {
@@ -23,17 +38,25 @@ async function loadData() {
             artifacts = data.artifacts;
         }
         
-        if (data.currentProject) {
-            currentProject = data.currentProject;
+        if (data.currentFolio) {
+            currentFolio = data.currentFolio;
         }
         
-        if (data.recentProjects) {
-            recentProjects = data.recentProjects;
+        if (data.recentFolios) {
+            recentFolios = data.recentFolios;
         }
         
         if (data.recentConversations) {
             recentConversations = data.recentConversations;
         }
+        
+        // Ensure artifact templates exist
+        if (data.artifactTemplates) {
+            artifactTemplates = { ...artifactTemplates, ...data.artifactTemplates };
+        }
+        
+        // Migrate shared artifacts for existing folios
+        migrateSharedArtifacts();
         
         console.log('Data loaded successfully');
         
@@ -46,11 +69,12 @@ async function saveData() {
     try {
         await chrome.storage.local.set({
             settings: settings,
-            projects: projects,
+            folios: folios,
             conversations: conversations,
             artifacts: artifacts,
-            currentProject: currentProject,
-            recentProjects: recentProjects,
+            artifactTemplates: artifactTemplates,
+            currentFolio: currentFolio,
+            recentFolios: recentFolios,
             recentConversations: recentConversations
         });
         
@@ -71,7 +95,7 @@ async function exportConversationAsMarkdown(conversationId) {
     }
     
     let markdown = `# ${conversation.title}\n\n`;
-    markdown += `**Project:** ${projects[conversation.projectId]?.name || 'Unknown'}\n`;
+    markdown += `**Folio:** ${folios[conversation.folioId]?.title || 'Unknown'}\n`;
     markdown += `**Created:** ${new Date(conversation.createdAt).toLocaleString()}\n`;
     if (conversation.updatedAt) {
         markdown += `**Last Updated:** ${new Date(conversation.updatedAt).toLocaleString()}\n`;
@@ -110,20 +134,27 @@ async function exportAllDataAsMarkdown() {
     allMarkdown += `**Extension Version:** ${chrome.runtime.getManifest().version}\n\n`;
     allMarkdown += `---\n\n`;
     
-    // Export all projects and their conversations
-    for (const [projectId, project] of Object.entries(projects)) {
-        allMarkdown += `# Project: ${project.name}\n\n`;
-        if (project.description) {
-            allMarkdown += `**Description:** ${project.description}\n\n`;
+    // Export all folios and their conversations
+    for (const [folioId, folio] of Object.entries(folios)) {
+        allMarkdown += `# Folio: ${folio.title}\n\n`;
+        if (folio.description) {
+            allMarkdown += `**Description:** ${folio.description}\n\n`;
         }
-        allMarkdown += `**Created:** ${new Date(project.createdAt || Date.now()).toLocaleString()}\n\n`;
+        if (folio.guidelines) {
+            allMarkdown += `**Guidelines:** ${folio.guidelines}\n\n`;
+        }
+        const persona = settings.personas[folio.assignedPersona];
+        if (persona) {
+            allMarkdown += `**Persona:** ${persona.name}\n\n`;
+        }
+        allMarkdown += `**Created:** ${new Date(folio.createdAt || Date.now()).toLocaleString()}\n\n`;
         
-        // Export conversations in this project
-        const projectConversations = project.conversations || [];
-        if (projectConversations.length > 0) {
+        // Export conversations in this folio
+        const folioConversations = folio.conversations || [];
+        if (folioConversations.length > 0) {
             allMarkdown += `## Conversations\n\n`;
             
-            for (const convId of projectConversations) {
+            for (const convId of folioConversations) {
                 const conversation = conversations[convId];
                 if (!conversation) continue;
                 
@@ -141,20 +172,51 @@ async function exportAllDataAsMarkdown() {
             }
         }
         
-        // Export notes/artifacts in this project
-        const projectArtifacts = project.artifacts || [];
-        if (projectArtifacts.length > 0) {
-            allMarkdown += `## Notes\n\n`;
+        // Export documents/artifacts in this folio
+        const folioArtifacts = folio.artifacts || [];
+        const folioSharedArtifacts = folio.sharedArtifacts || [];
+        const allFolioArtifacts = [...new Set([...folioArtifacts, ...folioSharedArtifacts])];
+        
+        if (allFolioArtifacts.length > 0) {
+            allMarkdown += `## Documents\n\n`;
             
-            for (const artifactId of projectArtifacts) {
+            // Group by type
+            const artifactsByType = {};
+            allFolioArtifacts.forEach(artifactId => {
                 const artifact = artifacts[artifactId];
-                if (!artifact) continue;
+                if (!artifact) return;
                 
-                allMarkdown += `### ${artifact.name}\n\n`;
-                allMarkdown += `**Created:** ${new Date(artifact.createdAt || Date.now()).toLocaleString()}\n\n`;
-                allMarkdown += `${artifact.content}\n\n`;
-                allMarkdown += `---\n\n`;
-            }
+                const type = artifact.type || 'note';
+                if (!artifactsByType[type]) artifactsByType[type] = [];
+                artifactsByType[type].push(artifact);
+            });
+            
+            // Export by type
+            Object.keys(artifactsByType).forEach(type => {
+                const template = artifactTemplates?.[type] || { name: 'Document', icon: '📄' };
+                allMarkdown += `### ${template.icon} ${template.name}s\n\n`;
+                
+                artifactsByType[type].forEach(artifact => {
+                    allMarkdown += `#### ${artifact.title}\n\n`;
+                    allMarkdown += `**Type:** ${template.name}\n`;
+                    allMarkdown += `**Created:** ${new Date(artifact.createdAt || Date.now()).toLocaleString()}\n`;
+                    if (artifact.updatedAt) {
+                        allMarkdown += `**Updated:** ${new Date(artifact.updatedAt).toLocaleString()}\n`;
+                    }
+                    if (artifact.shared) {
+                        allMarkdown += `**Status:** Shared across all folios\n`;
+                    }
+                    if (artifact.generated) {
+                        allMarkdown += `**Source:** AI Generated\n`;
+                    }
+                    if (artifact.folioId !== folioId) {
+                        const sourceFolio = folios[artifact.folioId];
+                        allMarkdown += `**Origin:** ${sourceFolio?.title || 'Unknown Folio'}\n`;
+                    }
+                    allMarkdown += `\n${artifact.content}\n\n`;
+                    allMarkdown += `---\n\n`;
+                });
+            });
         }
         
         allMarkdown += `\n\n`;
@@ -178,4 +240,28 @@ async function exportAllDataAsMarkdown() {
     URL.revokeObjectURL(url);
     
     showMessage('Complete data export successful! Your data is now saved as a markdown file.', 'success');
+}
+
+// ========== DATA MIGRATION ==========
+
+function migrateSharedArtifacts() {
+    // Ensure all folios have sharedArtifacts array
+    Object.keys(folios).forEach(folioId => {
+        if (!folios[folioId].sharedArtifacts) {
+            folios[folioId].sharedArtifacts = [];
+        }
+    });
+    
+    // Find all shared artifacts and ensure they're in all folios' shared lists
+    Object.values(artifacts).forEach(artifact => {
+        if (artifact.shared) {
+            Object.keys(folios).forEach(folioId => {
+                if (!folios[folioId].sharedArtifacts.includes(artifact.id)) {
+                    folios[folioId].sharedArtifacts.push(artifact.id);
+                }
+            });
+        }
+    });
+    
+    console.log('Shared artifacts migration completed');
 }

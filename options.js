@@ -19,7 +19,20 @@ let settings = {
     themeMode: 'dark', // 'light', 'dark', 'auto'
     fontSize: 'standard', // 'compact', 'standard', 'large', 'xl'
     reducedMotion: false,
-    highContrast: false
+    highContrast: false,
+    // Persona system
+    personas: {
+        'core': {
+            id: 'core',
+            name: 'Core Persona',
+            identity: 'Helpful AI assistant and cognitive support specialist',
+            communicationStyle: 'Clear, structured, and supportive',
+            tone: 'Professional yet approachable',
+            roleContext: 'General assistance, task breakdown, executive function support',
+            isDefault: true,
+            createdAt: new Date().toISOString()
+        }
+    }
 };
 
 // Initialize settings page
@@ -159,6 +172,16 @@ function setupEventListeners() {
     document.getElementById('systemPrompt').addEventListener('input', function() {
         settings.systemPrompt = this.value;
     });
+    
+    // Persona management
+    document.getElementById('newPersonaBtn').addEventListener('click', () => {
+        showPersonaModal();
+    });
+    
+    // Persona modal events
+    document.querySelector('#personaModal .modal-close').addEventListener('click', closePersonaModal);
+    document.getElementById('cancelPersonaBtn').addEventListener('click', closePersonaModal);
+    document.getElementById('savePersonaBtn').addEventListener('click', savePersona);
     
     
     // Sync settings
@@ -624,6 +647,9 @@ function updateUI() {
     document.getElementById('uploadDataBtn').style.display = settings.autoSync ? 'inline-block' : 'none';
     document.getElementById('downloadDataBtn').style.display = settings.autoSync ? 'inline-block' : 'none';
     
+    // Update personas
+    updatePersonasList();
+    
     // Apply tooltip visibility
     document.documentElement.classList.toggle('hide-tooltips', !settings.showTooltips);
 }
@@ -709,3 +735,192 @@ function showToast(message, type = 'info') {
         }, 300);
     }, 3000);
 }
+
+// ========== PERSONA MANAGEMENT ==========
+
+let currentEditingPersona = null;
+
+function updatePersonasList() {
+    const personasList = document.getElementById('personasList');
+    personasList.innerHTML = '';
+    
+    if (!settings.personas) {
+        settings.personas = {
+            'core': {
+                id: 'core',
+                name: 'Core Persona',
+                identity: 'Helpful AI assistant and cognitive support specialist',
+                communicationStyle: 'Clear, structured, and supportive',
+                tone: 'Professional yet approachable',
+                roleContext: 'General assistance, task breakdown, executive function support',
+                isDefault: true,
+                createdAt: new Date().toISOString()
+            }
+        };
+    }
+    
+    Object.values(settings.personas).forEach(persona => {
+        const personaCard = createPersonaCard(persona);
+        personasList.appendChild(personaCard);
+    });
+}
+
+function createPersonaCard(persona) {
+    const card = document.createElement('div');
+    card.className = 'persona-card';
+    if (persona.isDefault) {
+        card.classList.add('default');
+    }
+    
+    card.innerHTML = `
+        <div class="persona-header">
+            <div class="persona-title">
+                ${persona.name}
+                ${persona.isDefault ? '<span class="persona-default-badge">Default</span>' : ''}
+            </div>
+            <div class="persona-actions">
+                <button class="btn secondary small" onclick="editPersona('${persona.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                    Edit
+                </button>
+                ${!persona.isDefault ? `<button class="btn secondary small" onclick="deletePersona('${persona.id}')" style="color: var(--error);">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
+                    Delete
+                </button>` : ''}
+            </div>
+        </div>
+        <div class="persona-identity">${persona.identity}</div>
+        <div class="persona-meta">
+            <div class="persona-meta-item">
+                <div class="persona-meta-label">Communication Style</div>
+                <div class="persona-meta-value">${persona.communicationStyle}</div>
+            </div>
+            <div class="persona-meta-item">
+                <div class="persona-meta-label">Tone</div>
+                <div class="persona-meta-value">${persona.tone}</div>
+            </div>
+        </div>
+    `;
+    
+    return card;
+}
+
+function showPersonaModal(personaId = null) {
+    currentEditingPersona = personaId;
+    const modal = document.getElementById('personaModal');
+    const modalTitle = document.getElementById('personaModalTitle');
+    
+    if (personaId) {
+        // Edit existing persona
+        const persona = settings.personas[personaId];
+        modalTitle.textContent = 'Edit Persona';
+        document.getElementById('personaName').value = persona.name;
+        document.getElementById('personaIdentity').value = persona.identity;
+        document.getElementById('personaCommunicationStyle').value = persona.communicationStyle;
+        document.getElementById('personaTone').value = persona.tone;
+        document.getElementById('personaRoleContext').value = persona.roleContext;
+    } else {
+        // Create new persona
+        modalTitle.textContent = 'New Persona';
+        document.getElementById('personaName').value = '';
+        document.getElementById('personaIdentity').value = '';
+        document.getElementById('personaCommunicationStyle').value = '';
+        document.getElementById('personaTone').value = '';
+        document.getElementById('personaRoleContext').value = '';
+    }
+    
+    modal.classList.add('show');
+    document.getElementById('personaName').focus();
+}
+
+function closePersonaModal() {
+    const modal = document.getElementById('personaModal');
+    modal.classList.remove('show');
+    currentEditingPersona = null;
+}
+
+function savePersona() {
+    const name = document.getElementById('personaName').value.trim();
+    const identity = document.getElementById('personaIdentity').value.trim();
+    const communicationStyle = document.getElementById('personaCommunicationStyle').value.trim();
+    const tone = document.getElementById('personaTone').value.trim();
+    const roleContext = document.getElementById('personaRoleContext').value.trim();
+    
+    // Validation
+    if (!name || !identity || !communicationStyle || !tone || !roleContext) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    // Check for duplicate names (excluding current persona being edited)
+    const existingPersona = Object.values(settings.personas).find(
+        p => p.name.toLowerCase() === name.toLowerCase() && p.id !== currentEditingPersona
+    );
+    
+    if (existingPersona) {
+        showToast('A persona with this name already exists', 'error');
+        return;
+    }
+    
+    if (currentEditingPersona) {
+        // Update existing persona
+        const persona = settings.personas[currentEditingPersona];
+        persona.name = name;
+        persona.identity = identity;
+        persona.communicationStyle = communicationStyle;
+        persona.tone = tone;
+        persona.roleContext = roleContext;
+        persona.updatedAt = new Date().toISOString();
+        showToast('Persona updated successfully!', 'success');
+    } else {
+        // Create new persona
+        const personaId = generateId();
+        settings.personas[personaId] = {
+            id: personaId,
+            name: name,
+            identity: identity,
+            communicationStyle: communicationStyle,
+            tone: tone,
+            roleContext: roleContext,
+            isDefault: false,
+            createdAt: new Date().toISOString()
+        };
+        showToast('Persona created successfully!', 'success');
+    }
+    
+    closePersonaModal();
+    updatePersonasList();
+    saveSettings();
+}
+
+function editPersona(personaId) {
+    showPersonaModal(personaId);
+}
+
+function deletePersona(personaId) {
+    const persona = settings.personas[personaId];
+    
+    if (persona.isDefault) {
+        showToast('Cannot delete the default persona', 'error');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to delete the persona "${persona.name}"? This action cannot be undone.`)) {
+        delete settings.personas[personaId];
+        updatePersonasList();
+        saveSettings();
+        showToast('Persona deleted successfully', 'success');
+    }
+}
+
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
+// Make functions globally accessible for HTML onclick handlers
+window.editPersona = editPersona;
+window.deletePersona = deletePersona;

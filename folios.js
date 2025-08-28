@@ -1,5 +1,5 @@
-// Branestawm - Projects and Conversations Module
-// Handles project and conversation management, creation, editing, and switching
+// Branestawm - Folios and Conversations Module
+// Handles folio and conversation management, creation, editing, and switching
 
 // ========== CONVERSATION MANAGEMENT ==========
 
@@ -9,13 +9,13 @@ function newConversation() {
         id: id,
         title: 'New Chat',
         messages: [],
-        projectId: currentProject,
+        folioId: currentFolio,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
     };
     
     conversations[id] = conversation;
-    projects[currentProject].conversations.push(id);
+    folios[currentFolio].conversations.push(id);
     
     currentConversation = id;
     
@@ -95,86 +95,97 @@ function deleteConversation(conversationId) {
     showModal('deleteConfirmationModal');
 }
 
-// ========== PROJECT MANAGEMENT ==========
+// ========== FOLIO MANAGEMENT ==========
 
-function createProject() {
-    const name = document.getElementById('projectName').value.trim();
-    const description = document.getElementById('projectDescription').value.trim();
-    const customInstructions = document.getElementById('projectInstructions').value.trim();
+function createFolio() {
+    const title = document.getElementById('folioTitle').value.trim();
+    const description = document.getElementById('folioDescription').value.trim();
+    const guidelines = document.getElementById('folioGuidelines').value.trim();
+    const assignedPersona = document.getElementById('folioPersona').value;
     
-    if (!name) {
-        showMessage('Project name is required', 'error');
+    if (!title) {
+        showMessage('Folio title is required', 'error');
         return;
     }
     
-    const projectModal = document.getElementById('projectModal');
-    const existingId = projectModal.dataset.projectId;
+    if (!assignedPersona || !settings.personas[assignedPersona]) {
+        showMessage('Please select a valid persona', 'error');
+        return;
+    }
+    
+    const folioModal = document.getElementById('folioModal');
+    const existingId = folioModal.dataset.folioId;
     
     if (existingId) {
-        // Edit existing project
-        const project = projects[existingId];
-        if (project) {
-            project.name = name;
-            project.description = description;
-            project.customInstructions = customInstructions;
-            project.updatedAt = new Date().toISOString();
-            showMessage(`Project "${name}" updated successfully!`, 'success');
+        // Edit existing folio
+        const folio = folios[existingId];
+        if (folio) {
+            folio.title = title;
+            folio.description = description;
+            folio.guidelines = guidelines;
+            folio.assignedPersona = assignedPersona;
+            folio.updatedAt = new Date().toISOString();
+            showMessage(`Folio "${title}" updated successfully!`, 'success');
         }
-        delete projectModal.dataset.projectId;
-        document.getElementById('projectModalTitle').textContent = 'New Project';
+        delete folioModal.dataset.folioId;
+        document.getElementById('folioModalTitle').textContent = 'New Folio';
     } else {
-        // Create new project
-        const projectId = generateId();
-        const project = {
-            id: projectId,
-            name: name,
+        // Create new folio
+        const folioId = generateId();
+        const folio = {
+            id: folioId,
+            title: title,
             description: description,
-            customInstructions: customInstructions,
+            guidelines: guidelines,
+            assignedPersona: assignedPersona,
             conversations: [],
             artifacts: [],
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            lastUsed: new Date().toISOString()
         };
         
-        projects[projectId] = project;
-        currentProject = projectId;
-        updateRecentProjects(projectId);
-        showMessage(`Project "${name}" created successfully!`, 'success');
+        folios[folioId] = folio;
+        currentFolio = folioId;
+        updateRecentFolios(folioId);
+        showMessage(`Folio "${title}" created successfully!`, 'success');
     }
     
     // Clear form
-    document.getElementById('projectName').value = '';
-    document.getElementById('projectDescription').value = '';
-    document.getElementById('projectInstructions').value = '';
+    document.getElementById('folioTitle').value = '';
+    document.getElementById('folioDescription').value = '';
+    document.getElementById('folioGuidelines').value = '';
+    document.getElementById('folioPersona').value = 'core';
     
-    closeModal('projectModal');
+    closeModal('folioModal');
     updateUI();
     saveData();
 }
 
-function editProject(projectId) {
-    const project = projects[projectId];
-    if (!project) return;
+function editFolio(folioId) {
+    const folio = folios[folioId];
+    if (!folio) return;
     
-    // Populate the project modal with existing data
-    document.getElementById('projectName').value = project.name;
-    document.getElementById('projectDescription').value = project.description || '';
-    document.getElementById('projectInstructions').value = project.customInstructions || '';
-    document.getElementById('projectModalTitle').textContent = 'Edit Project';
+    // Populate the folio modal with existing data
+    document.getElementById('folioTitle').value = folio.title;
+    document.getElementById('folioDescription').value = folio.description || '';
+    document.getElementById('folioGuidelines').value = folio.guidelines || '';
+    document.getElementById('folioPersona').value = folio.assignedPersona || 'core';
+    document.getElementById('folioModalTitle').textContent = 'Edit Folio';
     
-    // Store the project ID for saving
-    document.getElementById('projectModal').dataset.projectId = projectId;
+    // Store the folio ID for saving
+    document.getElementById('folioModal').dataset.folioId = folioId;
     
-    showModal('projectModal');
+    showModal('folioModal');
 }
 
-function switchProject(projectId) {
-    if (!projects[projectId]) return;
+function switchFolio(folioId) {
+    if (!folios[folioId]) return;
     
-    currentProject = projectId;
+    currentFolio = folioId;
     currentConversation = null;
     
-    // Update recent projects
-    updateRecentProjects(projectId);
+    // Update recent folios
+    updateRecentFolios(folioId);
     
     // Clear chat display
     const chatMessages = document.getElementById('chatMessages');
@@ -184,95 +195,96 @@ function switchProject(projectId) {
     saveData();
 }
 
-function deleteProject(projectId) {
-    deleteTarget = { type: 'project', id: projectId };
+function deleteFolio(folioId) {
+    deleteTarget = { type: 'folio', id: folioId };
     showModal('deleteConfirmationModal');
 }
 
-function updateCurrentProjectDisplay() {
-    const project = projects[currentProject];
-    if (!project) return;
+function updateCurrentFolioDisplay() {
+    const folio = folios[currentFolio];
+    if (!folio) return;
     
-    const projectSelector = document.querySelector('.project-selector');
-    if (projectSelector) {
-        projectSelector.textContent = project.name;
+    const folioSelector = document.querySelector('.folio-selector');
+    if (folioSelector) {
+        folioSelector.textContent = folio.title;
     }
 }
 
-// ========== PROJECT AND CONVERSATION GRIDS ==========
+// ========== FOLIO AND CONVERSATION GRIDS ==========
 
-function showProjectSelectionModal() {
-    populateProjectsGrid();
-    showModal('projectSelectionModal');
+function showFolioSelectionModal() {
+    populateFoliosGrid();
+    showModal('folioSelectionModal');
 }
 
-function populateProjectsGrid() {
-    const grid = document.getElementById('projectsGrid');
+function populateFoliosGrid() {
+    const grid = document.getElementById('foliosGrid');
     grid.innerHTML = '';
     
-    // Sort projects by last used (most recent first)
-    const sortedProjects = Object.values(projects).sort((a, b) => {
-        const aLastUsed = getProjectLastUsed(a.id);
-        const bLastUsed = getProjectLastUsed(b.id);
+    // Sort folios by last used (most recent first)
+    const sortedFolios = Object.values(folios).sort((a, b) => {
+        const aLastUsed = getFolioLastUsed(a.id);
+        const bLastUsed = getFolioLastUsed(b.id);
         return new Date(bLastUsed) - new Date(aLastUsed);
     });
     
-    sortedProjects.forEach(project => {
-        const projectCard = createProjectCard(project);
-        grid.appendChild(projectCard);
+    sortedFolios.forEach(folio => {
+        const folioCard = createFolioCard(folio);
+        grid.appendChild(folioCard);
     });
 }
 
-function createProjectCard(project) {
-    const lastUsedDate = getProjectLastUsed(project.id);
+function createFolioCard(folio) {
+    const lastUsedDate = getFolioLastUsed(folio.id);
     const lastUsedText = lastUsedDate ? new Date(lastUsedDate).toLocaleDateString() : 'Never';
     
-    const conversationCount = project.conversations?.length || 0;
-    const artifactCount = project.artifacts?.length || 0;
+    const conversationCount = folio.conversations?.length || 0;
+    const artifactCount = folio.artifacts?.length || 0;
+    const persona = settings.personas[folio.assignedPersona];
     
     const card = document.createElement('div');
-    card.className = 'project-card';
-    if (project.id === currentProject) {
+    card.className = 'folio-card';
+    if (folio.id === currentFolio) {
         card.classList.add('current');
     }
     
     card.innerHTML = `
-        <div class="project-card-header">
-            <div class="project-card-title">${project.name}</div>
-            <div class="project-card-actions">
-                <button class="action-btn edit-btn" aria-label="Edit project" onclick="editProject('${project.id}')">
+        <div class="folio-card-header">
+            <div class="folio-card-title">${folio.title}</div>
+            <div class="folio-card-actions">
+                <button class="action-btn edit-btn" aria-label="Edit folio" onclick="editFolio('${folio.id}')">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                     </svg>
                 </button>
-                <button class="action-btn delete-btn" aria-label="Delete project" onclick="deleteProject('${project.id}')">
+                <button class="action-btn delete-btn" aria-label="Delete folio" onclick="deleteFolio('${folio.id}')">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                     </svg>
                 </button>
             </div>
         </div>
-        <div class="project-card-description">${project.description || 'No description'}</div>
-        <div class="project-card-stats">
+        <div class="folio-card-description">${folio.description || 'No description'}</div>
+        <div class="folio-card-stats">
             <span class="stat">${conversationCount} chats</span>
             <span class="stat">${artifactCount} notes</span>
-            ${project.customInstructions ? '<span class="stat custom-instructions-indicator">Custom Instructions</span>' : ''}
+            ${persona ? `<span class="stat persona-indicator">${persona.name}</span>` : ''}
         </div>
-        <div class="project-card-meta">Last used: ${lastUsedText}</div>
+        <div class="folio-card-meta">Last used: ${lastUsedText}</div>
     `;
     
     card.addEventListener('click', (e) => {
         // Don't select if clicking on action buttons
         if (e.target.closest('.action-btn')) return;
-        selectProject(project.id);
+        selectFolio(folio.id);
     });
     
     return card;
 }
 
-function selectProject(projectId) {
-    switchProject(projectId);
-    closeModal('projectSelectionModal');
+function selectFolio(folioId) {
+    switchFolio(folioId);
+    closeModal('folioSelectionModal');
 }
 
 function showConversationSelectionModal() {
@@ -284,15 +296,15 @@ function populateConversationsGrid() {
     const grid = document.getElementById('conversationsGrid');
     grid.innerHTML = '';
     
-    const projectConversations = projects[currentProject]?.conversations || [];
+    const folioConversations = folios[currentFolio]?.conversations || [];
     
-    if (projectConversations.length === 0) {
+    if (folioConversations.length === 0) {
         grid.innerHTML = '<div class="empty-state">No conversations yet. Start a new chat!</div>';
         return;
     }
     
     // Sort conversations by last updated (most recent first)
-    const sortedConversations = projectConversations
+    const sortedConversations = folioConversations
         .map(id => conversations[id])
         .filter(conv => conv)
         .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
@@ -353,17 +365,17 @@ function selectConversation(conversationId) {
 
 // ========== RECENT ITEMS MANAGEMENT ==========
 
-function updateRecentProjects(projectId) {
-    if (!recentProjects) recentProjects = [];
+function updateRecentFolios(folioId) {
+    if (!recentFolios) recentFolios = [];
     
     // Remove if already exists
-    recentProjects = recentProjects.filter(id => id !== projectId);
+    recentFolios = recentFolios.filter(id => id !== folioId);
     
     // Add to beginning
-    recentProjects.unshift(projectId);
+    recentFolios.unshift(folioId);
     
     // Keep only last 10
-    recentProjects = recentProjects.slice(0, 10);
+    recentFolios = recentFolios.slice(0, 10);
     
     saveData();
 }
@@ -395,13 +407,13 @@ function generateConversationPreview(conversation) {
     return preview + (lastMessage.content.length > 100 ? '...' : '');
 }
 
-function getProjectLastUsed(projectId) {
-    const project = projects[projectId];
-    if (!project || !project.conversations) return project?.createdAt || new Date().toISOString();
+function getFolioLastUsed(folioId) {
+    const folio = folios[folioId];
+    if (!folio || !folio.conversations) return folio?.createdAt || new Date().toISOString();
     
-    let lastUsed = project.createdAt || new Date().toISOString();
+    let lastUsed = folio.lastUsed || folio.createdAt || new Date().toISOString();
     
-    project.conversations.forEach(convId => {
+    folio.conversations.forEach(convId => {
         const conversation = conversations[convId];
         if (conversation && conversation.updatedAt) {
             if (new Date(conversation.updatedAt) > new Date(lastUsed)) {

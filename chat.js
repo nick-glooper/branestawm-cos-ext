@@ -46,26 +46,8 @@ async function sendMessage() {
             timeZoneName: 'short'
         });
         
-        // Get current project custom instructions
-        const currentProjectObj = projects[currentProject];
-        const customInstructions = currentProjectObj?.customInstructions || '';
-        
-        let systemPromptContent = `${settings.systemPrompt}
-
-📅 CURRENT DATE AND TIME: ${dateString} at ${timeString}
-🗓️ Today is: ${dateString}
-⏰ Current time: ${timeString}
-
-IMPORTANT: When users reference relative dates like "yesterday", "Saturday just gone", "last week", etc., calculate from TODAY'S date: ${dateString}. You have full access to current date/time information above.`;
-
-        // Add custom instructions if they exist for this project
-        if (customInstructions.trim()) {
-            systemPromptContent += `
-
-🎯 PROJECT-SPECIFIC INSTRUCTIONS: ${customInstructions}
-
-Please follow these project-specific instructions in addition to your base behavior. These instructions take precedence for this conversation.`;
-        }
+        // Multi-layered context system
+        const systemPromptContent = buildContextualPrompt(message, currentFolio);
 
         let messages = [
             { 
@@ -130,6 +112,12 @@ function addMessage(conversationId, role, content) {
     conversations[conversationId].messages.push(message);
     conversations[conversationId].updatedAt = new Date().toISOString();
     
+    // Update folio last used time
+    const conversation = conversations[conversationId];
+    if (conversation && folios[conversation.folioId]) {
+        folios[conversation.folioId].lastUsed = new Date().toISOString();
+    }
+    
     // Update UI
     displayMessage(message);
     scrollToBottom();
@@ -177,6 +165,97 @@ function removeTypingIndicator(typingDiv) {
     if (typingDiv && typingDiv.parentNode) {
         typingDiv.parentNode.removeChild(typingDiv);
     }
+}
+
+// ========== CONTEXTUAL PROMPT SYSTEM ==========
+
+function buildContextualPrompt(query, folioId) {
+    const folio = folios[folioId];
+    const persona = settings.personas[folio?.assignedPersona] || settings.personas['core'];
+    
+    // Prepare date/time context
+    const currentDate = new Date();
+    const dateString = currentDate.toLocaleDateString('en-US', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    });
+    const timeString = currentDate.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'short'
+    });
+    
+    // Build multi-layered prompt
+    let prompt = `SYSTEM CONTEXT (PERSONA):
+Identity: ${persona.identity}
+Communication Style: ${persona.communicationStyle}
+Tone: ${persona.tone}
+Role Context: ${persona.roleContext}
+
+`;
+
+    // Add folio context if available
+    if (folio && (folio.guidelines?.trim() || folio.description?.trim())) {
+        prompt += `DOMAIN CONTEXT (FOLIO):
+Folio: ${folio.title}`;
+        
+        if (folio.description?.trim()) {
+            prompt += `
+Description: ${folio.description}`;
+        }
+        
+        if (folio.guidelines?.trim()) {
+            prompt += `
+Guidelines: ${folio.guidelines}`;
+        }
+        
+        prompt += `
+
+`;
+    }
+
+    // Add personal context (original system prompt)
+    prompt += `PERSONAL CONTEXT:
+${settings.systemPrompt}
+
+`;
+
+    // Add temporal context
+    prompt += `TEMPORAL CONTEXT:
+📅 CURRENT DATE AND TIME: ${dateString} at ${timeString}
+🗓️ Today is: ${dateString}
+⏰ Current time: ${timeString}
+
+IMPORTANT: When users reference relative dates like "yesterday", "Saturday just gone", "last week", etc., calculate from TODAY'S date: ${dateString}. You have full access to current date/time information above.
+
+`;
+
+    // Add historical context instruction
+    prompt += `HISTORICAL CONTEXT:
+You have access to the entire conversation history and can reference previous discussions, artifacts, and interactions from across all folios. Use this knowledge to provide contextually aware and informed responses.
+
+`;
+
+    // Add current context
+    prompt += `CURRENT CONTEXT:
+The user is currently working in the "${folio?.title || 'General Folio'}" folio. Apply the persona characteristics and folio guidelines appropriately while maintaining access to your complete knowledge base.
+
+INSTRUCTIONS:
+- Respond using the specified persona's identity, communication style, and tone
+- Apply any folio-specific guidelines when relevant
+- Access your complete historical knowledge while filtering through the current persona/folio context
+- Maintain consistency with the persona's role context and communication preferences`;
+
+    return prompt;
+}
+
+function getRelevantHistoricalContext(query, folioId, maxEntries = 5) {
+    // Future enhancement: Implement semantic search through conversation history
+    // For now, return recent messages from current conversation
+    const recentMessages = conversations[currentConversation]?.messages?.slice(-maxEntries) || [];
+    return recentMessages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n');
 }
 
 // ========== UTILITY FUNCTIONS ==========
