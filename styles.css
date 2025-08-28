@@ -2022,8 +2022,8 @@ body {
 
 :root[data-mode="dark"] .recent-project-item.active,
 :root[data-mode="dark"] .recent-conversation-item.active {
-    background: var(--primary-900);
-    border-color: var(--primary-600);
+    background: #4B5563;
+    border-color: var(--primary-500);
 }
 
 /* Responsive Design */
@@ -2255,7 +2255,7 @@ body {
 
 :root[data-mode="dark"] .project-card.active,
 :root[data-mode="dark"] .conversation-card.active {
-    background: var(--primary-900);
+    background: #4B5563;
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
