@@ -406,7 +406,7 @@ IMPORTANT: When users reference relative dates like "yesterday", "Saturday just 
         if (conv.messages.length === 2 && conv.title === 'New Chat') {
             conv.title = generateConversationTitle(message);
             conv.updatedAt = new Date().toISOString();
-            updateConversationsList();
+            updateRecentConversationsWidget();
         }
         
         // Save data
@@ -544,10 +544,9 @@ function setupEventListeners() {
     document.getElementById('newChatBtn').addEventListener('click', newConversation);
     document.getElementById('newArtifactBtn').addEventListener('click', () => showModal('artifactModal'));
     
-    // Project selector
-    document.getElementById('projectSelect').addEventListener('change', function() {
-        switchProject(this.value);
-    });
+    // Project and conversation selection
+    document.getElementById('currentProjectBtn').addEventListener('click', showProjectSelectionModal);
+    document.getElementById('browseConversationsBtn').addEventListener('click', showConversationSelectionModal);
     
     // Modal action events
     document.getElementById('createProjectBtn').addEventListener('click', createProject);
@@ -664,7 +663,7 @@ function closeModal(modalId) {
 
 async function loadData() {
     try {
-        const data = await chrome.storage.local.get(['settings', 'projects', 'conversations', 'artifacts', 'currentProject']);
+        const data = await chrome.storage.local.get(['settings', 'projects', 'conversations', 'artifacts', 'currentProject', 'recentProjects', 'recentConversations']);
         
         if (data.settings) {
             settings = { ...settings, ...data.settings };
@@ -686,6 +685,14 @@ async function loadData() {
             currentProject = data.currentProject;
         }
         
+        if (data.recentProjects) {
+            recentProjects = data.recentProjects;
+        }
+        
+        if (data.recentConversations) {
+            recentConversations = data.recentConversations;
+        }
+        
         console.log('Data loaded successfully');
         
     } catch (error) {
@@ -700,7 +707,9 @@ async function saveData() {
             projects: projects,
             conversations: conversations,
             artifacts: artifacts,
-            currentProject: currentProject
+            currentProject: currentProject,
+            recentProjects: recentProjects,
+            recentConversations: recentConversations
         });
         
         console.log('Data saved successfully');
@@ -738,37 +747,14 @@ function newConversation() {
     saveData();
 }
 
-function switchProject(projectId) {
-    currentProject = projectId;
-    currentConversation = null;
-    updateUI();
-    saveData();
-}
 
 function updateUI() {
-    updateProjectSelector();
-    updateConversationsList();
+    updateCurrentProjectDisplay();
+    updateRecentProjectsWidget();
+    updateRecentConversationsWidget();
     updateArtifactsList();
 }
 
-function updateProjectSelector() {
-    const selector = document.getElementById('projectSelect');
-    selector.innerHTML = '';
-    
-    for (const project of Object.values(projects)) {
-        const option = document.createElement('option');
-        option.value = project.id;
-        option.textContent = project.name;
-        if (project.id === currentProject) {
-            option.selected = true;
-        }
-        selector.appendChild(option);
-    }
-}
-
-function updateConversationsList() {
-    // Placeholder - implement conversation list UI
-}
 
 function switchToConversation(conversationId) {
     if (!conversations[conversationId]) return;
@@ -785,7 +771,7 @@ function switchToConversation(conversationId) {
     });
     
     scrollToBottom();
-    updateConversationsList(); // Refresh to show active state
+    updateRecentConversationsWidget(); // Refresh to show active state
     saveData();
 }
 
@@ -1204,58 +1190,6 @@ function hideTooltip(element) {
 
 // ========== ENHANCED UI UPDATES ==========
 
-function updateConversationsList() {
-    const conversationsList = document.getElementById('conversationsList');
-    const projectConversations = projects[currentProject]?.conversations || [];
-    
-    conversationsList.innerHTML = '';
-    
-    if (projectConversations.length === 0) {
-        conversationsList.innerHTML = `
-            <div class="empty-state">
-                <p>No conversations yet</p>
-                <p class="help-text">Click "New Chat" to start your first conversation</p>
-            </div>
-        `;
-        return;
-    }
-    
-    projectConversations.forEach(conversationId => {
-        const conversation = conversations[conversationId];
-        if (!conversation) return;
-        
-        const conversationElement = document.createElement('div');
-        conversationElement.className = `conversation-item ${conversation.id === currentConversation ? 'active' : ''}`;
-        conversationElement.setAttribute('role', 'listitem');
-        conversationElement.setAttribute('tabindex', '0');
-        conversationElement.setAttribute('aria-label', `Conversation: ${conversation.title}`);
-        
-        const preview = conversation.messages.length > 0 
-            ? conversation.messages[conversation.messages.length - 1].content.substring(0, 100) + '...'
-            : 'No messages yet';
-            
-        const lastUpdate = conversation.updatedAt 
-            ? new Date(conversation.updatedAt).toLocaleDateString()
-            : new Date(conversation.createdAt).toLocaleDateString();
-        
-        conversationElement.innerHTML = `
-            <div class="conversation-title">${conversation.title}</div>
-            <div class="conversation-preview">${preview}</div>
-            <div class="conversation-meta">${lastUpdate}</div>
-        `;
-        
-        conversationElement.addEventListener('click', () => switchToConversation(conversation.id));
-        conversationElement.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                switchToConversation(conversation.id);
-            }
-        });
-        
-        conversationsList.appendChild(conversationElement);
-    });
-}
-
 function updateArtifactsList() {
     const artifactsList = document.getElementById('artifactsList');
     const projectArtifacts = projects[currentProject]?.artifacts || [];
@@ -1341,4 +1275,308 @@ document.addEventListener('DOMContentLoaded', async function() {
     console.log('Branestawm initialized successfully');
 });
 
-// ... existing code ...
+// ========== MODAL-BASED PROJECT AND CONVERSATION MANAGEMENT ==========
+
+// Recent items tracking
+let recentProjects = [];
+let recentConversations = [];
+const MAX_RECENT_ITEMS = 10;
+
+// Project Selection Modal Functions
+function showProjectSelectionModal() {
+    populateProjectsGrid();
+    showModal('projectSelectionModal');
+    setupProjectSearch();
+}
+
+function populateProjectsGrid() {
+    const grid = document.getElementById('projectsGrid');
+    grid.innerHTML = '';
+    
+    const sortedProjects = Object.values(projects).sort((a, b) => {
+        const aLastUsed = getProjectLastUsed(a.id);
+        const bLastUsed = getProjectLastUsed(b.id);
+        return bLastUsed - aLastUsed;
+    });
+    
+    sortedProjects.forEach(project => {
+        const projectCard = createProjectCard(project);
+        grid.appendChild(projectCard);
+    });
+}
+
+function createProjectCard(project) {
+    const card = document.createElement('div');
+    card.className = `project-card ${project.id === currentProject ? 'active' : ''}`;
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Select project: ${project.name}`);
+    
+    const conversationCount = project.conversations ? project.conversations.length : 0;
+    const artifactCount = project.artifacts ? project.artifacts.length : 0;
+    const lastUsed = getProjectLastUsed(project.id);
+    const lastUsedText = lastUsed ? new Date(lastUsed).toLocaleDateString() : 'Never used';
+    
+    card.innerHTML = `
+        <div class="project-card-header">
+            <h4 class="project-card-title">${project.name}</h4>
+            ${project.id === currentProject ? '<div class="active-badge">Current</div>' : ''}
+        </div>
+        <div class="project-card-description">${project.description || 'No description'}</div>
+        <div class="project-card-stats">
+            <span class="stat">${conversationCount} chats</span>
+            <span class="stat">${artifactCount} notes</span>
+        </div>
+        <div class="project-card-meta">Last used: ${lastUsedText}</div>
+    `;
+    
+    card.addEventListener('click', () => selectProject(project.id));
+    card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectProject(project.id);
+        }
+    });
+    
+    return card;
+}
+
+function setupProjectSearch() {
+    const searchInput = document.getElementById('projectSearchInput');
+    searchInput.addEventListener('input', (e) => {
+        filterProjectsGrid(e.target.value);
+    });
+}
+
+function filterProjectsGrid(searchTerm) {
+    const cards = document.querySelectorAll('.project-card');
+    const term = searchTerm.toLowerCase();
+    
+    cards.forEach(card => {
+        const title = card.querySelector('.project-card-title').textContent.toLowerCase();
+        const description = card.querySelector('.project-card-description').textContent.toLowerCase();
+        const matches = title.includes(term) || description.includes(term);
+        card.style.display = matches ? 'block' : 'none';
+    });
+}
+
+function selectProject(projectId) {
+    if (projectId !== currentProject) {
+        switchProject(projectId);
+        updateRecentProjects(projectId);
+    }
+    closeModal('projectSelectionModal');
+}
+
+// Conversation Selection Modal Functions
+function showConversationSelectionModal() {
+    populateConversationsGrid();
+    showModal('conversationSelectionModal');
+    setupConversationSearch();
+}
+
+function populateConversationsGrid() {
+    const grid = document.getElementById('conversationsGrid');
+    grid.innerHTML = '';
+    
+    // Get all conversations from current project
+    const projectConversations = projects[currentProject]?.conversations || [];
+    const conversationsInProject = projectConversations.map(id => conversations[id]).filter(Boolean);
+    
+    // Sort by last updated
+    const sortedConversations = conversationsInProject.sort((a, b) => {
+        const aTime = new Date(a.updatedAt || a.createdAt).getTime();
+        const bTime = new Date(b.updatedAt || b.createdAt).getTime();
+        return bTime - aTime;
+    });
+    
+    if (sortedConversations.length === 0) {
+        grid.innerHTML = '<div class="empty-state">No conversations in this project yet</div>';
+        return;
+    }
+    
+    sortedConversations.forEach(conversation => {
+        const conversationCard = createConversationCard(conversation);
+        grid.appendChild(conversationCard);
+    });
+}
+
+function createConversationCard(conversation) {
+    const card = document.createElement('div');
+    card.className = `conversation-card ${conversation.id === currentConversation ? 'active' : ''}`;
+    card.setAttribute('tabindex', '0');
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-label', `Select conversation: ${conversation.title}`);
+    
+    const messageCount = conversation.messages.length;
+    const lastMessage = conversation.messages[conversation.messages.length - 1];
+    const preview = lastMessage ? lastMessage.content.substring(0, 150) + '...' : 'No messages yet';
+    const lastUpdated = new Date(conversation.updatedAt || conversation.createdAt).toLocaleDateString();
+    
+    card.innerHTML = `
+        <div class="conversation-card-header">
+            <h4 class="conversation-card-title">${conversation.title}</h4>
+            ${conversation.id === currentConversation ? '<div class="active-badge">Current</div>' : ''}
+        </div>
+        <div class="conversation-card-preview">${preview}</div>
+        <div class="conversation-card-stats">
+            <span class="stat">${messageCount} messages</span>
+            <span class="stat">Updated ${lastUpdated}</span>
+        </div>
+    `;
+    
+    card.addEventListener('click', () => selectConversation(conversation.id));
+    card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            selectConversation(conversation.id);
+        }
+    });
+    
+    return card;
+}
+
+function setupConversationSearch() {
+    const searchInput = document.getElementById('conversationSearchInput');
+    searchInput.addEventListener('input', (e) => {
+        filterConversationsGrid(e.target.value);
+    });
+}
+
+function filterConversationsGrid(searchTerm) {
+    const cards = document.querySelectorAll('.conversation-card');
+    const term = searchTerm.toLowerCase();
+    
+    cards.forEach(card => {
+        const title = card.querySelector('.conversation-card-title').textContent.toLowerCase();
+        const preview = card.querySelector('.conversation-card-preview').textContent.toLowerCase();
+        const matches = title.includes(term) || preview.includes(term);
+        card.style.display = matches ? 'block' : 'none';
+    });
+}
+
+function selectConversation(conversationId) {
+    switchToConversation(conversationId);
+    updateRecentConversations(conversationId);
+    closeModal('conversationSelectionModal');
+}
+
+// Recent Items Management
+function updateRecentProjects(projectId) {
+    // Remove if already exists
+    recentProjects = recentProjects.filter(id => id !== projectId);
+    // Add to beginning
+    recentProjects.unshift(projectId);
+    // Keep only MAX_RECENT_ITEMS
+    recentProjects = recentProjects.slice(0, MAX_RECENT_ITEMS);
+    updateRecentProjectsWidget();
+    saveData();
+}
+
+function updateRecentConversations(conversationId) {
+    // Remove if already exists
+    recentConversations = recentConversations.filter(id => id !== conversationId);
+    // Add to beginning
+    recentConversations.unshift(conversationId);
+    // Keep only MAX_RECENT_ITEMS
+    recentConversations = recentConversations.slice(0, MAX_RECENT_ITEMS);
+    updateRecentConversationsWidget();
+    saveData();
+}
+
+function updateRecentProjectsWidget() {
+    const widget = document.getElementById('recentProjectsList');
+    widget.innerHTML = '';
+    
+    const validRecentProjects = recentProjects.filter(id => projects[id]).slice(0, 5);
+    
+    if (validRecentProjects.length === 0) {
+        widget.innerHTML = '<div class="empty-recent">No recent projects</div>';
+        return;
+    }
+    
+    validRecentProjects.forEach(projectId => {
+        const project = projects[projectId];
+        if (!project) return;
+        
+        const item = document.createElement('button');
+        item.className = `recent-project-item ${projectId === currentProject ? 'active' : ''}`;
+        item.textContent = project.name;
+        item.setAttribute('aria-label', `Switch to project: ${project.name}`);
+        
+        item.addEventListener('click', () => {
+            selectProject(projectId);
+        });
+        
+        widget.appendChild(item);
+    });
+}
+
+function updateRecentConversationsWidget() {
+    const widget = document.getElementById('recentConversationsList');
+    widget.innerHTML = '';
+    
+    // Get valid recent conversations from current project
+    const currentProjectConversations = projects[currentProject]?.conversations || [];
+    const validRecentConversations = recentConversations
+        .filter(id => conversations[id] && currentProjectConversations.includes(id))
+        .slice(0, 5);
+    
+    if (validRecentConversations.length === 0) {
+        widget.innerHTML = '<div class="empty-recent">No recent conversations</div>';
+        return;
+    }
+    
+    validRecentConversations.forEach(conversationId => {
+        const conversation = conversations[conversationId];
+        if (!conversation) return;
+        
+        const item = document.createElement('button');
+        item.className = `recent-conversation-item ${conversationId === currentConversation ? 'active' : ''}`;
+        item.innerHTML = `
+            <div class="recent-conversation-title">${conversation.title}</div>
+            <div class="recent-conversation-date">${new Date(conversation.updatedAt || conversation.createdAt).toLocaleDateString()}</div>
+        `;
+        item.setAttribute('aria-label', `Switch to conversation: ${conversation.title}`);
+        
+        item.addEventListener('click', () => {
+            selectConversation(conversationId);
+        });
+        
+        widget.appendChild(item);
+    });
+}
+
+// Helper Functions
+function getProjectLastUsed(projectId) {
+    const projectConversations = projects[projectId]?.conversations || [];
+    let lastUsed = 0;
+    
+    projectConversations.forEach(convId => {
+        const conversation = conversations[convId];
+        if (conversation) {
+            const updated = new Date(conversation.updatedAt || conversation.createdAt).getTime();
+            lastUsed = Math.max(lastUsed, updated);
+        }
+    });
+    
+    return lastUsed;
+}
+
+// Update existing functions to use new system
+function switchProject(projectId) {
+    currentProject = projectId;
+    currentConversation = null;
+    updateRecentProjects(projectId);
+    updateCurrentProjectDisplay();
+    updateUI();
+    saveData();
+}
+
+function updateCurrentProjectDisplay() {
+    const currentProjectNameEl = document.getElementById('currentProjectName');
+    const project = projects[currentProject];
+    if (currentProjectNameEl && project) {
+        currentProjectNameEl.textContent = project.name;
+    }
+}

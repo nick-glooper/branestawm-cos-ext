@@ -65,10 +65,19 @@
         <main class="main-content" id="main-content">
             <aside class="sidebar" role="complementary" aria-label="Projects and conversations">
                 <div class="sidebar-header">
-                    <label for="projectSelect" class="sr-only">Select project</label>
-                    <select class="project-selector" id="projectSelect" aria-label="Select project">
-                        <option value="default">Default Project</option>
-                    </select>
+                    <button class="btn project-selector-btn" id="currentProjectBtn" aria-label="Select project">
+                        <span class="current-project-name" id="currentProjectName">Default Project</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M7,10L12,15L17,10H7Z"/>
+                        </svg>
+                    </button>
+                    
+                    <div class="recent-projects">
+                        <h4>Recent Projects</h4>
+                        <div class="recent-projects-list" id="recentProjectsList">
+                            <!-- Recent projects will be populated here -->
+                        </div>
+                    </div>
                     <div class="sidebar-buttons">
                         <div class="tooltip">
                             <button class="btn small" id="newProjectBtn" aria-label="Create a new project to organize your chats">
@@ -84,8 +93,17 @@
                         </div>
                     </div>
                 </div>
-                <div class="conversations-list" id="conversationsList" role="list" aria-label="Conversations">
-                    <!-- Conversations will be populated here -->
+                
+                <div class="conversations-section">
+                    <div class="conversations-header">
+                        <h4>Conversations</h4>
+                        <button class="btn small secondary" id="browseConversationsBtn" aria-label="Browse all conversations">
+                            Browse All
+                        </button>
+                    </div>
+                    <div class="recent-conversations-list" id="recentConversationsList" role="list" aria-label="Recent conversations">
+                        <!-- Recent conversations will be populated here -->
+                    </div>
                 </div>
             </aside>
 
@@ -283,6 +301,42 @@
                 <div class="form-actions">
                     <button class="btn secondary" id="cancelArtifactBtn">Cancel</button>
                     <button class="btn" id="saveArtifactBtn">Save Note</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Selection Modal -->
+    <div class="modal" id="projectSelectionModal" role="dialog" aria-labelledby="projectSelectionModalTitle" aria-modal="true">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="projectSelectionModalTitle">Select Project</h3>
+                <button class="close-btn" aria-label="Close project selection modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-box">
+                    <input type="text" id="projectSearchInput" class="input" placeholder="Search projects..." aria-label="Search projects">
+                </div>
+                <div class="projects-grid" id="projectsGrid">
+                    <!-- Projects will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conversation Selection Modal -->
+    <div class="modal" id="conversationSelectionModal" role="dialog" aria-labelledby="conversationSelectionModalTitle" aria-modal="true">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3 id="conversationSelectionModalTitle">Browse Conversations</h3>
+                <button class="close-btn" aria-label="Close conversation selection modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="search-box">
+                    <input type="text" id="conversationSearchInput" class="input" placeholder="Search conversations..." aria-label="Search conversations">
+                </div>
+                <div class="conversations-grid" id="conversationsGrid">
+                    <!-- Conversations will be populated here -->
                 </div>
             </div>
         </div>
