@@ -66,6 +66,9 @@ body {
   min-height: var(--space-20); /* 80px */
   color: var(--text-inverse);
   box-shadow: var(--shadow-md);
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
 }
 
 .header-left h1 {
@@ -86,10 +89,12 @@ body {
 
 .header-controls {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-3);
   align-items: center;
   flex-shrink: 0;
   flex-wrap: nowrap;
+  overflow: visible;
+  min-width: 0;
 }
 
 .main-content {
@@ -183,6 +188,7 @@ body {
   gap: var(--space-3);
   align-items: flex-end;
   max-width: 100%;
+  flex-direction: row;
 }
 
 .message-input {
