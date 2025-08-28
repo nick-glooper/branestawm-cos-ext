@@ -121,95 +121,57 @@ function findAIOverview() {
     // Look for the most likely AI content containers based on common patterns
     
     const candidates = [
-        // AI Mode conversation responses (higher priority)
-        { selector: '[data-testid*="conversation"]', name: 'AI Mode conversation elements' },
-        { selector: '[data-testid*="response"]', name: 'AI Mode response elements' },
-        { selector: '[data-testid*="turn"]', name: 'AI Mode conversation turn' },
-        { selector: '[role="main"] div[data-testid]', name: 'Main area data-testid elements' },
-        { selector: '[class*="conversation"]', name: 'AI Mode conversation container' },
-        { selector: 'div[data-node-key]', name: 'AI Mode data-node-key elements' },
+        // Focus on actual AI Mode conversation structure (no content-specific patterns)
+        { selector: '[data-testid*="conversation"]:not([role="dialog"])', name: 'AI Mode conversation elements' },
+        { selector: '[data-testid*="response"]:not([role="dialog"])', name: 'AI Mode response elements' },
+        { selector: '[data-testid*="turn"]:not([role="dialog"])', name: 'AI Mode conversation turn' },
+        { selector: '[role="main"] div[data-testid]:not([role="dialog"])', name: 'Main area data-testid elements' },
+        { selector: '[class*="conversation"]:not([role="dialog"])', name: 'AI Mode conversation container' },
+        { selector: 'div[data-node-key]:not([role="dialog"])', name: 'AI Mode data-node-key elements' },
         
         // Traditional AI Overview patterns  
         { selector: '[data-snc="ih6Jnb_4Hk7"]', name: 'AI Overview main container' },
         { selector: '.X5LH0c', name: 'AI generated answer' },
         { selector: '.IZ6rdc', name: 'Search generative experience' },
-        { selector: '[data-testid*="ai"]', name: 'AI testid elements' },
-        { selector: '[aria-label*="AI"]', name: 'AI aria-label elements' },
+        { selector: '[data-testid*="ai"]:not([role="dialog"])', name: 'AI testid elements' },
+        { selector: '[aria-label*="AI"]:not([role="dialog"])', name: 'AI aria-label elements' },
         
-        // Weather and location-specific content patterns (for user's query)
-        { selector: 'div:has-weather', name: 'Elements with weather content', manual: true },
-        { selector: 'div:has-location', name: 'Elements with location content (GU51 2TH)', manual: true },
-        { selector: 'div:has-forecast', name: 'Elements with forecast content', manual: true },
-        { selector: 'div:has-text("As of")', name: 'Elements with AI intro phrases', manual: true },
-        { selector: 'div:has-text("Based on")', name: 'Elements with AI intro phrases', manual: true },
-        { selector: 'div:has-text("According to")', name: 'Elements with AI intro phrases', manual: true },
-        { selector: 'div:has-text("The weather")', name: 'Weather response indicators', manual: true },
+        // Generic content detection - find substantial text that's not in dialogs
+        { selector: 'div:substantial-content', name: 'Elements with substantial non-dialog content', manual: true },
     ];
     
     for (const candidate of candidates) {
         if (candidate.manual) {
-            // For text-based searches, we need to manually search
+            // Generic content detection - find substantial content not in UI dialogs
             let elements = [];
             
-            if (candidate.selector === 'div:has-weather') {
-                // Look for weather-specific content
+            if (candidate.selector === 'div:substantial-content') {
+                // Look for elements with substantial content that are not UI dialogs
                 elements = Array.from(document.querySelectorAll('div')).filter(el => {
                     const text = el.textContent?.trim();
-                    return text && text.length > 100 && text.length < 2000 && (
-                        text.includes('°C') || text.includes('°F') ||
-                        text.includes('temperature') || text.includes('Temperature') ||
-                        text.includes('weather') || text.includes('Weather') ||
-                        text.includes('forecast') || text.includes('Forecast') ||
-                        text.match(/\d+°[CF]/) || // Temperature patterns
-                        text.includes('humidity') || text.includes('wind') ||
-                        text.includes('rain') || text.includes('sunny') || text.includes('cloudy')
-                    );
+                    
+                    // Exclude known UI dialog containers by structure, not content
+                    const isUIDialog = el.closest('[role="dialog"]') ||
+                                      el.closest('.wklPJe') ||
+                                      el.closest('[data-type="hovc"]') ||
+                                      el.closest('[data-type="vsh"]') ||
+                                      el.closest('[jsaction*="vshDecision"]');
+                    
+                    // Look for substantial, meaningful content
+                    const hasSubstantialContent = text && text.length > 100 && text.length < 2000;
+                    
+                    // Exclude elements that are clearly UI/navigation by checking ancestors
+                    const isNavigation = el.closest('nav') || 
+                                        el.closest('header') || 
+                                        el.closest('footer') ||
+                                        el.closest('[role="navigation"]') ||
+                                        el.closest('[role="banner"]');
+                    
+                    return hasSubstantialContent && !isUIDialog && !isNavigation;
                 });
-            } else if (candidate.selector === 'div:has-location') {
-                // Look for location-specific content (user's GU51 2TH query)
-                elements = Array.from(document.querySelectorAll('div')).filter(el => {
-                    const text = el.textContent?.trim();
-                    return text && text.length > 100 && text.length < 2000 && (
-                        text.includes('GU51 2TH') || text.includes('GU51') ||
-                        text.includes('Fleet') || text.includes('Hampshire') ||
-                        text.includes('England') || text.includes('UK') ||
-                        text.match(/\b[A-Z]{1,2}\d{1,2}\s?\d[A-Z]{2}\b/) // UK postcode pattern
-                    );
-                });
-            } else if (candidate.selector === 'div:has-forecast') {
-                // Look for forecast-specific content
-                elements = Array.from(document.querySelectorAll('div')).filter(el => {
-                    const text = el.textContent?.trim();
-                    return text && text.length > 100 && text.length < 2000 && (
-                        text.includes('forecast') || text.includes('Forecast') ||
-                        text.includes('today') || text.includes('tomorrow') ||
-                        text.includes('week') || text.includes('outlook') ||
-                        text.includes('expect') || text.includes('will be') ||
-                        text.match(/\d+%.*chance/) || // "70% chance of rain"
-                        text.match(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/) ||
-                        text.includes('high') || text.includes('low')
-                    );
-                });
-            } else if (candidate.selector.includes('"The weather"')) {
-                // Look for weather response indicators
-                elements = Array.from(document.querySelectorAll('div')).filter(el => {
-                    const text = el.textContent?.trim();
-                    return text && text.length > 100 && text.length < 2000 && (
-                        text.includes('The weather') || text.includes('the weather') ||
-                        text.includes('Current weather') || text.includes('current weather') ||
-                        text.includes('Today\'s weather') || text.includes('today\'s weather')
-                    );
-                });
-            } else {
-                // Original AI intro phrase search
-                elements = Array.from(document.querySelectorAll('div')).filter(el => {
-                    const text = el.textContent?.trim();
-                    return text && (
-                        text.includes('As of ') || 
-                        text.includes('Based on ') || 
-                        text.includes('According to ')
-                    ) && text.length > 100 && text.length < 2000;
-                });
+                
+                // Sort by text length descending to prioritize more substantial content
+                elements.sort((a, b) => b.textContent.trim().length - a.textContent.trim().length);
             }
             
             if (elements.length > 0) {
@@ -352,14 +314,14 @@ function extractAIOverviewContent(aiOverview) {
     // Clean up the content
     const cloned = aiOverview.cloneNode(true);
     
-    // Remove unwanted UI elements including CSS-heavy containers
+    // Remove unwanted UI elements including CSS-heavy containers and dialogs
     const unwantedSelectors = [
         'script', 'style', 'noscript',
         '.hidden', '[style*="display: none"]', '[style*="visibility: hidden"]',
         'button', 'input', 'select', 'textarea', 
         '.gb_f', '.gb_g', '.gb_h', // Google toolbar
         'nav', 'header', 'footer',
-        '[role="button"]', '[role="navigation"]',
+        '[role="button"]', '[role="navigation"]', '[role="dialog"]', // Dialog elements
         '.FeRdKc', // Google ads
         '.commercial', '.ads',
         '[data-ved]', // Google tracking elements - these contain CSS
@@ -367,7 +329,9 @@ function extractAIOverviewContent(aiOverview) {
         '.s6JM6d', // Google UI elements
         '.N6Sb2c', // Google dialogs
         '.VfPpkd', // Material Design components
+        '.wklPJe', '.xyZFie', // Visual Search History dialog classes
         '.shared-links', // Shared links dialog
+        '[data-type="hovc"]', '[data-type="vsh"]', // Visual search dialog attributes
         '[aria-label*="Delete"]', '[aria-label*="Cancel"]', // Dialog buttons
         '[data-attrid*="action"]', // Action buttons
         '[class*="SPo9yc"]', '[class*="uqGSn"]', // CSS class containers
@@ -396,36 +360,19 @@ function extractAIOverviewContent(aiOverview) {
     content = content.replace(/@media[^{]*{[^}]*}/g, ''); // CSS media queries
     content = content.replace(/calc\([^)]+\)/g, ''); // CSS calc functions
     
-    // Filter out common Google UI text patterns
-    const uiPatterns = [
-        /Shared public links/gi,
-        /Delete all links/gi,
-        /Your public links are automatically deleted/gi,
+    // Remove common UI button text and navigation elements
+    const genericUIPatterns = [
         /Learn more/gi,
-        /Delete all public links\?/gi,
-        /If you delete all of your shared links/gi,
-        /Delete all.*Cancel/gi,
-        /\d+ months?\./gi,
-        /This public link shares a thread/gi,
-        /including any personal information you added/gi,
-        /You can delete a public link at any time/gi,
-        /but not copies made by others/gi,
-        /If you share with third parties/gi,
-        /their policies apply/gi,
-        /public link/gi,
-        /shares a thread/gi,
-        /Meet AI Mode/gi,
-        /Ask detailed questions for better responses/gi,
-        /Ask detailed questions/gi,
         /Dismiss/gi,
         /Upload image/gi,
         /Microphone/gi,
         /Send/gi,
-        /Google activity/gi,
-        /Sources:/gi
+        /Cancel/gi,
+        /Delete/gi,
+        /Sources?:/gi
     ];
     
-    uiPatterns.forEach(pattern => {
+    genericUIPatterns.forEach(pattern => {
         content = content.replace(pattern, '');
     });
     
@@ -440,20 +387,11 @@ function extractAIOverviewContent(aiOverview) {
     const cssIndicators = content.match(/\.(SPo9yc|uqGSn|KrKx0b|tA3WHf|WVV5ke|PLq9Je)/g);
     const cssPropertyCount = (content.match(/(width|height|margin|padding|position|display|background|transform):/g) || []).length;
     
-    // If content is too short, looks like UI text, or contains CSS, try to find actual content
-    if (content.length < 100 || 
-        cssIndicators?.length > 5 || 
-        cssPropertyCount > 10 ||
-        content.toLowerCase().includes('delete') || 
-        content.toLowerCase().includes('cancel') ||
-        content.toLowerCase().includes('public link') ||
-        content.toLowerCase().includes('personal information') ||
-        content.toLowerCase().includes('third parties') ||
-        content.toLowerCase().includes('meet ai mode') ||
-        content.toLowerCase().includes('upload image') ||
-        content.toLowerCase().includes('microphone') ||
-        content.toLowerCase().includes('google activity')) {
-        console.log('⚠️ Content appears to be UI elements, searching for better content...');
+    // If content is too short or contains excessive CSS, try to find actual content
+    if (content.length < 50 || 
+        cssIndicators?.length > 10 || 
+        cssPropertyCount > 20) {
+        console.log('⚠️ Content appears to be UI/CSS elements, searching for better content...');
         
         // Try to find actual AI response content within the element
         const contentElements = aiOverview.querySelectorAll('p, div, span');
@@ -461,19 +399,11 @@ function extractAIOverviewContent(aiOverview) {
         
         for (const element of contentElements) {
             const text = element.textContent.trim();
-            if (text.length > 50 && 
+            // Simple filtering - just avoid very short text and obvious UI button text
+            if (text.length > 30 && 
                 !text.toLowerCase().includes('delete') &&
                 !text.toLowerCase().includes('cancel') &&
-                !text.toLowerCase().includes('shared') &&
                 !text.toLowerCase().includes('learn more') &&
-                !text.toLowerCase().includes('public link') &&
-                !text.toLowerCase().includes('personal information') &&
-                !text.toLowerCase().includes('third parties') &&
-                !text.toLowerCase().includes('policies apply') &&
-                !text.toLowerCase().includes('meet ai mode') &&
-                !text.toLowerCase().includes('upload image') &&
-                !text.toLowerCase().includes('microphone') &&
-                !text.toLowerCase().includes('google activity') &&
                 !text.toLowerCase().includes('dismiss') &&
                 !text.toLowerCase().includes('send')) {
                 candidates.push(text);
