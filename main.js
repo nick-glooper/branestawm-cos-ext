@@ -545,8 +545,16 @@ function setupEventListeners() {
     document.getElementById('newArtifactBtn').addEventListener('click', () => showModal('artifactModal'));
     
     // Project and conversation selection
-    document.getElementById('currentProjectBtn').addEventListener('click', showProjectSelectionModal);
+    document.getElementById('browseProjectsBtn').addEventListener('click', showProjectSelectionModal);
     document.getElementById('browseConversationsBtn').addEventListener('click', showConversationSelectionModal);
+    
+    // Edit conversation modal events
+    document.getElementById('saveConversationBtn').addEventListener('click', saveConversationChanges);
+    document.getElementById('cancelEditConversationBtn').addEventListener('click', () => closeModal('editConversationModal'));
+    
+    // Delete confirmation modal events
+    document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
+    document.getElementById('cancelDeleteBtn').addEventListener('click', () => closeModal('deleteConfirmationModal'));
     
     // Modal action events
     document.getElementById('createProjectBtn').addEventListener('click', createProject);
@@ -803,18 +811,37 @@ function createProject() {
         return;
     }
     
-    const projectId = generateId();
-    const project = {
-        id: projectId,
-        name: name,
-        description: description,
-        conversations: [],
-        artifacts: [],
-        createdAt: new Date().toISOString()
-    };
+    const projectModal = document.getElementById('projectModal');
+    const existingId = projectModal.dataset.projectId;
     
-    projects[projectId] = project;
-    currentProject = projectId;
+    if (existingId) {
+        // Edit existing project
+        const project = projects[existingId];
+        if (project) {
+            project.name = name;
+            project.description = description;
+            project.updatedAt = new Date().toISOString();
+            showMessage(`Project "${name}" updated successfully!`, 'success');
+        }
+        delete projectModal.dataset.projectId;
+        document.getElementById('projectModalTitle').textContent = 'New Project';
+    } else {
+        // Create new project
+        const projectId = generateId();
+        const project = {
+            id: projectId,
+            name: name,
+            description: description,
+            conversations: [],
+            artifacts: [],
+            createdAt: new Date().toISOString()
+        };
+        
+        projects[projectId] = project;
+        currentProject = projectId;
+        updateRecentProjects(projectId);
+        showMessage(`Project "${name}" created successfully!`, 'success');
+    }
     
     // Clear form
     document.getElementById('projectName').value = '';
@@ -823,7 +850,6 @@ function createProject() {
     closeModal('projectModal');
     updateUI();
     saveData();
-    showMessage(`Project "${name}" created successfully!`, 'success');
 }
 
 function saveArtifact() {
@@ -1488,7 +1514,7 @@ function updateRecentProjectsWidget() {
     const widget = document.getElementById('recentProjectsList');
     widget.innerHTML = '';
     
-    const validRecentProjects = recentProjects.filter(id => projects[id]).slice(0, 5);
+    const validRecentProjects = recentProjects.filter(id => projects[id]).slice(0, 10);
     
     if (validRecentProjects.length === 0) {
         widget.innerHTML = '<div class="empty-recent">No recent projects</div>';
@@ -1499,12 +1525,35 @@ function updateRecentProjectsWidget() {
         const project = projects[projectId];
         if (!project) return;
         
-        const item = document.createElement('button');
+        const item = document.createElement('div');
         item.className = `recent-project-item ${projectId === currentProject ? 'active' : ''}`;
-        item.textContent = project.name;
         item.setAttribute('aria-label', `Switch to project: ${project.name}`);
         
-        item.addEventListener('click', () => {
+        const description = project.description || 'No description available';
+        
+        item.innerHTML = `
+            <div class="item-header">
+                <div class="item-title">${project.name}</div>
+                <div class="item-actions">
+                    <button class="action-btn edit-btn" aria-label="Edit project" onclick="editProject('${projectId}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/>
+                        </svg>
+                    </button>
+                    <button class="action-btn delete-btn" aria-label="Delete project" onclick="deleteProject('${projectId}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="item-description">${description}</div>
+        `;
+        
+        // Make the main area clickable (excluding action buttons)
+        const mainArea = item.querySelector('.item-title');
+        mainArea.style.cursor = 'pointer';
+        mainArea.addEventListener('click', () => {
             selectProject(projectId);
         });
         
@@ -1520,7 +1569,7 @@ function updateRecentConversationsWidget() {
     const currentProjectConversations = projects[currentProject]?.conversations || [];
     const validRecentConversations = recentConversations
         .filter(id => conversations[id] && currentProjectConversations.includes(id))
-        .slice(0, 5);
+        .slice(0, 10);
     
     if (validRecentConversations.length === 0) {
         widget.innerHTML = '<div class="empty-recent">No recent conversations</div>';
@@ -1531,20 +1580,49 @@ function updateRecentConversationsWidget() {
         const conversation = conversations[conversationId];
         if (!conversation) return;
         
-        const item = document.createElement('button');
+        const item = document.createElement('div');
         item.className = `recent-conversation-item ${conversationId === currentConversation ? 'active' : ''}`;
-        item.innerHTML = `
-            <div class="recent-conversation-title">${conversation.title}</div>
-            <div class="recent-conversation-date">${new Date(conversation.updatedAt || conversation.createdAt).toLocaleDateString()}</div>
-        `;
         item.setAttribute('aria-label', `Switch to conversation: ${conversation.title}`);
         
-        item.addEventListener('click', () => {
+        const description = conversation.description || generateConversationPreview(conversation);
+        
+        item.innerHTML = `
+            <div class="item-header">
+                <div class="item-title">${conversation.title}</div>
+                <div class="item-actions">
+                    <button class="action-btn edit-btn" aria-label="Edit conversation" onclick="editConversation('${conversationId}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14.06,9L15,9.94L5.92,19H5V18.08L14.06,9M17.66,3C17.41,3 17.15,3.1 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18.17,3.09 17.92,3 17.66,3M14.06,6.19L3,17.25V21H6.75L17.81,9.94L14.06,6.19Z"/>
+                        </svg>
+                    </button>
+                    <button class="action-btn delete-btn" aria-label="Delete conversation" onclick="deleteConversation('${conversationId}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="item-description">${description}</div>
+        `;
+        
+        // Make the main area clickable (excluding action buttons)
+        const mainArea = item.querySelector('.item-title');
+        mainArea.style.cursor = 'pointer';
+        mainArea.addEventListener('click', () => {
             selectConversation(conversationId);
         });
         
         widget.appendChild(item);
     });
+}
+
+// Helper function to generate conversation preview
+function generateConversationPreview(conversation) {
+    if (conversation.messages && conversation.messages.length > 0) {
+        const lastMessage = conversation.messages[conversation.messages.length - 1];
+        return lastMessage.content.substring(0, 80) + '...';
+    }
+    return 'No messages yet';
 }
 
 // Helper Functions
@@ -1579,4 +1657,165 @@ function updateCurrentProjectDisplay() {
     if (currentProjectNameEl && project) {
         currentProjectNameEl.textContent = project.name;
     }
+}
+
+// ========== EDIT AND DELETE FUNCTIONS ==========
+
+let itemToDelete = null;
+let itemTypeToDelete = null;
+let conversationToEdit = null;
+
+// Edit Project Function (reuse existing project modal)
+function editProject(projectId) {
+    const project = projects[projectId];
+    if (!project) return;
+    
+    // Populate the project modal with existing data
+    document.getElementById('projectName').value = project.name;
+    document.getElementById('projectDescription').value = project.description || '';
+    document.getElementById('projectModalTitle').textContent = 'Edit Project';
+    
+    // Store the project ID for saving
+    document.getElementById('projectModal').dataset.projectId = projectId;
+    
+    showModal('projectModal');
+}
+
+// Edit Conversation Function
+function editConversation(conversationId) {
+    const conversation = conversations[conversationId];
+    if (!conversation) return;
+    
+    conversationToEdit = conversationId;
+    
+    // Populate the conversation modal with existing data
+    document.getElementById('conversationTitle').value = conversation.title;
+    document.getElementById('conversationDescription').value = conversation.description || '';
+    
+    showModal('editConversationModal');
+}
+
+// Save Conversation Changes
+function saveConversationChanges() {
+    if (!conversationToEdit) return;
+    
+    const title = document.getElementById('conversationTitle').value.trim();
+    const description = document.getElementById('conversationDescription').value.trim();
+    
+    if (!title) {
+        showMessage('Conversation title is required', 'error');
+        return;
+    }
+    
+    const conversation = conversations[conversationToEdit];
+    conversation.title = title;
+    conversation.description = description;
+    conversation.updatedAt = new Date().toISOString();
+    
+    closeModal('editConversationModal');
+    updateRecentConversationsWidget();
+    saveData();
+    showMessage('Conversation updated successfully!', 'success');
+    
+    conversationToEdit = null;
+}
+
+// Delete Project Function
+function deleteProject(projectId) {
+    const project = projects[projectId];
+    if (!project) return;
+    
+    itemToDelete = projectId;
+    itemTypeToDelete = 'project';
+    
+    const message = `Are you sure you want to delete the project "${project.name}"? This will also delete all conversations and notes in this project. This action cannot be undone.`;
+    document.getElementById('deleteMessage').textContent = message;
+    
+    showModal('deleteConfirmationModal');
+}
+
+// Delete Conversation Function
+function deleteConversation(conversationId) {
+    const conversation = conversations[conversationId];
+    if (!conversation) return;
+    
+    itemToDelete = conversationId;
+    itemTypeToDelete = 'conversation';
+    
+    const message = `Are you sure you want to delete the conversation "${conversation.title}"? This action cannot be undone.`;
+    document.getElementById('deleteMessage').textContent = message;
+    
+    showModal('deleteConfirmationModal');
+}
+
+// Confirm Delete Function
+function confirmDelete() {
+    if (!itemToDelete || !itemTypeToDelete) return;
+    
+    if (itemTypeToDelete === 'project') {
+        // Delete project and all its conversations and artifacts
+        const project = projects[itemToDelete];
+        if (project) {
+            // Delete all conversations in this project
+            if (project.conversations) {
+                project.conversations.forEach(convId => {
+                    delete conversations[convId];
+                });
+            }
+            
+            // Delete all artifacts in this project
+            if (project.artifacts) {
+                project.artifacts.forEach(artifactId => {
+                    delete artifacts[artifactId];
+                });
+            }
+            
+            // Remove from recent projects
+            recentProjects = recentProjects.filter(id => id !== itemToDelete);
+            
+            // Delete the project
+            delete projects[itemToDelete];
+            
+            // Switch to default project if this was current
+            if (currentProject === itemToDelete) {
+                currentProject = 'default';
+                currentConversation = null;
+            }
+            
+            showMessage(`Project "${project.name}" deleted successfully`, 'success');
+        }
+    } else if (itemTypeToDelete === 'conversation') {
+        // Delete conversation
+        const conversation = conversations[itemToDelete];
+        if (conversation) {
+            // Remove from project's conversation list
+            const project = projects[conversation.projectId];
+            if (project && project.conversations) {
+                project.conversations = project.conversations.filter(id => id !== itemToDelete);
+            }
+            
+            // Remove from recent conversations
+            recentConversations = recentConversations.filter(id => id !== itemToDelete);
+            
+            // Clear current conversation if this was it
+            if (currentConversation === itemToDelete) {
+                currentConversation = null;
+                const chatMessages = document.getElementById('chatMessages');
+                chatMessages.innerHTML = '<div class="message system" role="status">Conversation deleted. Start a new conversation or select an existing one.</div>';
+            }
+            
+            // Delete the conversation
+            delete conversations[itemToDelete];
+            
+            showMessage(`Conversation "${conversation.title}" deleted successfully`, 'success');
+        }
+    }
+    
+    closeModal('deleteConfirmationModal');
+    updateUI();
+    saveData();
+    
+    // Reset delete state
+    itemToDelete = null;
+    itemTypeToDelete = null;
 }
