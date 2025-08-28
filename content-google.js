@@ -117,6 +117,18 @@ function isGoogleSearchResultsPage() {
 function findAIOverview() {
     console.log('🎯 === IMPROVED AI OVERVIEW DETECTION ===');
     
+    // First, check if AI Mode container exists on page
+    const aiModeContainer = document.querySelector('div[data-subtree="aimc"]');
+    console.log('🔍 AI Mode container check:', aiModeContainer ? 'FOUND' : 'NOT FOUND');
+    if (aiModeContainer) {
+        console.log('🔍 AI Mode container details:', {
+            tagName: aiModeContainer.tagName,
+            className: aiModeContainer.className,
+            textLength: aiModeContainer.textContent?.length,
+            visible: aiModeContainer.style.display !== 'none'
+        });
+    }
+    
     // Enhanced detection strategy with better Google AI Mode support
     const candidates = [
         // CORRECT Google AI Mode selector (highest priority)
@@ -448,22 +460,24 @@ function handleImportClick() {
         Importing...
     `;
     
-    // Use cached content if available, otherwise search again
-    let aiOverview = cachedAIContent;
-    if (!aiOverview || !document.contains(aiOverview)) {
-        console.log('🔍 Cached content not available or removed, searching again...');
-        aiOverview = findAIOverview();
-        if (!aiOverview) {
-            console.error('❌ No content found for Google import');
-            showError('Could not find content to import');
-            return;
-        }
-    } else {
-        console.log('✅ Using cached AI Overview content');
+    // FORCE re-detection to use new AI Mode selector (clear cache)
+    console.log('🔍 Forcing fresh detection with new AI Mode selector...');
+    cachedAIContent = null; // Clear cache to force new detection
+    
+    let aiOverview = findAIOverview();
+    if (!aiOverview) {
+        console.error('❌ No AI Mode content found for import');
+        showError('Could not find AI Mode content to import. Make sure you\'re on a page with AI responses.');
+        return;
     }
     
-    console.log('📄 Found content element:', aiOverview);
-    console.log('📄 Element HTML preview:', aiOverview.outerHTML.substring(0, 300) + '...');
+    // Log what we actually found
+    const isAIModeContainer = aiOverview.getAttribute('data-subtree') === 'aimc';
+    console.log('✅ Found element - AI Mode Container:', isAIModeContainer);
+    
+    console.log('📄 Final selected element:', aiOverview.tagName, aiOverview.className);
+    console.log('📄 Data subtree attribute:', aiOverview.getAttribute('data-subtree'));
+    console.log('📄 Element preview:', aiOverview.textContent?.substring(0, 200) + '...');
     
     // Extract content
     const content = extractAIOverviewContent(aiOverview);
