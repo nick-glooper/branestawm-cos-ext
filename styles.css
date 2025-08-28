@@ -1875,9 +1875,10 @@ body {
 
 .recent-project-item.active,
 .recent-conversation-item.active {
-    background: #374151;
+    background: #4B5563;
     border-color: var(--primary-500);
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    border-width: 2px;
 }
 
 /* Item Header with Actions */
@@ -2090,9 +2091,10 @@ body {
 }
 
 .project-card.active {
-    background: #374151;
+    background: #4B5563;
     border-color: var(--primary-500);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    border-width: 2px;
 }
 
 .project-card-header {
@@ -2197,9 +2199,10 @@ body {
 }
 
 .conversation-card.active {
-    background: #374151;
+    background: #4B5563;
     border-color: var(--primary-500);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    border-width: 2px;
 }
 
 .conversation-card-header {
