@@ -802,6 +802,11 @@ input[type="checkbox"] {
 /* ========== TOOLTIPS ========== */
 
 .tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-content {
   position: absolute;
   background: var(--bg-primary);
   color: var(--text-primary);
@@ -814,6 +819,18 @@ input[type="checkbox"] {
   pointer-events: none;
   max-width: 200px;
   line-height: var(--leading-normal);
+  white-space: nowrap;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity var(--transition-fast) var(--ease-out), visibility var(--transition-fast) var(--ease-out);
+  bottom: calc(100% + var(--space-2));
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tooltip:hover .tooltip-content {
+  visibility: visible;
+  opacity: 1;
 }
 
 /* ========== EMPTY STATES ========== */
