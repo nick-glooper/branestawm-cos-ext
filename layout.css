@@ -95,6 +95,20 @@ body {
   flex-wrap: nowrap;
   overflow: visible;
   min-width: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.header-controls .tooltip {
+  position: relative;
+}
+
+.header-controls .btn.icon-btn {
+  min-width: 40px;
+  padding: var(--space-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .main-content {
