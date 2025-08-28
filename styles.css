@@ -1790,6 +1790,7 @@ body {
 /* Sidebar Sections */
 .sidebar-section {
     margin-bottom: 1.5rem;
+    padding: 0 0.75rem;
 }
 
 .sidebar-section:first-child {
@@ -1856,8 +1857,8 @@ body {
 /* Item Styling */
 .recent-project-item,
 .recent-conversation-item {
-    background: var(--surface-secondary);
-    border: 1px solid var(--border);
+    background: #374151;
+    border: 1px solid #4B5563;
     border-radius: 0.5rem;
     padding: 0.75rem;
     transition: all 0.2s ease;
@@ -1866,7 +1867,7 @@ body {
 
 .recent-project-item:hover,
 .recent-conversation-item:hover {
-    background: var(--surface-primary);
+    background: #4B5563;
     border-color: var(--primary-300);
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
     transform: translateY(-1px);
@@ -1874,9 +1875,9 @@ body {
 
 .recent-project-item.active,
 .recent-conversation-item.active {
-    background: var(--primary-100);
-    border-color: var(--primary-400);
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+    background: var(--primary-200);
+    border-color: var(--primary-500);
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
 /* Item Header with Actions */
@@ -1889,7 +1890,7 @@ body {
 
 .item-title {
     font-weight: 600;
-    color: var(--text-primary);
+    color: #F9FAFB;
     font-size: 0.875rem;
     line-height: 1.3;
     flex: 1;
@@ -1942,13 +1943,12 @@ body {
 /* Item Description */
 .item-description {
     font-size: 0.75rem;
-    color: var(--text-primary);
+    color: #D1D5DB;
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    opacity: 0.8;
 }
 
 /* Section Actions */
@@ -2068,8 +2068,8 @@ body {
 
 /* Project Cards */
 .project-card {
-    background: var(--surface-primary);
-    border: 1px solid var(--border);
+    background: #374151;
+    border: 1px solid #4B5563;
     border-radius: 0.75rem;
     padding: 1.25rem;
     cursor: pointer;
@@ -2078,6 +2078,7 @@ body {
 }
 
 .project-card:hover {
+    background: #4B5563;
     border-color: var(--primary-300);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
     transform: translateY(-1px);
@@ -2089,9 +2090,9 @@ body {
 }
 
 .project-card.active {
+    background: var(--primary-200);
     border-color: var(--primary-500);
-    background: var(--primary-25);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .project-card-header {
@@ -2104,7 +2105,7 @@ body {
 .project-card-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #F9FAFB;
     margin: 0;
     line-height: 1.3;
     flex: 1;
@@ -2141,7 +2142,7 @@ body {
 }
 
 .project-card-description {
-    color: var(--text-secondary);
+    color: #D1D5DB;
     font-size: 0.875rem;
     line-height: 1.4;
     margin-bottom: 1rem;
@@ -2159,8 +2160,8 @@ body {
 
 .stat {
     font-size: 0.75rem;
-    color: var(--text-tertiary);
-    background: var(--surface-secondary);
+    color: #9CA3AF;
+    background: #4B5563;
     padding: 0.25rem 0.5rem;
     border-radius: 0.25rem;
     font-weight: 500;
@@ -2168,14 +2169,14 @@ body {
 
 .project-card-meta {
     font-size: 0.75rem;
-    color: var(--text-tertiary);
+    color: #9CA3AF;
     font-weight: 500;
 }
 
 /* Conversation Cards */
 .conversation-card {
-    background: var(--surface-primary);
-    border: 1px solid var(--border);
+    background: #374151;
+    border: 1px solid #4B5563;
     border-radius: 0.75rem;
     padding: 1.25rem;
     cursor: pointer;
@@ -2184,6 +2185,7 @@ body {
 }
 
 .conversation-card:hover {
+    background: #4B5563;
     border-color: var(--primary-300);
     box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
     transform: translateY(-1px);
@@ -2195,9 +2197,9 @@ body {
 }
 
 .conversation-card.active {
+    background: var(--primary-200);
     border-color: var(--primary-500);
-    background: var(--primary-25);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .conversation-card-header {
@@ -2210,7 +2212,7 @@ body {
 .conversation-card-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: #F9FAFB;
     margin: 0;
     line-height: 1.3;
     flex: 1;
@@ -2218,7 +2220,7 @@ body {
 }
 
 .conversation-card-preview {
-    color: var(--text-secondary);
+    color: #D1D5DB;
     font-size: 0.875rem;
     line-height: 1.4;
     margin-bottom: 1rem;
