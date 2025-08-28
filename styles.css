@@ -1957,6 +1957,19 @@ body {
     margin-top: 0.75rem;
 }
 
+/* Custom Instructions Indicators */
+.custom-instructions-badge {
+    font-size: 0.75rem;
+    margin-left: 0.5rem;
+    opacity: 0.7;
+}
+
+.custom-instructions-indicator {
+    background: var(--success-500) !important;
+    color: white !important;
+    font-weight: 600;
+}
+
 /* Empty State */
 .empty-recent {
     padding: 2rem 1rem;

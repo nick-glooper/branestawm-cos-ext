@@ -373,16 +373,31 @@ async function sendMessage() {
             timeZoneName: 'short'
         });
         
-        let messages = [
-            { 
-                role: 'system', 
-                content: `${settings.systemPrompt}
+        // Get current project custom instructions
+        const currentProjectObj = projects[currentProject];
+        const customInstructions = currentProjectObj?.customInstructions || '';
+        
+        let systemPromptContent = `${settings.systemPrompt}
 
 📅 CURRENT DATE AND TIME: ${dateString} at ${timeString}
 🗓️ Today is: ${dateString}
 ⏰ Current time: ${timeString}
 
-IMPORTANT: When users reference relative dates like "yesterday", "Saturday just gone", "last week", etc., calculate from TODAY'S date: ${dateString}. You have full access to current date/time information above.` 
+IMPORTANT: When users reference relative dates like "yesterday", "Saturday just gone", "last week", etc., calculate from TODAY'S date: ${dateString}. You have full access to current date/time information above.`;
+
+        // Add custom instructions if they exist for this project
+        if (customInstructions.trim()) {
+            systemPromptContent += `
+
+🎯 PROJECT-SPECIFIC INSTRUCTIONS: ${customInstructions}
+
+Please follow these project-specific instructions in addition to your base behavior. These instructions take precedence for this conversation.`;
+        }
+
+        let messages = [
+            { 
+                role: 'system', 
+                content: systemPromptContent
             }
         ];
         
@@ -808,6 +823,7 @@ function openSettings() {
 function createProject() {
     const name = document.getElementById('projectName').value.trim();
     const description = document.getElementById('projectDescription').value.trim();
+    const customInstructions = document.getElementById('projectInstructions').value.trim();
     
     if (!name) {
         showMessage('Project name is required', 'error');
@@ -823,6 +839,7 @@ function createProject() {
         if (project) {
             project.name = name;
             project.description = description;
+            project.customInstructions = customInstructions;
             project.updatedAt = new Date().toISOString();
             showMessage(`Project "${name}" updated successfully!`, 'success');
         }
@@ -835,6 +852,7 @@ function createProject() {
             id: projectId,
             name: name,
             description: description,
+            customInstructions: customInstructions,
             conversations: [],
             artifacts: [],
             createdAt: new Date().toISOString()
@@ -849,6 +867,7 @@ function createProject() {
     // Clear form
     document.getElementById('projectName').value = '';
     document.getElementById('projectDescription').value = '';
+    document.getElementById('projectInstructions').value = '';
     
     closeModal('projectModal');
     updateUI();
@@ -1369,6 +1388,7 @@ function createProjectCard(project) {
         <div class="project-card-stats">
             <span class="stat">${conversationCount} chats</span>
             <span class="stat">${artifactCount} notes</span>
+            ${project.customInstructions ? '<span class="stat custom-instructions-indicator">Custom Instructions</span>' : ''}
         </div>
         <div class="project-card-meta">Last used: ${lastUsedText}</div>
     `;
@@ -1561,10 +1581,14 @@ function updateRecentProjectsWidget() {
         item.setAttribute('aria-label', `Switch to project: ${project.name}`);
         
         const description = project.description || 'No description available';
+        const hasInstructions = project.customInstructions && project.customInstructions.trim().length > 0;
         
         item.innerHTML = `
             <div class="item-header">
-                <div class="item-title">${project.name}</div>
+                <div class="item-title">
+                    ${project.name}
+                    ${hasInstructions ? '<span class="custom-instructions-badge">📋</span>' : ''}
+                </div>
                 <div class="item-actions">
                     <button class="action-btn edit-btn" aria-label="Edit project" onclick="editProject('${projectId}')">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -1704,6 +1728,7 @@ function editProject(projectId) {
     // Populate the project modal with existing data
     document.getElementById('projectName').value = project.name;
     document.getElementById('projectDescription').value = project.description || '';
+    document.getElementById('projectInstructions').value = project.customInstructions || '';
     document.getElementById('projectModalTitle').textContent = 'Edit Project';
     
     // Store the project ID for saving
