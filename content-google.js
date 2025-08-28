@@ -119,28 +119,26 @@ function findAIOverview() {
     
     // Enhanced detection strategy with better Google AI Mode support
     const candidates = [
-        // Google AI Mode specific selectors (highest priority)
-        { selector: '[data-testid*="conversation"][data-testid*="thread"]', name: 'AI Mode conversation thread' },
-        { selector: '[data-testid*="assistant-response"]', name: 'AI Mode assistant response' },
-        { selector: '[data-testid*="conversation-turn"]', name: 'AI Mode conversation turn' },
-        { selector: '[data-testid*="search-generative"]', name: 'Search generative AI content' },
-        { selector: '[data-ved][role="region"] > div', name: 'Google AI content region' },
+        // Google AI Mode specific selectors (highest priority) - visible elements only
+        { selector: '[data-testid*="conversation"][data-testid*="thread"]:not([style*="display: none"])', name: 'AI Mode conversation thread' },
+        { selector: '[data-testid*="assistant-response"]:not([style*="display: none"])', name: 'AI Mode assistant response' },
+        { selector: '[data-testid*="conversation-turn"]:not([style*="display: none"])', name: 'AI Mode conversation turn' },
+        { selector: '[data-testid*="search-generative"]:not([style*="display: none"])', name: 'Search generative AI content' },
+        { selector: '[data-ved][role="region"] > div:not([style*="display: none"])', name: 'Google AI content region' },
         
-        // Traditional Google AI Overview patterns
-        { selector: '[data-snc="ih6Jnb_4Hk7"]', name: 'AI Overview main container' },
-        { selector: '.X5LH0c', name: 'AI generated answer' },
-        { selector: '.IZ6rdc', name: 'Search generative experience' },
-        { selector: '[data-testid*="ai"]:not([role="dialog"])', name: 'AI testid elements' },
-        { selector: '[aria-label*="AI"]:not([role="dialog"])', name: 'AI aria-label elements' },
+        // Traditional Google AI Overview patterns (visible only)
+        { selector: '[data-snc="ih6Jnb_4Hk7"]:not([style*="display: none"])', name: 'AI Overview main container' },
+        { selector: '.X5LH0c:not([style*="display: none"])', name: 'AI generated answer' },
+        { selector: '.IZ6rdc:not([style*="display: none"])', name: 'Search generative experience' },
+        { selector: '[data-testid*="ai"]:not([role="dialog"]):not([style*="display: none"])', name: 'AI testid elements' },
+        { selector: '[aria-label*="AI"]:not([role="dialog"]):not([style*="display: none"])', name: 'AI aria-label elements' },
         
-        // Generic AI Mode conversation patterns
-        { selector: '[data-testid*="conversation"]:not([role="dialog"])', name: 'AI Mode conversation elements' },
-        { selector: '[data-testid*="response"]:not([role="dialog"])', name: 'AI Mode response elements' },
-        { selector: '[data-testid*="turn"]:not([role="dialog"])', name: 'AI Mode conversation turn' },
-        { selector: '[role="main"] div[data-testid]:not([role="dialog"])', name: 'Main area data-testid elements' },
-        { selector: 'div[data-node-key]:not([role="dialog"])', name: 'AI Mode data-node-key elements' },
+        // Focus on visible elements in main content area
+        { selector: '#main div:not(.OkHxFe):not([style*="display: none"])', name: 'Main content divs (excluding share dialog)' },
+        { selector: '#center_col div:not(.OkHxFe):not([style*="display: none"])', name: 'Center column content' },
+        { selector: '[role="main"] div:not(.OkHxFe):not([style*="display: none"])', name: 'Main role content' },
         
-        // Enhanced content detection
+        // Enhanced content detection with improved filtering
         { selector: 'div:ai-conversation', name: 'AI conversation content', manual: true },
         { selector: 'div:substantial-content', name: 'Substantial content fallback', manual: true },
     ];
@@ -158,9 +156,20 @@ function findAIOverview() {
                     // Must have substantial content
                     if (!text || text.length < 200 || text.length > 5000) return false;
                     
-                    // Exclude UI dialogs and navigation
+                    // CRITICAL: Exclude hidden elements first
+                    const isHidden = el.style.display === 'none' ||
+                                    el.style.visibility === 'hidden' ||
+                                    el.hasAttribute('hidden') ||
+                                    getComputedStyle(el).display === 'none' ||
+                                    getComputedStyle(el).visibility === 'hidden';
+                    
+                    if (isHidden) return false;
+                    
+                    // Exclude UI dialogs and navigation (including share management)
                     const isUIDialog = el.closest('[role="dialog"]') ||
                                       el.closest('.wklPJe') ||
+                                      el.closest('.OkHxFe') ||  // Share management dialog
+                                      el.closest('[data-xid*="share"]') ||  // Share dialogs
                                       el.closest('[data-type="hovc"]') ||
                                       el.closest('[data-type="vsh"]') ||
                                       el.closest('nav, header, footer');
@@ -191,12 +200,25 @@ function findAIOverview() {
                 elements = Array.from(document.querySelectorAll('div')).filter(el => {
                     const text = el.textContent?.trim();
                     
-                    // Exclude known UI dialog containers by structure
+                    // CRITICAL: Exclude hidden elements first
+                    const isHidden = el.style.display === 'none' ||
+                                    el.style.visibility === 'hidden' ||
+                                    el.hasAttribute('hidden') ||
+                                    getComputedStyle(el).display === 'none' ||
+                                    getComputedStyle(el).visibility === 'hidden';
+                    
+                    if (isHidden) return false;
+                    
+                    // Exclude known UI dialog containers (including share management)
                     const isUIDialog = el.closest('[role="dialog"]') ||
                                       el.closest('.wklPJe') ||
+                                      el.closest('.OkHxFe') ||  // Share management dialog
+                                      el.closest('[data-xid*="share"]') ||  // Share dialogs
                                       el.closest('[data-type="hovc"]') ||
                                       el.closest('[data-type="vsh"]') ||
                                       el.closest('[jsaction*="vshDecision"]');
+                    
+                    if (isUIDialog) return false;
                     
                     // Look for substantial, meaningful content
                     const hasSubstantialContent = text && text.length > 150 && text.length < 3000;
@@ -221,6 +243,8 @@ function findAIOverview() {
             if (elements.length > 0) {
                 const element = elements[0];
                 console.log(`🎯 Found via ${candidate.name}:`, element.tagName, element.className);
+                console.log(`🎯 Element visible:`, !element.style.display || element.style.display !== 'none');
+                console.log(`🎯 Content quality score:`, calculateContentQuality(element.textContent));
                 console.log(`🎯 Text preview:`, element.textContent.substring(0, 200));
                 cachedAIContent = element;
                 return element;
@@ -228,10 +252,23 @@ function findAIOverview() {
         } else {
             const element = document.querySelector(candidate.selector);
             if (element && element.textContent?.trim().length > 100) {
-                console.log(`🎯 Found via ${candidate.name}:`, element.tagName, element.className);
-                console.log(`🎯 Text preview:`, element.textContent.substring(0, 200));
-                cachedAIContent = element;
-                return element;
+                // Check if element is visible and not a UI dialog
+                const isVisible = element.style.display !== 'none' && 
+                                 !element.hasAttribute('hidden') &&
+                                 getComputedStyle(element).display !== 'none';
+                                 
+                const qualityScore = calculateContentQuality(element.textContent);
+                
+                if (isVisible && qualityScore > 10) {
+                    console.log(`🎯 Found via ${candidate.name}:`, element.tagName, element.className);
+                    console.log(`🎯 Element visible:`, isVisible);
+                    console.log(`🎯 Content quality score:`, qualityScore);
+                    console.log(`🎯 Text preview:`, element.textContent.substring(0, 200));
+                    cachedAIContent = element;
+                    return element;
+                } else {
+                    console.log(`⚠️ Skipping ${candidate.name}: visible=${isVisible}, quality=${qualityScore}`);
+                }
             }
         }
     }
@@ -243,6 +280,7 @@ function findAIOverview() {
         debugPageStructure();
     }
     
+    console.log('⚠️ No suitable AI content found. This might be a page without AI responses.');
     return null;
 }
 
@@ -279,15 +317,24 @@ function calculateContentQuality(text) {
         if (sentences >= 3) score += 15;
     }
     
-    // Avoid UI text patterns
-    const uiPatterns = [
-        /learn more/i, /dismiss/i, /cancel/i, /delete/i,
-        /upload image/i, /microphone/i, /send/i, /sources?:/i
+    // Strong negative scoring for UI/dialog text
+    const strongUIPatterns = [
+        /shared public links/i, /you don't have any shared links/i,
+        /delete all links/i, /something went wrong/i, /loading\.\.\.?/i,
+        /learn more/i, /dismiss/i, /cancel/i, /delete all/i,
+        /upload image/i, /microphone/i, /send/i
     ];
     
-    uiPatterns.forEach(pattern => {
-        if (pattern.test(text)) score -= 20;
+    strongUIPatterns.forEach(pattern => {
+        if (pattern.test(text)) score -= 50;  // Heavy penalty for UI text
     });
+    
+    // Additional penalty for typical error/loading messages
+    if (text.toLowerCase().includes('loading') || 
+        text.toLowerCase().includes('something went wrong') ||
+        text.toLowerCase().includes('shared links')) {
+        score -= 100;  // Severe penalty
+    }
     
     return score;
 }
