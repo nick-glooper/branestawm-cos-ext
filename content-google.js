@@ -121,30 +121,96 @@ function findAIOverview() {
     // Look for the most likely AI content containers based on common patterns
     
     const candidates = [
-        // Known AI Overview patterns from analysis
+        // AI Mode conversation responses (higher priority)
+        { selector: '[data-testid*="conversation"]', name: 'AI Mode conversation elements' },
+        { selector: '[data-testid*="response"]', name: 'AI Mode response elements' },
+        { selector: '[data-testid*="turn"]', name: 'AI Mode conversation turn' },
+        { selector: '[role="main"] div[data-testid]', name: 'Main area data-testid elements' },
+        { selector: '[class*="conversation"]', name: 'AI Mode conversation container' },
+        { selector: 'div[data-node-key]', name: 'AI Mode data-node-key elements' },
+        
+        // Traditional AI Overview patterns  
         { selector: '[data-snc="ih6Jnb_4Hk7"]', name: 'AI Overview main container' },
         { selector: '.X5LH0c', name: 'AI generated answer' },
         { selector: '.IZ6rdc', name: 'Search generative experience' },
         { selector: '[data-testid*="ai"]', name: 'AI testid elements' },
         { selector: '[aria-label*="AI"]', name: 'AI aria-label elements' },
         
-        // Look for elements that contain AI-like content patterns
+        // Weather and location-specific content patterns (for user's query)
+        { selector: 'div:has-weather', name: 'Elements with weather content', manual: true },
+        { selector: 'div:has-location', name: 'Elements with location content (GU51 2TH)', manual: true },
+        { selector: 'div:has-forecast', name: 'Elements with forecast content', manual: true },
         { selector: 'div:has-text("As of")', name: 'Elements with AI intro phrases', manual: true },
         { selector: 'div:has-text("Based on")', name: 'Elements with AI intro phrases', manual: true },
         { selector: 'div:has-text("According to")', name: 'Elements with AI intro phrases', manual: true },
+        { selector: 'div:has-text("The weather")', name: 'Weather response indicators', manual: true },
     ];
     
     for (const candidate of candidates) {
         if (candidate.manual) {
             // For text-based searches, we need to manually search
-            const elements = Array.from(document.querySelectorAll('div')).filter(el => {
-                const text = el.textContent?.trim();
-                return text && (
-                    text.includes('As of ') || 
-                    text.includes('Based on ') || 
-                    text.includes('According to ')
-                ) && text.length > 100 && text.length < 2000;
-            });
+            let elements = [];
+            
+            if (candidate.selector === 'div:has-weather') {
+                // Look for weather-specific content
+                elements = Array.from(document.querySelectorAll('div')).filter(el => {
+                    const text = el.textContent?.trim();
+                    return text && text.length > 100 && text.length < 2000 && (
+                        text.includes('°C') || text.includes('°F') ||
+                        text.includes('temperature') || text.includes('Temperature') ||
+                        text.includes('weather') || text.includes('Weather') ||
+                        text.includes('forecast') || text.includes('Forecast') ||
+                        text.match(/\d+°[CF]/) || // Temperature patterns
+                        text.includes('humidity') || text.includes('wind') ||
+                        text.includes('rain') || text.includes('sunny') || text.includes('cloudy')
+                    );
+                });
+            } else if (candidate.selector === 'div:has-location') {
+                // Look for location-specific content (user's GU51 2TH query)
+                elements = Array.from(document.querySelectorAll('div')).filter(el => {
+                    const text = el.textContent?.trim();
+                    return text && text.length > 100 && text.length < 2000 && (
+                        text.includes('GU51 2TH') || text.includes('GU51') ||
+                        text.includes('Fleet') || text.includes('Hampshire') ||
+                        text.includes('England') || text.includes('UK') ||
+                        text.match(/\b[A-Z]{1,2}\d{1,2}\s?\d[A-Z]{2}\b/) // UK postcode pattern
+                    );
+                });
+            } else if (candidate.selector === 'div:has-forecast') {
+                // Look for forecast-specific content
+                elements = Array.from(document.querySelectorAll('div')).filter(el => {
+                    const text = el.textContent?.trim();
+                    return text && text.length > 100 && text.length < 2000 && (
+                        text.includes('forecast') || text.includes('Forecast') ||
+                        text.includes('today') || text.includes('tomorrow') ||
+                        text.includes('week') || text.includes('outlook') ||
+                        text.includes('expect') || text.includes('will be') ||
+                        text.match(/\d+%.*chance/) || // "70% chance of rain"
+                        text.match(/(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)/) ||
+                        text.includes('high') || text.includes('low')
+                    );
+                });
+            } else if (candidate.selector.includes('"The weather"')) {
+                // Look for weather response indicators
+                elements = Array.from(document.querySelectorAll('div')).filter(el => {
+                    const text = el.textContent?.trim();
+                    return text && text.length > 100 && text.length < 2000 && (
+                        text.includes('The weather') || text.includes('the weather') ||
+                        text.includes('Current weather') || text.includes('current weather') ||
+                        text.includes('Today\'s weather') || text.includes('today\'s weather')
+                    );
+                });
+            } else {
+                // Original AI intro phrase search
+                elements = Array.from(document.querySelectorAll('div')).filter(el => {
+                    const text = el.textContent?.trim();
+                    return text && (
+                        text.includes('As of ') || 
+                        text.includes('Based on ') || 
+                        text.includes('According to ')
+                    ) && text.length > 100 && text.length < 2000;
+                });
+            }
             
             if (elements.length > 0) {
                 const element = elements[0];
