@@ -590,7 +590,10 @@ function setupEventListeners() {
     
     // Modals and settings
     document.getElementById('settingsBtn').addEventListener('click', openSettings);
-    document.getElementById('setupBtn').addEventListener('click', authenticateWithGoogle);
+    const setupBtn = document.getElementById('setupBtn');
+    if (setupBtn) {
+        setupBtn.addEventListener('click', authenticateWithGoogle);
+    }
     document.getElementById('advancedSetupBtn').addEventListener('click', openSettings);
     document.getElementById('exportBtn').addEventListener('click', () => showModal('exportModal'));
     document.getElementById('cancelExportBtn').addEventListener('click', () => closeModal('exportModal'));
