@@ -245,6 +245,7 @@ async function processSearchImport(importData, storageKey) {
 // ========== WEB SEARCH INTEGRATION ==========
 
 function showWebSearchModal() {
+    console.log('Web search modal triggered');
     showModal('webSearchModal');
 }
 

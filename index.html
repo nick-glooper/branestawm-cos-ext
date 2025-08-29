@@ -126,6 +126,14 @@
                 </div>
                 <div class="chat-input">
                     <div class="input-container">
+                        <label for="messageInput" class="sr-only">Message input</label>
+                        <textarea 
+                            class="message-input" 
+                            id="messageInput" 
+                            placeholder="Continue your dialogue with Branestawm..."
+                            aria-label="Type your message here"
+                            rows="3"
+                        ></textarea>
                         <div class="tooltip">
                             <button class="btn send-btn" id="sendBtn" aria-label="Send message">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -135,14 +143,6 @@
                             </button>
                             <div class="tooltip-content">Send message (Enter)</div>
                         </div>
-                        <label for="messageInput" class="sr-only">Message input</label>
-                        <textarea 
-                            class="message-input" 
-                            id="messageInput" 
-                            placeholder="Continue your dialogue with Branestawm..."
-                            aria-label="Type your message here"
-                            rows="3"
-                        ></textarea>
                     </div>
                 </div>
             </section>

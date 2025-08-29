@@ -201,7 +201,7 @@ body {
 .input-container {
   display: flex;
   gap: var(--space-3);
-  align-items: flex-end;
+  align-items: flex-start;
   max-width: 100%;
   flex-direction: row;
 }

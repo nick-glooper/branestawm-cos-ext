@@ -829,7 +829,7 @@ input[type="checkbox"] {
   border: 1px solid var(--border-primary);
   z-index: 1001;
   pointer-events: none;
-  max-width: 200px;
+  min-width: max-content;
   line-height: var(--leading-normal);
   white-space: nowrap;
   visibility: hidden;
