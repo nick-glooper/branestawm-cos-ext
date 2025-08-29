@@ -16,6 +16,12 @@ function closeModal(modalId) {
 function showMessage(message, type = 'info') {
     const messageContainer = document.getElementById('messageContainer');
     
+    // If no message container exists, log to console instead
+    if (!messageContainer) {
+        console.log(`${type.toUpperCase()}: ${message}`);
+        return;
+    }
+    
     const messageEl = document.createElement('div');
     messageEl.className = `message ${type}`;
     messageEl.innerHTML = `

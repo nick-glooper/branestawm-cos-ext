@@ -249,9 +249,20 @@ function showWebSearchModal() {
 }
 
 function setupWebSearchEventListeners() {
-    document.getElementById('googleSearchBtn').addEventListener('click', handleGoogleSearch);
-    document.getElementById('perplexitySearchBtn').addEventListener('click', handlePerplexitySearch);
-    document.getElementById('cancelWebSearchBtn').addEventListener('click', () => closeModal('webSearchModal'));
+    const googleSearchBtn = document.getElementById('googleSearchBtn');
+    if (googleSearchBtn) {
+        googleSearchBtn.addEventListener('click', handleGoogleSearch);
+    }
+    
+    const perplexitySearchBtn = document.getElementById('perplexitySearchBtn');
+    if (perplexitySearchBtn) {
+        perplexitySearchBtn.addEventListener('click', handlePerplexitySearch);
+    }
+    
+    const cancelWebSearchBtn = document.getElementById('cancelWebSearchBtn');
+    if (cancelWebSearchBtn) {
+        cancelWebSearchBtn.addEventListener('click', () => closeModal('webSearchModal'));
+    }
 }
 
 function handleGoogleSearch() {
@@ -575,29 +586,40 @@ function confirmDelete() {
 // ========== EVENT LISTENERS SETUP ==========
 
 function setupEventListeners() {
-    // Core chat functionality
-    document.getElementById('sendBtn').addEventListener('click', sendMessage);
-    document.getElementById('messageInput').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
+    // Helper function to safely add event listeners
+    function addListener(id, event, handler) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener(event, handler);
+        } else {
+            console.warn(`Element with ID '${id}' not found, skipping event listener`);
         }
-    });
-    document.getElementById('messageInput').addEventListener('input', autoResizeTextarea);
+    }
+    
+    // Core chat functionality
+    addListener('sendBtn', 'click', sendMessage);
+    
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        messageInput.addEventListener('input', autoResizeTextarea);
+    }
     
     // Navigation
-    document.getElementById('browseFoliosBtn').addEventListener('click', showFolioSelectionModal);
+    addListener('browseFoliosBtn', 'click', showFolioSelectionModal);
     
     // Modals and settings
-    document.getElementById('settingsBtn').addEventListener('click', openSettings);
-    const setupBtn = document.getElementById('setupBtn');
-    if (setupBtn) {
-        setupBtn.addEventListener('click', authenticateWithGoogle);
-    }
-    document.getElementById('advancedSetupBtn').addEventListener('click', openSettings);
-    document.getElementById('exportBtn').addEventListener('click', () => showModal('exportModal'));
-    document.getElementById('cancelExportBtn').addEventListener('click', () => closeModal('exportModal'));
-    document.getElementById('exportConversationBtn').addEventListener('click', () => {
+    addListener('settingsBtn', 'click', openSettings);
+    addListener('setupBtn', 'click', authenticateWithGoogle);
+    addListener('advancedSetupBtn', 'click', openSettings);
+    addListener('exportBtn', 'click', () => showModal('exportModal'));
+    addListener('cancelExportBtn', 'click', () => closeModal('exportModal'));
+    addListener('exportConversationBtn', 'click', () => {
         if (!currentFolio) {
             showMessage('No folio selected to export', 'error');
             return;
@@ -605,43 +627,60 @@ function setupEventListeners() {
         exportFolioAsMarkdown(currentFolio);
         closeModal('exportModal');
     });
-    document.getElementById('exportAllBtn').addEventListener('click', () => {
+    addListener('exportAllBtn', 'click', () => {
         exportAllDataAsMarkdown();
         closeModal('exportModal');
     });
-    document.getElementById('syncBtn').addEventListener('click', () => showModal('syncModal'));
-    document.getElementById('newFolioBtn').addEventListener('click', () => showModal('folioModal'));
-    document.getElementById('webSearchBtn').addEventListener('click', showWebSearchModal);
-    document.getElementById('newArtifactBtn').addEventListener('click', () => createArtifactFromTemplate('note'));
-    document.getElementById('generateArtifactBtn').addEventListener('click', showArtifactGenerationMenu);
+    addListener('syncBtn', 'click', () => showModal('syncModal'));
+    addListener('newFolioBtn', 'click', () => showModal('folioModal'));
+    addListener('webSearchBtn', 'click', showWebSearchModal);
+    addListener('newArtifactBtn', 'click', () => createArtifactFromTemplate('note'));
+    addListener('generateArtifactBtn', 'click', showArtifactGenerationMenu);
     
     // Modal form handlers
-    document.getElementById('saveEditConversationBtn').addEventListener('click', saveConversationChanges);
-    document.getElementById('cancelEditConversationBtn').addEventListener('click', () => closeModal('editConversationModal'));
-    document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
-    document.getElementById('cancelDeleteBtn').addEventListener('click', () => closeModal('deleteConfirmationModal'));
+    addListener('saveEditConversationBtn', 'click', saveConversationChanges);
+    addListener('cancelEditConversationBtn', 'click', () => closeModal('editConversationModal'));
+    addListener('confirmDeleteBtn', 'click', confirmDelete);
+    addListener('cancelDeleteBtn', 'click', () => closeModal('deleteConfirmationModal'));
     
-    document.getElementById('createFolioBtn').addEventListener('click', createFolio);
-    document.getElementById('cancelFolioBtn').addEventListener('click', () => closeModal('folioModal'));
-    document.getElementById('saveArtifactBtn').addEventListener('click', saveArtifact);
-    document.getElementById('cancelArtifactBtn').addEventListener('click', () => closeModal('artifactModal'));
+    addListener('createFolioBtn', 'click', createFolio);
+    addListener('cancelFolioBtn', 'click', () => closeModal('folioModal'));
+    addListener('saveArtifactBtn', 'click', saveArtifact);
+    addListener('cancelArtifactBtn', 'click', () => closeModal('artifactModal'));
     
     // Web search setup
     setupWebSearchEventListeners();
     
     // Global modal close handlers
     document.querySelectorAll('.modal').forEach(modal => {
+        // Click outside to close
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
+                console.log('Closing modal by clicking outside:', modal.id);
                 closeModal(modal.id);
             }
         });
         
+        // Close button handler
         const closeBtn = modal.querySelector('.close-btn');
         if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
+            closeBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Closing modal by close button:', modal.id);
                 closeModal(modal.id);
             });
+        }
+    });
+    
+    // Escape key to close modals
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const openModal = document.querySelector('.modal.show');
+            if (openModal) {
+                console.log('Closing modal with Escape key:', openModal.id);
+                closeModal(openModal.id);
+            }
         }
     });
 }
