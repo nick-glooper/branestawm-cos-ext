@@ -637,7 +637,7 @@ function setupEventListeners() {
         const closeBtn = modal.querySelector('.close-btn');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
-                closeModal(this.id);
+                closeModal(modal.id);
             });
         }
     });
@@ -1046,3 +1046,6 @@ window.forceLocalRouting = forceLocalRouting;
 window.forceCloudRouting = forceCloudRouting;
 window.getRoutingStatistics = getRoutingStatistics;
 window.refreshOllamaConnection = refreshOllamaConnection;
+
+// Make web search function accessible
+window.showWebSearchModal = showWebSearchModal;
