@@ -858,6 +858,28 @@ input[type="checkbox"] {
   left: auto;
 }
 
+/* Artifact canvas tooltip positioning to prevent overflow */
+.canvas-actions .tooltip-content {
+  top: calc(100% + var(--space-2));
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+/* ========== ACCESSIBILITY ========== */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* ========== EMPTY STATES ========== */
 
 .empty-state {
