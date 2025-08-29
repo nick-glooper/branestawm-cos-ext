@@ -425,6 +425,132 @@
             line-height: var(--leading-normal);
         }
         
+        /* Ollama Section Styles */
+        .ollama-status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-4);
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-weight: 500;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: background-color var(--duration-200);
+        }
+        
+        .status-dot.connected {
+            background: var(--success);
+            box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2);
+        }
+        
+        .status-dot.disconnected {
+            background: var(--error);
+        }
+        
+        .status-dot.checking {
+            background: var(--warning);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .range-input {
+            width: 100%;
+            margin: var(--space-2) 0;
+        }
+        
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+        
+        .perf-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--space-4);
+            margin-top: var(--space-4);
+        }
+        
+        .perf-stat {
+            text-align: center;
+            padding: var(--space-3);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+        }
+        
+        .perf-stat-value {
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: var(--space-1);
+        }
+        
+        .perf-stat-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+        
+        .setup-instructions {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            margin-top: var(--space-4);
+        }
+        
+        .setup-instructions h4 {
+            margin: 0 0 var(--space-4) 0;
+            color: var(--text-primary);
+        }
+        
+        .setup-instructions ol {
+            margin: 0 0 var(--space-4) var(--space-4);
+            padding: 0;
+        }
+        
+        .setup-instructions li {
+            margin-bottom: var(--space-2);
+            line-height: var(--leading-normal);
+        }
+        
+        .setup-instructions code {
+            background: var(--bg-primary);
+            padding: var(--space-1) var(--space-2);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-mono);
+            font-size: var(--font-size-sm);
+            border: 1px solid var(--border-primary);
+        }
+        
+        .setup-instructions a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .setup-instructions a:hover {
+            text-decoration: underline;
+        }
+        
         /* Persona Modal Styles */
         .modal {
             position: fixed;
@@ -772,6 +898,71 @@
                 
                 <div class="form-actions">
                     <button class="btn secondary" id="newPersonaBtn">Create New Persona</button>
+                </div>
+            </section>
+            
+            <section class="settings-section">
+                <h3>
+                    <span class="section-icon">🦙</span>
+                    Local LLM (Ollama)
+                </h3>
+                <p class="help-text">Configure local Ollama models for privacy-first, fast inference. Automatically detects available models and routes queries intelligently between local and cloud processing.</p>
+                
+                <div class="ollama-status">
+                    <div class="status-indicator">
+                        <div class="status-dot" id="ollamaStatusDot"></div>
+                        <span id="ollamaStatusText">Checking connection...</span>
+                    </div>
+                    <button class="btn small secondary" id="refreshOllamaBtn">Refresh</button>
+                </div>
+                
+                <div id="ollamaConfigSection" style="display: none;">
+                    <div class="form-group">
+                        <label for="ollamaModelSelect" class="label">Active Model</label>
+                        <select id="ollamaModelSelect" class="input">
+                            <option value="">No models available</option>
+                        </select>
+                        <div class="help-text">Select which Ollama model to use for local processing</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="routingPreference" class="label">Routing Preference</label>
+                        <select id="routingPreference" class="input">
+                            <option value="local-first">Local First (Recommended)</option>
+                            <option value="cloud-first">Cloud First</option>
+                            <option value="auto">Automatic</option>
+                        </select>
+                        <div class="help-text">How queries should be routed between local and cloud models</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="complexityThreshold" class="label">Complexity Threshold</label>
+                        <input type="range" id="complexityThreshold" class="range-input" min="0" max="1" step="0.1" value="0.6">
+                        <div class="range-labels">
+                            <span>Simple (Local)</span>
+                            <span id="complexityValue">0.6</span>
+                            <span>Complex (Cloud)</span>
+                        </div>
+                        <div class="help-text">Queries above this complexity automatically route to cloud models</div>
+                    </div>
+                    
+                    <div class="ollama-performance">
+                        <h4>Performance Statistics</h4>
+                        <div class="perf-grid" id="performanceStats">
+                            <!-- Performance stats will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="ollamaSetupInstructions" class="setup-instructions">
+                    <h4>🚀 Setting up Ollama</h4>
+                    <ol>
+                        <li>Install Ollama from <a href="https://ollama.ai" target="_blank">ollama.ai</a></li>
+                        <li>Run <code>ollama pull gemma2</code> or your preferred model</li>
+                        <li>Start Ollama service: <code>ollama serve</code></li>
+                        <li>Refresh this page to detect your models</li>
+                    </ol>
+                    <p><strong>Benefits:</strong> Faster responses, complete privacy, no API costs, works offline</p>
                 </div>
             </section>
             

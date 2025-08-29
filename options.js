@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadSettings();
     initializeTheme();
     setupEventListeners();
+    initializeOllamaSettings();
     updateUI();
     
     console.log('Settings page loaded successfully');
@@ -921,6 +922,238 @@ function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
+// ========== OLLAMA SETTINGS ==========
+
+/**
+ * Initialize Ollama settings UI
+ */
+function initializeOllamaSettings() {
+    const refreshBtn = document.getElementById('refreshOllamaBtn');
+    const modelSelect = document.getElementById('ollamaModelSelect');
+    const routingSelect = document.getElementById('routingPreference');
+    const complexitySlider = document.getElementById('complexityThreshold');
+    const complexityValue = document.getElementById('complexityValue');
+    
+    // Set up event listeners
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', refreshOllamaStatus);
+    }
+    
+    if (modelSelect) {
+        modelSelect.addEventListener('change', (e) => {
+            setOllamaActiveModel(e.target.value);
+        });
+    }
+    
+    if (routingSelect) {
+        routingSelect.addEventListener('change', (e) => {
+            setRoutingPreference(e.target.value);
+        });
+    }
+    
+    if (complexitySlider && complexityValue) {
+        complexitySlider.addEventListener('input', (e) => {
+            const value = parseFloat(e.target.value);
+            complexityValue.textContent = value.toFixed(1);
+            setComplexityThreshold(value);
+        });
+    }
+    
+    // Initial status check
+    updateOllamaStatus();
+    
+    // Update status every 30 seconds
+    setInterval(updateOllamaStatus, 30000);
+}
+
+/**
+ * Update Ollama connection status
+ */
+async function updateOllamaStatus() {
+    const statusDot = document.getElementById('ollamaStatusDot');
+    const statusText = document.getElementById('ollamaStatusText');
+    const configSection = document.getElementById('ollamaConfigSection');
+    const setupInstructions = document.getElementById('ollamaSetupInstructions');
+    
+    if (!statusDot || !statusText) return;
+    
+    // Set checking state
+    statusDot.className = 'status-dot checking';
+    statusText.textContent = 'Checking connection...';
+    
+    try {
+        // Check if the hybrid system is available in the main window
+        if (window.opener && window.opener.refreshOllamaConnection) {
+            const status = await window.opener.refreshOllamaConnection();
+            
+            if (status.connected) {
+                // Connected - show config options
+                statusDot.className = 'status-dot connected';
+                statusText.textContent = `Connected (${status.models?.length || 0} models)`;
+                
+                if (configSection) configSection.style.display = 'block';
+                if (setupInstructions) setupInstructions.style.display = 'none';
+                
+                // Populate model dropdown
+                updateModelDropdown(status.models || []);
+                updatePerformanceStats();
+                
+            } else {
+                // Disconnected - show setup instructions
+                statusDot.className = 'status-dot disconnected';
+                statusText.textContent = 'Ollama not found';
+                
+                if (configSection) configSection.style.display = 'none';
+                if (setupInstructions) setupInstructions.style.display = 'block';
+            }
+        } else {
+            // No hybrid system available
+            statusDot.className = 'status-dot disconnected';
+            statusText.textContent = 'Hybrid system not initialized';
+            
+            if (configSection) configSection.style.display = 'none';
+            if (setupInstructions) setupInstructions.style.display = 'block';
+        }
+    } catch (error) {
+        console.error('Error checking Ollama status:', error);
+        statusDot.className = 'status-dot disconnected';
+        statusText.textContent = 'Connection error';
+        
+        if (configSection) configSection.style.display = 'none';
+        if (setupInstructions) setupInstructions.style.display = 'block';
+    }
+}
+
+/**
+ * Refresh Ollama status manually
+ */
+async function refreshOllamaStatus() {
+    const refreshBtn = document.getElementById('refreshOllamaBtn');
+    if (refreshBtn) {
+        refreshBtn.disabled = true;
+        refreshBtn.textContent = 'Checking...';
+    }
+    
+    await updateOllamaStatus();
+    
+    if (refreshBtn) {
+        refreshBtn.disabled = false;
+        refreshBtn.textContent = 'Refresh';
+    }
+}
+
+/**
+ * Update model dropdown with available models
+ */
+function updateModelDropdown(models) {
+    const modelSelect = document.getElementById('ollamaModelSelect');
+    if (!modelSelect) return;
+    
+    // Clear existing options
+    modelSelect.innerHTML = '';
+    
+    if (models.length === 0) {
+        modelSelect.innerHTML = '<option value="">No models available</option>';
+        return;
+    }
+    
+    // Add model options
+    models.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model.name;
+        option.textContent = model.displayName || model.name;
+        
+        if (model.isActive) {
+            option.selected = true;
+        }
+        
+        modelSelect.appendChild(option);
+    });
+}
+
+/**
+ * Set active Ollama model
+ */
+async function setOllamaActiveModel(modelName) {
+    if (!modelName) return;
+    
+    try {
+        if (window.opener && window.opener.modelManager) {
+            await window.opener.modelManager.setActiveModel(modelName);
+            showToast(`Active model set to ${modelName}`, 'success');
+        }
+    } catch (error) {
+        console.error('Error setting active model:', error);
+        showToast(`Error setting active model: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Set routing preference
+ */
+function setRoutingPreference(preference) {
+    try {
+        if (window.opener && window.opener.llmRouter) {
+            window.opener.llmRouter.setRoutingPreference(preference);
+            showToast(`Routing preference set to ${preference}`, 'success');
+        }
+    } catch (error) {
+        console.error('Error setting routing preference:', error);
+        showToast(`Error setting routing preference: ${error.message}`, 'error');
+    }
+}
+
+/**
+ * Set complexity threshold
+ */
+function setComplexityThreshold(threshold) {
+    try {
+        if (window.opener && window.opener.llmRouter) {
+            window.opener.llmRouter.setComplexityThreshold(threshold);
+        }
+    } catch (error) {
+        console.error('Error setting complexity threshold:', error);
+    }
+}
+
+/**
+ * Update performance statistics
+ */
+function updatePerformanceStats() {
+    const perfGrid = document.getElementById('performanceStats');
+    if (!perfGrid) return;
+    
+    try {
+        if (window.opener && window.opener.getRoutingStatistics) {
+            const stats = window.opener.getRoutingStatistics();
+            
+            if (stats) {
+                perfGrid.innerHTML = `
+                    <div class="perf-stat">
+                        <div class="perf-stat-value">${stats.local.requests}</div>
+                        <div class="perf-stat-label">Local Requests</div>
+                    </div>
+                    <div class="perf-stat">
+                        <div class="perf-stat-value">${stats.cloud.requests}</div>
+                        <div class="perf-stat-label">Cloud Requests</div>
+                    </div>
+                    <div class="perf-stat">
+                        <div class="perf-stat-value">${Math.round(stats.local.avgResponseTime)}ms</div>
+                        <div class="perf-stat-label">Avg Local Time</div>
+                    </div>
+                    <div class="perf-stat">
+                        <div class="perf-stat-value">${Math.round(stats.local.successRate * 100)}%</div>
+                        <div class="perf-stat-label">Local Success</div>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error updating performance stats:', error);
+    }
+}
+
 // Make functions globally accessible for HTML onclick handlers
 window.editPersona = editPersona;
 window.deletePersona = deletePersona;
+window.refreshOllamaStatus = refreshOllamaStatus;

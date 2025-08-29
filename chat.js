@@ -58,8 +58,8 @@ async function sendMessage() {
         const recentMessages = folios[currentFolio].messages.slice(-20);
         messages = messages.concat(recentMessages);
         
-        // Get AI response
-        const response = await callLLMAPI(messages);
+        // Get AI response using hybrid routing
+        const response = await getHybridLLMResponse(messages, message);
         
         // Remove typing indicator
         removeTypingIndicator(typingDiv);

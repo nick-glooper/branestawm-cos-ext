@@ -3,6 +3,11 @@
 
 // ========== GLOBAL STATE ==========
 
+// Hybrid LLM System
+let ollamaClient = null;
+let llmRouter = null;
+let modelManager = null;
+
 let currentFolio = 'general';
 let folios = {
     'general': {
@@ -857,6 +862,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupEventListeners();
         setupAccessibility();
         populatePersonaDropdown();
+        
+        // Initialize hybrid LLM system
+        await initializeHybridLLMSystem();
+        
         updateUI();
         
         // Setup tooltips
@@ -890,9 +899,150 @@ window.addEventListener('beforeunload', () => {
     stopImportMonitoring();
 });
 
+// ========== HYBRID LLM SYSTEM ==========
+
+/**
+ * Initialize the hybrid LLM system
+ */
+async function initializeHybridLLMSystem() {
+    try {
+        // Initialize Ollama client
+        ollamaClient = new OllamaClient();
+        
+        // Initialize LLM router
+        llmRouter = new LLMRouter(ollamaClient);
+        
+        // Initialize model manager
+        modelManager = new ModelManager(ollamaClient, llmRouter);
+        
+        console.log('Hybrid LLM system initialized');
+        
+        // Log connection status
+        setTimeout(() => {
+            if (ollamaClient.isConnected()) {
+                const models = ollamaClient.getAvailableModels();
+                const activeModel = ollamaClient.getActiveModel();
+                console.log(`Ollama connected with ${models.length} models. Active: ${activeModel}`);
+            } else {
+                console.log('Ollama not available - using cloud-only mode');
+            }
+        }, 2000); // Give it time to establish connection
+        
+    } catch (error) {
+        console.error('Error initializing hybrid LLM system:', error);
+        // Continue without Ollama if initialization fails
+        console.log('Falling back to cloud-only mode');
+    }
+}
+
+/**
+ * Get LLM response using hybrid routing
+ */
+async function getHybridLLMResponse(messages, originalMessage) {
+    try {
+        // If hybrid system not available, use cloud fallback
+        if (!llmRouter) {
+            console.log('Hybrid system not available, using cloud API');
+            return await callLLMAPI(messages);
+        }
+        
+        // Use hybrid routing
+        const response = await llmRouter.query(originalMessage, messages);
+        
+        // Log routing decision for debugging
+        console.log(`LLM routed to: ${response.source} (${response.routing})`);
+        
+        return response.content;
+        
+    } catch (error) {
+        console.error('Hybrid LLM error:', error);
+        
+        // Fallback to cloud API if hybrid fails
+        console.log('Falling back to cloud API due to hybrid system error');
+        return await callLLMAPI(messages);
+    }
+}
+
+/**
+ * Get current model information for display
+ */
+function getCurrentModelInfo() {
+    if (!ollamaClient || !ollamaClient.isConnected()) {
+        return {
+            source: 'cloud',
+            model: settings.apiProvider || 'Cloud LLM',
+            available: true
+        };
+    }
+    
+    const activeModel = ollamaClient.getActiveModel();
+    const modelInfo = modelManager ? modelManager.getModelDisplayName(activeModel) : activeModel;
+    
+    return {
+        source: 'local',
+        model: modelInfo || 'Local LLM',
+        available: !!activeModel
+    };
+}
+
+/**
+ * Check if local LLM is available
+ */
+function isLocalLLMAvailable() {
+    return ollamaClient && ollamaClient.isConnected() && ollamaClient.getActiveModel();
+}
+
+/**
+ * Force local routing for next request
+ */
+function forceLocalRouting() {
+    return { forceLocal: true };
+}
+
+/**
+ * Force cloud routing for next request  
+ */
+function forceCloudRouting() {
+    return { forceCloud: true };
+}
+
+/**
+ * Get routing statistics
+ */
+function getRoutingStatistics() {
+    if (!llmRouter) return null;
+    
+    return llmRouter.getPerformanceStats();
+}
+
+/**
+ * Refresh Ollama connection and models
+ */
+async function refreshOllamaConnection() {
+    if (ollamaClient) {
+        try {
+            const status = await ollamaClient.refresh();
+            console.log('Ollama refresh result:', status);
+            return status;
+        } catch (error) {
+            console.error('Error refreshing Ollama:', error);
+            return { connected: false, error: error.message };
+        }
+    }
+    return { connected: false, error: 'Ollama client not initialized' };
+}
+
 // Make functions globally accessible for HTML onclick handlers
 window.editArtifact = editArtifact;
 window.duplicateArtifact = duplicateArtifact;
 window.generateArtifactFromFolio = generateArtifactFromFolio;
 window.createArtifactFromTemplate = createArtifactFromTemplate;
 window.showArtifactGenerationMenu = showArtifactGenerationMenu;
+
+// Make hybrid LLM functions accessible
+window.getCurrentModelInfo = getCurrentModelInfo;
+window.isLocalLLMAvailable = isLocalLLMAvailable;
+window.forceLocalRouting = forceLocalRouting;
+window.forceCloudRouting = forceCloudRouting;
+window.getRoutingStatistics = getRoutingStatistics;
+window.refreshOllamaConnection = refreshOllamaConnection;
