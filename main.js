@@ -615,11 +615,9 @@ function setupEventListeners() {
     
     // Modals and settings
     addListener('settingsBtn', 'click', openSettings);
-    addListener('setupBtn', 'click', authenticateWithGoogle);
     addListener('advancedSetupBtn', 'click', openSettings);
     addListener('exportBtn', 'click', () => showModal('exportModal'));
-    addListener('cancelExportBtn', 'click', () => closeModal('exportModal'));
-    addListener('exportConversationBtn', 'click', () => {
+    addListener('exportCurrentBtn', 'click', () => {
         if (!currentFolio) {
             showMessage('No folio selected to export', 'error');
             return;
@@ -638,7 +636,6 @@ function setupEventListeners() {
     addListener('generateArtifactBtn', 'click', showArtifactGenerationMenu);
     
     // Modal form handlers
-    addListener('saveEditConversationBtn', 'click', saveConversationChanges);
     addListener('cancelEditConversationBtn', 'click', () => closeModal('editConversationModal'));
     addListener('confirmDeleteBtn', 'click', confirmDelete);
     addListener('cancelDeleteBtn', 'click', () => closeModal('deleteConfirmationModal'));
