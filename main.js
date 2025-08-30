@@ -483,12 +483,28 @@ function updateRecentFoliosWidget() {
         return;
     }
     
+    // Create a list with current folio first, then other recent folios
+    const displayFolios = [];
+    
+    // Add current folio first
+    if (currentFolio && folios[currentFolio]) {
+        displayFolios.push(currentFolio);
+    }
+    
+    // Add other recent folios (excluding current folio to avoid duplicates)
     recentFolios.slice(0, 5).forEach(folioId => {
+        if (folioId !== currentFolio && folios[folioId]) {
+            displayFolios.push(folioId);
+        }
+    });
+    
+    displayFolios.forEach(folioId => {
         const folio = folios[folioId];
         if (!folio) return;
         
+        const isActive = folioId === currentFolio;
         const item = document.createElement('div');
-        item.className = 'recent-item';
+        item.className = `recent-item${isActive ? ' active' : ''}`;
         item.setAttribute('aria-label', `Switch to folio: ${folio.title}`);
         
         const description = folio.description || 'No description available';
@@ -498,6 +514,7 @@ function updateRecentFoliosWidget() {
             <div class="item-header">
                 <div class="item-title">
                     ${folio.title}
+                    ${isActive ? '<span class="current-badge">Current</span>' : ''}
                     ${persona ? `<span class="persona-badge">${persona.name}</span>` : ''}
                 </div>
                 <div class="item-actions">
