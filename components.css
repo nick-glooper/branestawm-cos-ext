@@ -637,7 +637,7 @@ input[type="checkbox"] {
   background: var(--surface-primary);
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-xl);
-  max-width: 90vw;
+  max-width: 45vw;
   max-height: 90vh;
   width: 100%;
   overflow: hidden;
@@ -651,7 +651,7 @@ input[type="checkbox"] {
 }
 
 .modal-header {
-  padding: var(--space-6) var(--space-6) var(--space-4);
+  padding: var(--space-6) var(--space-8) var(--space-4);
   border-bottom: 1px solid var(--border-primary);
   display: flex;
   justify-content: space-between;
@@ -667,13 +667,13 @@ input[type="checkbox"] {
 }
 
 .modal-body {
-  padding: var(--space-6);
+  padding: var(--space-6) var(--space-8);
   overflow-y: auto;
   max-height: calc(90vh - 180px);
 }
 
 .modal-footer {
-  padding: var(--space-4) var(--space-6) var(--space-6);
+  padding: var(--space-6) var(--space-8) var(--space-8);
   display: flex;
   gap: var(--space-3);
   justify-content: flex-end;

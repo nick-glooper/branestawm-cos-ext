@@ -264,6 +264,10 @@
   border-width: 2px;
 }
 
+.recent-item.active:hover {
+  transform: none;
+}
+
 [data-mode="dark"] .recent-item.active {
   background: rgba(16, 185, 129, 0.1);
   border-color: var(--success);
