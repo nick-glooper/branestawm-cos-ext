@@ -473,6 +473,8 @@ function duplicateArtifact(artifactId) {
 }
 
 function updateRecentFoliosWidget() {
+    updatePinnedFoliosWidget();
+    
     const widget = document.getElementById('recentFoliosList');
     const itemsList = widget;
     
@@ -485,15 +487,16 @@ function updateRecentFoliosWidget() {
     
     // Create a list with current folio first, then other recent folios
     const displayFolios = [];
+    const pinnedFolios = settings.pinnedFolios || [];
     
-    // Add current folio first
-    if (currentFolio && folios[currentFolio]) {
+    // Add current folio first (if not pinned)
+    if (currentFolio && folios[currentFolio] && !pinnedFolios.includes(currentFolio)) {
         displayFolios.push(currentFolio);
     }
     
-    // Add other recent folios (excluding current folio to avoid duplicates)
-    recentFolios.slice(0, 5).forEach(folioId => {
-        if (folioId !== currentFolio && folios[folioId]) {
+    // Add other recent folios (excluding current folio and pinned folios to avoid duplicates)
+    recentFolios.slice(0, 8).forEach(folioId => {
+        if (folioId !== currentFolio && folios[folioId] && !pinnedFolios.includes(folioId)) {
             displayFolios.push(folioId);
         }
     });
@@ -517,11 +520,39 @@ function updateRecentFoliosWidget() {
                     ${persona ? `<span class="persona-badge">${persona.name}</span>` : ''}
                 </div>
                 <div class="item-actions">
-                    <button class="action-btn edit-btn" aria-label="Edit folio" onclick="editFolio('${folioId}')">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                        </svg>
-                    </button>
+                    <div class="dropdown">
+                        <button class="action-btn menu-btn" aria-label="Folio actions" onclick="toggleFolioMenu(event, '${folioId}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="menu-${folioId}">
+                            <button class="dropdown-item" onclick="editFolio('${folioId}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                </svg>
+                                Edit
+                            </button>
+                            <button class="dropdown-item" onclick="duplicateFolio('${folioId}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                                </svg>
+                                Duplicate
+                            </button>
+                            <button class="dropdown-item pin-item" onclick="togglePinFolio('${folioId}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6h2v-6h5v-2l-2-2z"/>
+                                </svg>
+                                <span class="pin-text">Pin</span>
+                            </button>
+                            <button class="dropdown-item delete-item" onclick="deleteFolio('${folioId}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                </svg>
+                                Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <div class="item-description">${description}</div>
@@ -537,6 +568,168 @@ function updateRecentFoliosWidget() {
     });
 }
 
+function updatePinnedFoliosWidget() {
+    const pinnedSection = document.getElementById('pinnedSection');
+    const pinnedList = document.getElementById('pinnedFoliosList');
+    const pinnedFolios = settings.pinnedFolios || [];
+    
+    // Show/hide pinned section based on whether there are pinned folios
+    if (pinnedFolios.length === 0) {
+        pinnedSection.style.display = 'none';
+        return;
+    }
+    
+    pinnedSection.style.display = 'block';
+    pinnedList.innerHTML = '';
+    
+    pinnedFolios.forEach(folioId => {
+        const folio = folios[folioId];
+        if (!folio) return;
+        
+        const isActive = folioId === currentFolio;
+        const item = document.createElement('div');
+        item.className = `recent-item${isActive ? ' active' : ''}`;
+        item.setAttribute('aria-label', `Switch to folio: ${folio.title}`);
+        
+        const description = folio.description || 'No description available';
+        const persona = settings.personas[folio.assignedPersona];
+        
+        item.innerHTML = `
+            <div class="item-header">
+                <div class="item-title">
+                    ${folio.title}
+                    ${persona ? `<span class="persona-badge">${persona.name}</span>` : ''}
+                </div>
+                <div class="item-actions">
+                    <div class="dropdown">
+                        <button class="action-btn menu-btn" aria-label="Folio actions" onclick="toggleFolioMenu(event, '${folioId}')">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="menu-${folioId}">
+                            <button class="dropdown-item" onclick="editFolio('${folioId}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                                </svg>
+                                Edit
+                            </button>
+                            <button class="dropdown-item" onclick="duplicateFolio('${folioId}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                                </svg>
+                                Duplicate
+                            </button>
+                            <button class="dropdown-item pin-item" onclick="togglePinFolio('${folioId}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6h2v-6h5v-2l-2-2z"/>
+                                </svg>
+                                <span class="pin-text">Unpin</span>
+                            </button>
+                            <button class="dropdown-item delete-item" onclick="deleteFolio('${folioId}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                </svg>
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="item-description">${description}</div>
+        `;
+        
+        item.addEventListener('click', (e) => {
+            if (!e.target.closest('.action-btn')) {
+                switchFolio(folioId);
+            }
+        });
+        
+        pinnedList.appendChild(item);
+    });
+}
+
+// ========== DROPDOWN MENU FUNCTIONALITY ==========
+
+function toggleFolioMenu(event, folioId) {
+    event.stopPropagation();
+    
+    // Close any other open menus
+    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+        if (menu.id !== `menu-${folioId}`) {
+            menu.classList.remove('show');
+        }
+    });
+    
+    const menu = document.getElementById(`menu-${folioId}`);
+    if (menu) {
+        menu.classList.toggle('show');
+        
+        // Update pin button text based on current state
+        const pinItem = menu.querySelector('.pin-item .pin-text');
+        const isPinned = settings.pinnedFolios && settings.pinnedFolios.includes(folioId);
+        if (pinItem) {
+            pinItem.textContent = isPinned ? 'Unpin' : 'Pin';
+        }
+    }
+}
+
+function duplicateFolio(folioId) {
+    const originalFolio = folios[folioId];
+    if (!originalFolio) return;
+    
+    const newFolioId = generateId();
+    const newFolio = {
+        ...originalFolio,
+        id: newFolioId,
+        title: `${originalFolio.title} (Copy)`,
+        createdAt: new Date().toISOString(),
+        lastUsed: new Date().toISOString()
+    };
+    
+    folios[newFolioId] = newFolio;
+    saveToStorage();
+    updateRecentFoliosWidget();
+    showMessage('Folio duplicated successfully', 'success');
+    
+    // Close the menu
+    document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
+}
+
+function togglePinFolio(folioId) {
+    if (!settings.pinnedFolios) settings.pinnedFolios = [];
+    
+    const isPinned = settings.pinnedFolios.includes(folioId);
+    
+    if (isPinned) {
+        // Unpin
+        settings.pinnedFolios = settings.pinnedFolios.filter(id => id !== folioId);
+        showMessage('Folio unpinned', 'info');
+    } else {
+        // Pin (max 3)
+        if (settings.pinnedFolios.length >= 3) {
+            showMessage('Maximum 3 folios can be pinned. Unpin one first.', 'warning');
+            return;
+        }
+        settings.pinnedFolios.push(folioId);
+        showMessage('Folio pinned', 'success');
+    }
+    
+    saveToStorage();
+    updateRecentFoliosWidget();
+    
+    // Close the menu
+    document.querySelectorAll('.dropdown-menu').forEach(menu => menu.classList.remove('show'));
+}
+
+// Close dropdown menus when clicking outside
+document.addEventListener('click', (event) => {
+    if (!event.target.closest('.dropdown')) {
+        document.querySelectorAll('.dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
 
 // ========== DELETE CONFIRMATION ==========
 

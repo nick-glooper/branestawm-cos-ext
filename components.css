@@ -473,6 +473,121 @@ input[type="checkbox"] {
   color: var(--primary-500);
 }
 
+/* ========== DROPDOWN MENUS ========== */
+
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: var(--surface-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  min-width: 140px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all var(--transition-fast) var(--ease-out);
+  z-index: 1000;
+}
+
+.dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+  border-radius: 0;
+  transition: background-color var(--transition-fast) var(--ease-out);
+}
+
+.dropdown-item:first-child {
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
+.dropdown-item:last-child {
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: var(--radius-lg);
+}
+
+.dropdown-item:hover {
+  background: var(--surface-secondary);
+}
+
+.dropdown-item.delete-item:hover {
+  background: var(--error-light);
+  color: var(--error);
+}
+
+.dropdown-item svg {
+  flex-shrink: 0;
+}
+
+/* ========== PINNED FOLIOS SECTION ========== */
+
+.pinned-section {
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.pinned-section .section-title {
+  color: var(--primary-600);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+}
+
+.pinned-folios-list {
+  padding: 0 var(--space-3);
+}
+
+.pinned-folios-list .recent-item {
+  margin-bottom: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--primary-25);
+  border: 1px solid var(--primary-100);
+}
+
+.pinned-folios-list .recent-item:hover {
+  background: var(--primary-50);
+  border-color: var(--primary-200);
+}
+
+.pinned-folios-list .recent-item.active {
+  background: var(--primary-100);
+  border-color: var(--primary-300);
+}
+
+[data-mode="dark"] .pinned-folios-list .recent-item {
+  background: rgba(59, 130, 246, 0.05);
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+[data-mode="dark"] .pinned-folios-list .recent-item:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+[data-mode="dark"] .pinned-folios-list .recent-item.active {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+}
+
 /* ========== CARDS ========== */
 
 .card {
