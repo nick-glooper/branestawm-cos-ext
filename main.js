@@ -72,7 +72,7 @@ let settings = {
 
 let isProcessing = false;
 let keepAlivePort = null;
-let recentFolios = [];
+let recentFolios = ['general'];
 // let recentConversations = []; // No longer needed - folios track their own dialogue
 let deleteTarget = null;
 
@@ -525,7 +525,7 @@ function updateRecentFoliosWidget() {
                     </button>
                 </div>
             </div>
-            <div class="item-description">${description}</div>
+            ${isActive ? `<div class="item-description current-description">${description}</div>` : `<div class="item-description">${description}</div>`}
         `;
         
         item.addEventListener('click', (e) => {
