@@ -521,31 +521,31 @@ function updateRecentFoliosWidget() {
                 </div>
                 <div class="item-actions">
                     <div class="dropdown">
-                        <button class="action-btn menu-btn" aria-label="Folio actions" onclick="toggleFolioMenu(event, '${folioId}')">
+                        <button class="action-btn menu-btn" aria-label="Folio actions" data-folio-id="${folioId}">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
                             </svg>
                         </button>
                         <div class="dropdown-menu" id="menu-${folioId}">
-                            <button class="dropdown-item" onclick="editFolio('${folioId}')">
+                            <button class="dropdown-item edit-item" data-folio-id="${folioId}">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                                 </svg>
                                 Edit
                             </button>
-                            <button class="dropdown-item" onclick="duplicateFolio('${folioId}')">
+                            <button class="dropdown-item duplicate-item" data-folio-id="${folioId}">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
                                 </svg>
                                 Duplicate
                             </button>
-                            <button class="dropdown-item pin-item" onclick="togglePinFolio('${folioId}')">
+                            <button class="dropdown-item pin-item" data-folio-id="${folioId}">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6h2v-6h5v-2l-2-2z"/>
                                 </svg>
                                 <span class="pin-text">Pin</span>
                             </button>
-                            <button class="dropdown-item delete-item" onclick="deleteFolio('${folioId}')">
+                            <button class="dropdown-item delete-item" data-folio-id="${folioId}">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                 </svg>
@@ -563,6 +563,29 @@ function updateRecentFoliosWidget() {
                 switchFolio(folioId);
             }
         });
+        
+        // Add event listeners for dropdown actions
+        const menuBtn = item.querySelector('.menu-btn');
+        const editBtn = item.querySelector('.edit-item');
+        const duplicateBtn = item.querySelector('.duplicate-item');
+        const pinBtn = item.querySelector('.pin-item');
+        const deleteBtn = item.querySelector('.delete-item');
+        
+        if (menuBtn) {
+            menuBtn.addEventListener('click', (e) => toggleFolioMenu(e, folioId));
+        }
+        if (editBtn) {
+            editBtn.addEventListener('click', () => editFolio(folioId));
+        }
+        if (duplicateBtn) {
+            duplicateBtn.addEventListener('click', () => duplicateFolio(folioId));
+        }
+        if (pinBtn) {
+            pinBtn.addEventListener('click', () => togglePinFolio(folioId));
+        }
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => deleteFolio(folioId));
+        }
         
         itemsList.appendChild(item);
     });
@@ -605,31 +628,31 @@ function updatePinnedFoliosWidget() {
                 </div>
                 <div class="item-actions">
                     <div class="dropdown">
-                        <button class="action-btn menu-btn" aria-label="Folio actions" onclick="toggleFolioMenu(event, '${folioId}')">
+                        <button class="action-btn menu-btn" aria-label="Folio actions" data-folio-id="${folioId}">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
                             </svg>
                         </button>
                         <div class="dropdown-menu" id="menu-${folioId}">
-                            <button class="dropdown-item" onclick="editFolio('${folioId}')">
+                            <button class="dropdown-item edit-item" data-folio-id="${folioId}">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                                 </svg>
                                 Edit
                             </button>
-                            <button class="dropdown-item" onclick="duplicateFolio('${folioId}')">
+                            <button class="dropdown-item duplicate-item" data-folio-id="${folioId}">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
                                 </svg>
                                 Duplicate
                             </button>
-                            <button class="dropdown-item pin-item" onclick="togglePinFolio('${folioId}')">
+                            <button class="dropdown-item pin-item" data-folio-id="${folioId}">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5v6h2v-6h5v-2l-2-2z"/>
                                 </svg>
                                 <span class="pin-text">Unpin</span>
                             </button>
-                            <button class="dropdown-item delete-item" onclick="deleteFolio('${folioId}')">
+                            <button class="dropdown-item delete-item" data-folio-id="${folioId}">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                                 </svg>
@@ -647,6 +670,29 @@ function updatePinnedFoliosWidget() {
                 switchFolio(folioId);
             }
         });
+        
+        // Add event listeners for dropdown actions
+        const menuBtn = item.querySelector('.menu-btn');
+        const editBtn = item.querySelector('.edit-item');
+        const duplicateBtn = item.querySelector('.duplicate-item');
+        const pinBtn = item.querySelector('.pin-item');
+        const deleteBtn = item.querySelector('.delete-item');
+        
+        if (menuBtn) {
+            menuBtn.addEventListener('click', (e) => toggleFolioMenu(e, folioId));
+        }
+        if (editBtn) {
+            editBtn.addEventListener('click', () => editFolio(folioId));
+        }
+        if (duplicateBtn) {
+            duplicateBtn.addEventListener('click', () => duplicateFolio(folioId));
+        }
+        if (pinBtn) {
+            pinBtn.addEventListener('click', () => togglePinFolio(folioId));
+        }
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', () => deleteFolio(folioId));
+        }
         
         pinnedList.appendChild(item);
     });
