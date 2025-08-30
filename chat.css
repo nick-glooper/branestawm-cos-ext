@@ -259,13 +259,15 @@
 }
 
 .recent-item.active {
-  background: var(--primary-50);
-  border-color: var(--primary-200);
+  background: var(--success-light);
+  border-color: var(--success);
+  border-width: 2px;
 }
 
 [data-mode="dark"] .recent-item.active {
-  background: var(--primary-900);
-  border-color: var(--primary-700);
+  background: rgba(16, 185, 129, 0.1);
+  border-color: var(--success);
+  border-width: 2px;
 }
 
 .item-header {

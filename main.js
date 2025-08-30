@@ -514,7 +514,6 @@ function updateRecentFoliosWidget() {
             <div class="item-header">
                 <div class="item-title">
                     ${folio.title}
-                    ${isActive ? '<span class="current-badge">Current</span>' : ''}
                     ${persona ? `<span class="persona-badge">${persona.name}</span>` : ''}
                 </div>
                 <div class="item-actions">
@@ -525,7 +524,7 @@ function updateRecentFoliosWidget() {
                     </button>
                 </div>
             </div>
-            ${isActive ? `<div class="item-description current-description">${description}</div>` : `<div class="item-description">${description}</div>`}
+            <div class="item-description">${description}</div>
         `;
         
         item.addEventListener('click', (e) => {
