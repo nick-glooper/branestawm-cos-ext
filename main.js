@@ -559,7 +559,7 @@ function updateRecentFoliosWidget() {
         `;
         
         item.addEventListener('click', (e) => {
-            if (!e.target.closest('.action-btn')) {
+            if (!e.target.closest('.action-btn') && !e.target.closest('.dropdown-menu')) {
                 switchFolio(folioId);
             }
         });
@@ -569,13 +569,16 @@ function updateRecentFoliosWidget() {
 }
 
 function updatePinnedFoliosWidget() {
+    console.log('📌 Updating pinned folios widget');
     const pinnedSection = document.getElementById('pinnedSection');
     const pinnedList = document.getElementById('pinnedFoliosList');
     const pinnedFolios = settings.pinnedFolios || [];
+    console.log('📌 Found pinned folios:', pinnedFolios);
     
     // Show/hide pinned section based on whether there are pinned folios
     if (pinnedFolios.length === 0) {
-        pinnedSection.style.display = 'none';
+        console.log('📌 No pinned folios, hiding section');
+        if (pinnedSection) pinnedSection.style.display = 'none';
         return;
     }
     
@@ -640,7 +643,7 @@ function updatePinnedFoliosWidget() {
         `;
         
         item.addEventListener('click', (e) => {
-            if (!e.target.closest('.action-btn')) {
+            if (!e.target.closest('.action-btn') && !e.target.closest('.dropdown-menu')) {
                 switchFolio(folioId);
             }
         });
@@ -652,6 +655,7 @@ function updatePinnedFoliosWidget() {
 // ========== DROPDOWN MENU FUNCTIONALITY ==========
 
 function toggleFolioMenu(event, folioId) {
+    console.log('📝 toggleFolioMenu called for:', folioId);
     event.stopPropagation();
     
     // Close any other open menus
@@ -662,8 +666,10 @@ function toggleFolioMenu(event, folioId) {
     });
     
     const menu = document.getElementById(`menu-${folioId}`);
+    console.log('📝 Menu found:', menu ? 'yes' : 'no');
     if (menu) {
         menu.classList.toggle('show');
+        console.log('📝 Menu toggled, now has show class:', menu.classList.contains('show'));
         
         // Update pin button text based on current state
         const pinItem = menu.querySelector('.pin-item .pin-text');
@@ -688,7 +694,7 @@ function duplicateFolio(folioId) {
     };
     
     folios[newFolioId] = newFolio;
-    saveToStorage();
+    saveData();
     updateRecentFoliosWidget();
     showMessage('Folio duplicated successfully', 'success');
     
@@ -697,14 +703,17 @@ function duplicateFolio(folioId) {
 }
 
 function togglePinFolio(folioId) {
+    console.log('📌 togglePinFolio called for:', folioId);
     if (!settings.pinnedFolios) settings.pinnedFolios = [];
     
     const isPinned = settings.pinnedFolios.includes(folioId);
+    console.log('📌 Is currently pinned:', isPinned);
     
     if (isPinned) {
         // Unpin
         settings.pinnedFolios = settings.pinnedFolios.filter(id => id !== folioId);
         showMessage('Folio unpinned', 'info');
+        console.log('📌 Folio unpinned, new pinned array:', settings.pinnedFolios);
     } else {
         // Pin (max 3)
         if (settings.pinnedFolios.length >= 3) {
@@ -713,9 +722,10 @@ function togglePinFolio(folioId) {
         }
         settings.pinnedFolios.push(folioId);
         showMessage('Folio pinned', 'success');
+        console.log('📌 Folio pinned, new pinned array:', settings.pinnedFolios);
     }
     
-    saveToStorage();
+    saveData();
     updateRecentFoliosWidget();
     
     // Close the menu
@@ -1297,3 +1307,8 @@ window.refreshOllamaConnection = refreshOllamaConnection;
 
 // Make web search function accessible
 window.showWebSearchModal = showWebSearchModal;
+
+// Make dropdown menu functions accessible
+window.toggleFolioMenu = toggleFolioMenu;
+window.duplicateFolio = duplicateFolio;
+window.togglePinFolio = togglePinFolio;
