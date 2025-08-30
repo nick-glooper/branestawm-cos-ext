@@ -59,7 +59,7 @@ let settings = {
     personas: {
         'core': {
             id: 'core',
-            name: 'Core Persona',
+            name: 'Core',
             identity: 'Helpful AI assistant and cognitive support specialist',
             communicationStyle: 'Clear, structured, and supportive',
             tone: 'Professional yet approachable',

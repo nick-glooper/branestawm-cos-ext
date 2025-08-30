@@ -24,7 +24,7 @@ let settings = {
     personas: {
         'core': {
             id: 'core',
-            name: 'Core Persona',
+            name: 'Core',
             identity: 'Helpful AI assistant and cognitive support specialist',
             communicationStyle: 'Clear, structured, and supportive',
             tone: 'Professional yet approachable',
@@ -183,6 +183,13 @@ function setupEventListeners() {
     document.querySelector('#personaModal .modal-close').addEventListener('click', closePersonaModal);
     document.getElementById('cancelPersonaBtn').addEventListener('click', closePersonaModal);
     document.getElementById('savePersonaBtn').addEventListener('click', savePersona);
+    
+    // Character counter for persona name
+    document.getElementById('personaName').addEventListener('input', function() {
+        const charCount = document.getElementById('nameCharCount');
+        charCount.textContent = this.value.length;
+        charCount.style.color = this.value.length > 12 ? 'var(--warning)' : 'var(--text-secondary)';
+    });
     
     
     // Sync settings
@@ -749,7 +756,7 @@ function updatePersonasList() {
         settings.personas = {
             'core': {
                 id: 'core',
-                name: 'Core Persona',
+                name: 'Core',
                 identity: 'Helpful AI assistant and cognitive support specialist',
                 communicationStyle: 'Clear, structured, and supportive',
                 tone: 'Professional yet approachable',
@@ -824,6 +831,11 @@ function showPersonaModal(personaId = null) {
         document.getElementById('personaCommunicationStyle').value = persona.communicationStyle;
         document.getElementById('personaTone').value = persona.tone;
         document.getElementById('personaRoleContext').value = persona.roleContext;
+        
+        // Update character count
+        const charCount = document.getElementById('nameCharCount');
+        charCount.textContent = persona.name.length;
+        charCount.style.color = persona.name.length > 12 ? 'var(--warning)' : 'var(--text-secondary)';
     } else {
         // Create new persona
         modalTitle.textContent = 'New Persona';
@@ -832,6 +844,11 @@ function showPersonaModal(personaId = null) {
         document.getElementById('personaCommunicationStyle').value = '';
         document.getElementById('personaTone').value = '';
         document.getElementById('personaRoleContext').value = '';
+        
+        // Reset character count
+        const charCount = document.getElementById('nameCharCount');
+        charCount.textContent = '0';
+        charCount.style.color = 'var(--text-secondary)';
     }
     
     modal.classList.add('show');
@@ -854,6 +871,12 @@ function savePersona() {
     // Validation
     if (!name || !identity || !communicationStyle || !tone || !roleContext) {
         showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    // Check name length
+    if (name.length > 15) {
+        showToast('Persona name must be 15 characters or less', 'error');
         return;
     }
     
