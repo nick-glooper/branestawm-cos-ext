@@ -433,8 +433,8 @@
             <div class="modal-header">
                 <div class="modal-title-with-info">
                     <h3 id="webSearchModalTitle">Web Search Options</h3>
-                    <button class="btn icon-btn info-btn" id="webSearchInfoBtn" aria-label="How it works">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <button class="btn icon-btn main-info-btn" id="webSearchInfoBtn" aria-label="How it works">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,7H13V9H11V7M11,11H13V17H11V11Z"/>
                         </svg>
                     </button>
@@ -442,14 +442,19 @@
                 <button class="close-btn" aria-label="Close web search modal">×</button>
             </div>
             <div class="modal-body">
-                <p class="help-text">Search the web using AI-powered platforms, then import results into your conversation or notes.</p>
-                
                 <div class="web-search-options">
                     <div class="search-option">
                         <div class="search-option-header">
-                            <div class="search-option-info">
+                            <div class="search-option-title">
                                 <h4>Google</h4>
-                                <p>Opens Google with AI Overview enabled. Import AI summaries, featured snippets, or knowledge panel content</p>
+                                <button class="option-info-btn" id="googleInfoBtn" aria-label="Google search information">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,7H13V9H11V7M11,11H13V17H11V11Z"/>
+                                    </svg>
+                                </button>
+                                <div class="option-info-tooltip" id="googleInfoTooltip">
+                                    Opens Google with AI Overview enabled. Import AI summaries, featured snippets, or knowledge panel content
+                                </div>
                             </div>
                         </div>
                         <button class="btn" id="searchGoogleBtn">Search with Google AI</button>
@@ -457,9 +462,16 @@
                     
                     <div class="search-option">
                         <div class="search-option-header">
-                            <div class="search-option-info">
+                            <div class="search-option-title">
                                 <h4>Perplexity</h4>
-                                <p>Search using Perplexity's AI research assistant with real-time citations</p>
+                                <button class="option-info-btn" id="perplexityInfoBtn" aria-label="Perplexity search information">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,7H13V9H11V7M11,11H13V17H11V11Z"/>
+                                    </svg>
+                                </button>
+                                <div class="option-info-tooltip" id="perplexityInfoTooltip">
+                                    Search using Perplexity's AI research assistant with real-time citations
+                                </div>
                             </div>
                         </div>
                         <button class="btn" id="searchPerplexityBtn">Search with Perplexity</button>

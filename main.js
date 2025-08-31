@@ -268,9 +268,49 @@ function setupWebSearchEventListeners() {
         webSearchInfoBtn.addEventListener('click', showWebSearchInfoModal);
     }
     
+    const googleInfoBtn = document.getElementById('googleInfoBtn');
+    if (googleInfoBtn) {
+        googleInfoBtn.addEventListener('click', toggleGoogleInfoTooltip);
+    }
+    
+    const perplexityInfoBtn = document.getElementById('perplexityInfoBtn');
+    if (perplexityInfoBtn) {
+        perplexityInfoBtn.addEventListener('click', togglePerplexityInfoTooltip);
+    }
+    
     const cancelWebSearchBtn = document.getElementById('cancelWebSearchBtn');
     if (cancelWebSearchBtn) {
         cancelWebSearchBtn.addEventListener('click', () => closeModal('webSearchModal'));
+    }
+}
+
+function toggleGoogleInfoTooltip() {
+    const tooltip = document.getElementById('googleInfoTooltip');
+    const perplexityTooltip = document.getElementById('perplexityInfoTooltip');
+    
+    // Hide the other tooltip
+    if (perplexityTooltip) {
+        perplexityTooltip.classList.remove('show');
+    }
+    
+    // Toggle this tooltip
+    if (tooltip) {
+        tooltip.classList.toggle('show');
+    }
+}
+
+function togglePerplexityInfoTooltip() {
+    const tooltip = document.getElementById('perplexityInfoTooltip');
+    const googleTooltip = document.getElementById('googleInfoTooltip');
+    
+    // Hide the other tooltip
+    if (googleTooltip) {
+        googleTooltip.classList.remove('show');
+    }
+    
+    // Toggle this tooltip
+    if (tooltip) {
+        tooltip.classList.toggle('show');
     }
 }
 
