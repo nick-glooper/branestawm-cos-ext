@@ -433,11 +433,19 @@
             <div class="modal-header">
                 <div class="modal-title-with-info">
                     <h3 id="webSearchModalTitle">Web Search Options</h3>
-                    <button class="btn icon-btn main-info-btn" id="webSearchInfoBtn" aria-label="How it works">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <button class="option-info-btn" id="webSearchInfoBtn" aria-label="How it works">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,7H13V9H11V7M11,11H13V17H11V11Z"/>
                         </svg>
                     </button>
+                    <div class="main-info-tooltip" id="webSearchInfoTooltip">
+                        <ol>
+                            <li>Click a search option to open that platform in a new tab</li>
+                            <li>Perform your search using the familiar interface</li>
+                            <li>Look for the "Import to Branestawm" button on the search results</li>
+                            <li>Click import to bring the AI response into your current conversation</li>
+                        </ol>
+                    </div>
                 </div>
                 <button class="close-btn" aria-label="Close web search modal">×</button>
             </div>
@@ -482,23 +490,6 @@
         </div>
     </div>
 
-    <!-- Web Search Info Modal -->
-    <div class="modal" id="webSearchInfoModal" role="dialog" aria-labelledby="webSearchInfoModalTitle" aria-modal="true">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="webSearchInfoModalTitle">How Web Search Works</h3>
-                <button class="close-btn" aria-label="Close info modal">×</button>
-            </div>
-            <div class="modal-body">
-                <ol>
-                    <li>Click a search option to open that platform in a new tab</li>
-                    <li>Perform your search using the familiar interface</li>
-                    <li>Look for the "Import to Branestawm" button on the search results</li>
-                    <li>Click import to bring the AI response into your current conversation</li>
-                </ol>
-            </div>
-        </div>
-    </div>
 
     <!-- Artifact Generation Modal -->
     <div class="modal" id="artifactGenerationModal" role="dialog" aria-labelledby="artifactGenerationModalTitle" aria-modal="true">

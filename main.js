@@ -248,9 +248,6 @@ function showWebSearchModal() {
     showModal('webSearchModal');
 }
 
-function showWebSearchInfoModal() {
-    showModal('webSearchInfoModal');
-}
 
 function setupWebSearchEventListeners() {
     const googleSearchBtn = document.getElementById('googleSearchBtn');
@@ -265,7 +262,7 @@ function setupWebSearchEventListeners() {
     
     const webSearchInfoBtn = document.getElementById('webSearchInfoBtn');
     if (webSearchInfoBtn) {
-        webSearchInfoBtn.addEventListener('click', showWebSearchInfoModal);
+        webSearchInfoBtn.addEventListener('click', toggleWebSearchInfoTooltip);
     }
     
     const googleInfoBtn = document.getElementById('googleInfoBtn');
@@ -284,13 +281,36 @@ function setupWebSearchEventListeners() {
     }
 }
 
+function toggleWebSearchInfoTooltip() {
+    const tooltip = document.getElementById('webSearchInfoTooltip');
+    const googleTooltip = document.getElementById('googleInfoTooltip');
+    const perplexityTooltip = document.getElementById('perplexityInfoTooltip');
+    
+    // Hide other tooltips
+    if (googleTooltip) {
+        googleTooltip.classList.remove('show');
+    }
+    if (perplexityTooltip) {
+        perplexityTooltip.classList.remove('show');
+    }
+    
+    // Toggle this tooltip
+    if (tooltip) {
+        tooltip.classList.toggle('show');
+    }
+}
+
 function toggleGoogleInfoTooltip() {
     const tooltip = document.getElementById('googleInfoTooltip');
     const perplexityTooltip = document.getElementById('perplexityInfoTooltip');
+    const mainTooltip = document.getElementById('webSearchInfoTooltip');
     
-    // Hide the other tooltip
+    // Hide other tooltips
     if (perplexityTooltip) {
         perplexityTooltip.classList.remove('show');
+    }
+    if (mainTooltip) {
+        mainTooltip.classList.remove('show');
     }
     
     // Toggle this tooltip
@@ -302,10 +322,14 @@ function toggleGoogleInfoTooltip() {
 function togglePerplexityInfoTooltip() {
     const tooltip = document.getElementById('perplexityInfoTooltip');
     const googleTooltip = document.getElementById('googleInfoTooltip');
+    const mainTooltip = document.getElementById('webSearchInfoTooltip');
     
-    // Hide the other tooltip
+    // Hide other tooltips
     if (googleTooltip) {
         googleTooltip.classList.remove('show');
+    }
+    if (mainTooltip) {
+        mainTooltip.classList.remove('show');
     }
     
     // Toggle this tooltip
@@ -946,7 +970,7 @@ function setupEventListeners() {
     addListener('syncBtn', 'click', () => showModal('syncModal'));
     addListener('newFolioBtn', 'click', () => showModal('folioModal'));
     addListener('webSearchBtn', 'click', showWebSearchModal);
-    addListener('webSearchInfoBtn', 'click', showWebSearchInfoModal);
+    addListener('webSearchInfoBtn', 'click', toggleWebSearchInfoTooltip);
     addListener('newArtifactBtn', 'click', () => createArtifactFromTemplate('note'));
     addListener('generateArtifactBtn', 'click', showArtifactGenerationMenu);
     
@@ -1403,7 +1427,6 @@ window.refreshOllamaConnection = refreshOllamaConnection;
 
 // Make web search function accessible
 window.showWebSearchModal = showWebSearchModal;
-window.showWebSearchInfoModal = showWebSearchInfoModal;
 
 // Make dropdown menu functions accessible
 window.toggleFolioMenu = toggleFolioMenu;
