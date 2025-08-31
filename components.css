@@ -47,7 +47,6 @@
     position: static;
     display: flex;
     justify-content: center;
-    border-top: 1px solid var(--border-secondary);
     background: var(--surface-primary);
 }
 
