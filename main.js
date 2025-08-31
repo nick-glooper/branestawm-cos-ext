@@ -248,6 +248,10 @@ function showWebSearchModal() {
     showModal('webSearchModal');
 }
 
+function showWebSearchInfoModal() {
+    showModal('webSearchInfoModal');
+}
+
 function setupWebSearchEventListeners() {
     const googleSearchBtn = document.getElementById('googleSearchBtn');
     if (googleSearchBtn) {
@@ -257,6 +261,11 @@ function setupWebSearchEventListeners() {
     const perplexitySearchBtn = document.getElementById('perplexitySearchBtn');
     if (perplexitySearchBtn) {
         perplexitySearchBtn.addEventListener('click', handlePerplexitySearch);
+    }
+    
+    const webSearchInfoBtn = document.getElementById('webSearchInfoBtn');
+    if (webSearchInfoBtn) {
+        webSearchInfoBtn.addEventListener('click', showWebSearchInfoModal);
     }
     
     const cancelWebSearchBtn = document.getElementById('cancelWebSearchBtn');
@@ -897,6 +906,7 @@ function setupEventListeners() {
     addListener('syncBtn', 'click', () => showModal('syncModal'));
     addListener('newFolioBtn', 'click', () => showModal('folioModal'));
     addListener('webSearchBtn', 'click', showWebSearchModal);
+    addListener('webSearchInfoBtn', 'click', showWebSearchInfoModal);
     addListener('newArtifactBtn', 'click', () => createArtifactFromTemplate('note'));
     addListener('generateArtifactBtn', 'click', showArtifactGenerationMenu);
     
@@ -1353,6 +1363,7 @@ window.refreshOllamaConnection = refreshOllamaConnection;
 
 // Make web search function accessible
 window.showWebSearchModal = showWebSearchModal;
+window.showWebSearchInfoModal = showWebSearchInfoModal;
 
 // Make dropdown menu functions accessible
 window.toggleFolioMenu = toggleFolioMenu;

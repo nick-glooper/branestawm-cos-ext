@@ -431,7 +431,14 @@
     <div class="modal" id="webSearchModal" role="dialog" aria-labelledby="webSearchModalTitle" aria-modal="true">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="webSearchModalTitle">Web Search Options</h3>
+                <div class="modal-title-with-info">
+                    <h3 id="webSearchModalTitle">Web Search Options</h3>
+                    <button class="btn icon-btn info-btn" id="webSearchInfoBtn" aria-label="How it works">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,7H13V9H11V7M11,11H13V17H11V11Z"/>
+                        </svg>
+                    </button>
+                </div>
                 <button class="close-btn" aria-label="Close web search modal">×</button>
             </div>
             <div class="modal-body">
@@ -440,9 +447,8 @@
                 <div class="web-search-options">
                     <div class="search-option">
                         <div class="search-option-header">
-                            <div class="search-option-icon">🔍</div>
                             <div class="search-option-info">
-                                <h4>Google AI Overview</h4>
+                                <h4>Google</h4>
                                 <p>Opens Google with AI Overview enabled. Import AI summaries, featured snippets, or knowledge panel content</p>
                             </div>
                         </div>
@@ -451,9 +457,8 @@
                     
                     <div class="search-option">
                         <div class="search-option-header">
-                            <div class="search-option-icon">🟣</div>
                             <div class="search-option-info">
-                                <h4>Perplexity AI</h4>
+                                <h4>Perplexity</h4>
                                 <p>Search using Perplexity's AI research assistant with real-time citations</p>
                             </div>
                         </div>
@@ -461,15 +466,24 @@
                     </div>
                 </div>
                 
-                <div class="search-instructions">
-                    <h4>How it works:</h4>
-                    <ol>
-                        <li>Click a search option to open that platform in a new tab</li>
-                        <li>Perform your search using the familiar interface</li>
-                        <li>Look for the "Import to Branestawm" button on the search results</li>
-                        <li>Click import to bring the AI response into your current conversation</li>
-                    </ol>
-                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web Search Info Modal -->
+    <div class="modal" id="webSearchInfoModal" role="dialog" aria-labelledby="webSearchInfoModalTitle" aria-modal="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="webSearchInfoModalTitle">How Web Search Works</h3>
+                <button class="close-btn" aria-label="Close info modal">×</button>
+            </div>
+            <div class="modal-body">
+                <ol>
+                    <li>Click a search option to open that platform in a new tab</li>
+                    <li>Perform your search using the familiar interface</li>
+                    <li>Look for the "Import to Branestawm" button on the search results</li>
+                    <li>Click import to bring the AI response into your current conversation</li>
+                </ol>
             </div>
         </div>
     </div>
