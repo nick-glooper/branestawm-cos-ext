@@ -58,6 +58,9 @@ async function loadData() {
         // Migrate shared artifacts for existing folios
         migrateSharedArtifacts();
         
+        // Migrate persona names to remove "Persona" suffix
+        migratePersonaNames();
+        
         console.log('Data loaded successfully');
         
     } catch (error) {
@@ -270,4 +273,24 @@ function migrateSharedArtifacts() {
     });
     
     console.log('Shared artifacts migration completed');
+}
+
+// Migrate persona names to remove "Persona" suffix for cleaner display
+function migratePersonaNames() {
+    if (!settings.personas) return;
+    
+    let migrated = false;
+    Object.values(settings.personas).forEach(persona => {
+        if (persona.name && persona.name.endsWith(' Persona')) {
+            const newName = persona.name.replace(/ Persona$/, '');
+            console.log(`📝 Migrating persona name: "${persona.name}" → "${newName}"`);
+            persona.name = newName;
+            migrated = true;
+        }
+    });
+    
+    if (migrated) {
+        saveData();
+        console.log('📝 Persona names migration completed');
+    }
 }

@@ -134,6 +134,24 @@ body {
   padding: var(--space-4);
   border-bottom: 1px solid var(--border-primary);
   background: var(--surface-primary);
+  flex-shrink: 0;
+}
+
+.section-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.section-subheader {
+  padding: var(--space-3) var(--space-4) var(--space-2);
+}
+
+.section-subtitle {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--primary-600);
+  margin: 0;
 }
 
 .project-selector {
