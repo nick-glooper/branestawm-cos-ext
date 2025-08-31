@@ -11,7 +11,8 @@
   ],
   
   "host_permissions": [
-    "https://*/*"
+    "https://*/*",
+    "http://localhost:*/*"
   ],
   
   "content_scripts": [
