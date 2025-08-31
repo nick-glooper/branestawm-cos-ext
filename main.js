@@ -250,12 +250,12 @@ function showWebSearchModal() {
 
 
 function setupWebSearchEventListeners() {
-    const googleSearchBtn = document.getElementById('googleSearchBtn');
+    const googleSearchBtn = document.getElementById('searchGoogleBtn');
     if (googleSearchBtn) {
         googleSearchBtn.addEventListener('click', handleGoogleSearch);
     }
     
-    const perplexitySearchBtn = document.getElementById('perplexitySearchBtn');
+    const perplexitySearchBtn = document.getElementById('searchPerplexityBtn');
     if (perplexitySearchBtn) {
         perplexitySearchBtn.addEventListener('click', handlePerplexitySearch);
     }
