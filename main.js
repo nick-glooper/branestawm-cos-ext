@@ -340,20 +340,20 @@ function togglePerplexityInfoTooltip() {
 
 function handleGoogleSearch() {
     chrome.tabs.create({ 
-        url: 'https://google.com',
+        url: 'https://www.google.com/search?q=&udm=2',
         active: true
     });
     closeModal('webSearchModal');
-    showMessage('Google AI search opened. The "Import to Branestawm" button will appear after you search with AI Overview enabled.', 'info');
+    showMessage('Google AI search opened. The "Import to Branestawm" button will appear on search results with AI Overview.', 'info');
 }
 
 function handlePerplexitySearch() {
     chrome.tabs.create({ 
-        url: 'https://perplexity.ai',
+        url: 'https://www.perplexity.ai',
         active: true
     });
     closeModal('webSearchModal');
-    showMessage('Perplexity opened. Look for the "Import to Branestawm" button after searching.', 'info');
+    showMessage('Perplexity opened. The "Import to Branestawm" button will appear after you perform a search.', 'info');
 }
 
 // ========== WIDGETS AND UI UPDATES ==========
