@@ -990,6 +990,12 @@ input[type="checkbox"] {
   left: auto;
 }
 
+.canvas-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
 /* Artifact canvas tooltip positioning to prevent overflow */
 .canvas-actions .tooltip-content {
   top: calc(100% + var(--space-2));
