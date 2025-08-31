@@ -159,11 +159,140 @@ function removeTypingIndicator(typingDiv) {
     }
 }
 
+// ========== DATA LAKE ACCESS ==========
+
+function buildDataLakeContext() {
+    const dataLake = {
+        folios: {},
+        artifacts: {},
+        totalMessages: 0,
+        totalArtifacts: 0
+    };
+    
+    // Aggregate all folio data
+    Object.entries(folios).forEach(([folioId, folio]) => {
+        if (!folio || !folio.messages) return;
+        
+        dataLake.folios[folioId] = {
+            title: folio.title,
+            description: folio.description || '',
+            guidelines: folio.guidelines || '',
+            assignedPersona: folio.assignedPersona,
+            createdAt: folio.createdAt,
+            lastUsed: folio.lastUsed,
+            messageCount: folio.messages.length,
+            artifactCount: (folio.artifacts || []).length,
+            // Include recent messages for context (last 10 per folio to manage size)
+            recentMessages: folio.messages.slice(-10).map(msg => ({
+                role: msg.role,
+                content: msg.content.substring(0, 500), // Truncate very long messages
+                timestamp: msg.timestamp
+            })),
+            // Include all artifacts from this folio
+            artifacts: (folio.artifacts || []).map(artifact => ({
+                title: artifact.title || 'Untitled',
+                content: artifact.content.substring(0, 1000), // Truncate very long content
+                type: artifact.type,
+                createdAt: artifact.createdAt,
+                id: artifact.id
+            }))
+        };
+        
+        dataLake.totalMessages += folio.messages.length;
+        dataLake.totalArtifacts += (folio.artifacts || []).length;
+    });
+    
+    // Add shared artifacts
+    Object.entries(artifacts).forEach(([artifactId, artifact]) => {
+        if (artifact.shared) {
+            dataLake.artifacts[artifactId] = {
+                title: artifact.title || 'Untitled',
+                content: artifact.content.substring(0, 1000),
+                type: artifact.type,
+                createdAt: artifact.createdAt,
+                shared: true
+            };
+        }
+    });
+    
+    return dataLake;
+}
+
+function formatDataLakeForLLM(dataLake, currentFolioId) {
+    let context = `DATA LAKE SUMMARY:
+📊 Total Folios: ${Object.keys(dataLake.folios).length}
+💬 Total Messages: ${dataLake.totalMessages}
+📝 Total Artifacts: ${dataLake.totalArtifacts + Object.keys(dataLake.artifacts).length}
+
+`;
+
+    // Current folio details (primary context)
+    if (dataLake.folios[currentFolioId]) {
+        const currentFolio = dataLake.folios[currentFolioId];
+        context += `CURRENT FOLIO DETAILS:
+📁 Active: ${currentFolio.title}
+📄 Description: ${currentFolio.description}
+👤 Persona: ${currentFolio.assignedPersona}
+💬 Messages: ${currentFolio.messageCount}
+📝 Artifacts: ${currentFolio.artifactCount}
+
+`;
+    }
+
+    // All folios overview (for cross-folio searches)
+    context += `ALL FOLIOS OVERVIEW:\n`;
+    Object.entries(dataLake.folios).forEach(([folioId, folio]) => {
+        const isActive = folioId === currentFolioId;
+        context += `${isActive ? '🟢' : '⚪'} ${folio.title} (${folio.messageCount} msgs, ${folio.artifactCount} artifacts)`;
+        if (folio.description) {
+            context += ` - ${folio.description.substring(0, 100)}`;
+        }
+        context += `\n`;
+    });
+    
+    context += `\n`;
+
+    // Recent cross-folio content (for searchable context)
+    context += `RECENT CROSS-FOLIO CONTENT:\n`;
+    Object.entries(dataLake.folios).forEach(([folioId, folio]) => {
+        if (folio.recentMessages.length > 0) {
+            context += `--- ${folio.title} (Recent) ---\n`;
+            folio.recentMessages.slice(-3).forEach(msg => {
+                if (msg.role === 'user') {
+                    context += `Q: ${msg.content}\n`;
+                } else if (msg.role === 'assistant') {
+                    context += `A: ${msg.content}\n`;
+                }
+            });
+            context += `\n`;
+        }
+    });
+
+    // All artifacts (searchable content)
+    context += `ARTIFACTS & NOTES:\n`;
+    Object.entries(dataLake.folios).forEach(([folioId, folio]) => {
+        folio.artifacts.forEach(artifact => {
+            context += `📝 [${folio.title}] ${artifact.title}: ${artifact.content}\n`;
+        });
+    });
+    
+    // Shared artifacts
+    Object.entries(dataLake.artifacts).forEach(([artifactId, artifact]) => {
+        context += `🔗 [Shared] ${artifact.title}: ${artifact.content}\n`;
+    });
+
+    return context;
+}
+
 // ========== CONTEXTUAL PROMPT SYSTEM ==========
 
 function buildContextualPrompt(query, folioId) {
     const folio = folios[folioId];
     const persona = settings.personas[folio?.assignedPersona] || settings.personas['core'];
+    
+    // Build and format complete data lake context
+    const dataLake = buildDataLakeContext();
+    const dataLakeContext = formatDataLakeForLLM(dataLake, folioId);
     
     // Prepare date/time context
     const currentDate = new Date();
@@ -224,9 +353,8 @@ IMPORTANT: When users reference relative dates like "yesterday", "Saturday just 
 
 `;
 
-    // Add historical context instruction
-    prompt += `HISTORICAL CONTEXT:
-You have access to the entire conversation history and can reference previous discussions, artifacts, and interactions from across all folios. Use this knowledge to provide contextually aware and informed responses.
+    // Add comprehensive data lake context
+    prompt += `${dataLakeContext}
 
 `;
 
@@ -234,10 +362,18 @@ You have access to the entire conversation history and can reference previous di
     prompt += `CURRENT CONTEXT:
 The user is currently working in the "${folio?.title || 'General Folio'}" folio. Apply the persona characteristics and folio guidelines appropriately while maintaining access to your complete knowledge base.
 
+CROSS-FOLIO SEARCH CAPABILITY:
+You have full access to all conversations, artifacts, and data across ALL folios in the data lake above. When answering queries:
+- Search across all folios for relevant information (meetings, events, notes, etc.)
+- Reference specific folios by name when citing information
+- Combine information from multiple folios when relevant
+- Maintain context of which folio information originated from
+
 INSTRUCTIONS:
 - Respond using the specified persona's identity, communication style, and tone
 - Apply any folio-specific guidelines when relevant
-- Access your complete historical knowledge while filtering through the current persona/folio context
+- Access your complete historical knowledge and data lake while filtering through the current persona/folio context
+- Use cross-folio search to find relevant information regardless of which folio it's stored in
 - Maintain consistency with the persona's role context and communication preferences`;
 
     return prompt;
