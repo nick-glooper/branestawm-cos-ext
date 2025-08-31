@@ -340,11 +340,11 @@ function togglePerplexityInfoTooltip() {
 
 function handleGoogleSearch() {
     chrome.tabs.create({ 
-        url: 'https://www.google.com/search?q=&udm=2',
+        url: 'https://www.google.com/search?q=AI+overview&udm=14',
         active: true
     });
     closeModal('webSearchModal');
-    showMessage('Google AI search opened. The "Import to Branestawm" button will appear on search results with AI Overview.', 'info');
+    showMessage('Google AI Search opened. The "Import to Branestawm" button will appear on search results with AI Overview.', 'info');
 }
 
 function handlePerplexitySearch() {
