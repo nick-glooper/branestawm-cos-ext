@@ -1038,32 +1038,67 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label for="personaName" class="label label-required">Persona Name</label>
-                    <input type="text" id="personaName" class="input" placeholder="e.g., Tech Expert, Writer" maxlength="15" required>
-                    <div class="help-text">A descriptive name for this persona (<span id="nameCharCount">0</span>/15 characters)</div>
+                    <input type="text" id="personaName" class="input" placeholder="e.g., Glooper Content Creator, Husian Consultant" maxlength="30" required>
+                    <div class="help-text">A descriptive name for this persona (<span id="nameCharCount">0</span>/30 characters)</div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="personaIdentity" class="label label-required">Identity</label>
-                    <textarea id="personaIdentity" class="input" rows="2" placeholder="e.g., Experienced software engineer and technical mentor" required></textarea>
-                    <div class="help-text">How should this persona identify itself?</div>
+                <!-- Base Persona Section -->
+                <div class="form-section">
+                    <h4 class="section-title">Base Persona</h4>
+                    
+                    <div class="form-group">
+                        <label for="companyContext" class="label label-required">Company Context</label>
+                        <select id="companyContext" class="input" required>
+                            <option value="">Select company context...</option>
+                            <option value="life-admin">Life Admin</option>
+                            <option value="husian">Husian</option>
+                            <option value="glooper">Glooper</option>
+                            <option value="risktrace">RiskTrace</option>
+                            <option value="remarkable-dynamics">Remarkable Dynamics</option>
+                        </select>
+                        <div class="help-text">Which company/life context does this persona operate in?</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="coreIdentity" class="label label-required">Core Identity</label>
+                        <textarea id="coreIdentity" class="input" rows="3" placeholder="Your primary function, key stakeholders, main objectives, and authority level in this context..." required></textarea>
+                        <div class="help-text">Your fundamental role and purpose within this company context</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="communicationPreferences" class="label">Communication Preferences</label>
+                        <textarea id="communicationPreferences" class="input" rows="3" placeholder="Technical complexity level, communication style, key terminology, content tone..."></textarea>
+                        <div class="help-text">How you prefer information to be presented and communicated</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="priorityFramework" class="label">Priority Framework</label>
+                        <textarea id="priorityFramework" class="input" rows="3" placeholder="What matters most, success metrics, time horizons, risk tolerance..."></textarea>
+                        <div class="help-text">Your priority hierarchy and decision-making framework</div>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="personaCommunicationStyle" class="label label-required">Communication Style</label>
-                    <textarea id="personaCommunicationStyle" class="input" rows="2" placeholder="e.g., Direct, technical, with practical examples" required></textarea>
-                    <div class="help-text">How should this persona communicate?</div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="personaTone" class="label label-required">Tone</label>
-                    <input type="text" id="personaTone" class="input" placeholder="e.g., Professional, friendly, encouraging" required>
-                    <div class="help-text">The overall tone this persona should use</div>
-                </div>
-                
-                <div class="form-group">
-                    <label for="personaRoleContext" class="label label-required">Role Context</label>
-                    <textarea id="personaRoleContext" class="input" rows="3" placeholder="e.g., Code reviews, architecture decisions, debugging assistance" required></textarea>
-                    <div class="help-text">What contexts or situations is this persona best suited for?</div>
+                <!-- Role Overlay Section -->
+                <div class="form-section">
+                    <h4 class="section-title">Role Overlay</h4>
+                    
+                    <div class="form-group">
+                        <label for="roleFocus" class="label label-required">Role Focus</label>
+                        <input type="text" id="roleFocus" class="input" placeholder="e.g., Consultant, Developer, Content Creator, Analyst" required>
+                        <div class="help-text">The specific role you're performing within this context</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cognitiveMode" class="label">Cognitive Mode</label>
+                        <textarea id="cognitiveMode" class="input" rows="2" placeholder="Primary thinking style, information processing preference, output formats..."></textarea>
+                        <div class="help-text">How your mind works in this role</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="workingStyle" class="label">Working Style</label>
+                        <textarea id="workingStyle" class="input" rows="2" placeholder="Energy requirements, session length, interruption tolerance..."></textarea>
+                        <div class="help-text">Your preferred working patterns and environment</div>
+                    </div>
                 </div>
                 
                 <div class="form-actions">

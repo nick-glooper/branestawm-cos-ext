@@ -1294,3 +1294,25 @@ input[type="checkbox"] {
   background: rgba(59, 130, 246, 0.1);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
+
+/* Form sections for persona modal */
+.form-section {
+  margin: var(--space-6) 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
+  background: var(--surface-secondary);
+}
+
+.form-section:first-of-type {
+  margin-top: var(--space-4);
+}
+
+.section-title {
+  margin: 0 0 var(--space-4) 0;
+  font-size: var(--text-lg);
+  font-weight: var(--font-semibold);
+  color: var(--primary-600);
+  border-bottom: 1px solid var(--border-primary);
+  padding-bottom: var(--space-2);
+}
