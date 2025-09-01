@@ -689,25 +689,25 @@
         </header>
         
         <div class="settings-content">
-            <a href="main.html" class="back-link">
+            <button class="back-link" id="backToBranestawmBtn">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                 </svg>
                 Back to Branestawm
-            </a>
+            </button>
             
             <section class="settings-section">
                 <div class="modal-title-with-info">
                     <h3>
                         Cloud LLM
-                    </h3>
-                    <div class="tooltip">
-                        <button class="info-icon" aria-label="Information about Cloud LLM connection">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,17A1.5,1.5 0 0,1 10.5,15.5A1.5,1.5 0 0,1 12,14A1.5,1.5 0 0,1 13.5,15.5A1.5,1.5 0 0,1 12,17M12,10.5A1.5,1.5 0 0,1 10.5,9A1.5,1.5 0 0,1 12,7.5A1.5,1.5 0 0,1 13.5,9A1.5,1.5 0 0,1 12,10.5Z"/>
+                        <button class="option-info-btn" id="cloudLlmInfoBtn" aria-label="Information about Cloud LLM connection">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,7H13V9H11V7M11,11H13V17H11V11Z"/>
                             </svg>
                         </button>
-                        <div class="tooltip-content">Choose how you want to connect to AI services. You can change this anytime.</div>
+                    </h3>
+                    <div class="option-info-tooltip" id="cloudLlmInfoTooltip">
+                        Choose how you want to connect to AI services. You can change this anytime.
                     </div>
                 </div>
                 

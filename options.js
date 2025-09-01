@@ -122,6 +122,7 @@ function setupEventListeners() {
     
     // Google OAuth
     document.getElementById('googleSignInBtn').addEventListener('click', authenticateWithGoogle);
+    document.getElementById('googleReconnectBtn').addEventListener('click', authenticateWithGoogle);
     document.getElementById('googleSignOutBtn').addEventListener('click', signOutFromGoogle);
     
     // Provider selection
@@ -210,6 +211,24 @@ function setupEventListeners() {
     // Form actions
     document.getElementById('resetSettingsBtn').addEventListener('click', resetSettings);
     document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
+    
+    // Back to Branestawm button
+    document.getElementById('backToBranestawmBtn').addEventListener('click', () => {
+        // Try to close the current tab
+        if (chrome.tabs) {
+            chrome.tabs.getCurrent((tab) => {
+                if (tab) {
+                    chrome.tabs.remove(tab.id);
+                } else {
+                    // Fallback: close window if not in a tab
+                    window.close();
+                }
+            });
+        } else {
+            // Fallback: close window
+            window.close();
+        }
+    });
 }
 
 // ========== AUTH METHOD SELECTION ==========
@@ -228,6 +247,8 @@ function selectAuthMethod(method) {
         document.getElementById('googleAuthOption').classList.add('selected');
         document.getElementById('googleAuthSection').classList.add('active');
         settings.authMethod = 'google';
+        // Automatically trigger Google OAuth when card is clicked
+        authenticateWithGoogle();
     } else {
         document.getElementById('apiKeyOption').classList.add('selected');
         document.getElementById('apiKeySection').classList.add('active');

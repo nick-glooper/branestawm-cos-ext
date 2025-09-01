@@ -1089,6 +1089,25 @@ input[type="checkbox"] {
   display: block;
 }
 
+/* Settings page specific overrides */
+.settings-section .option-info-btn {
+  color: white;
+  background: transparent;
+  position: relative;
+  vertical-align: super;
+  font-size: 0.8em;
+  margin-left: var(--space-1);
+}
+
+.settings-section .option-info-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+  background: transparent;
+}
+
+.settings-section .option-info-btn:hover + .option-info-tooltip {
+  display: block;
+}
+
 /* Web Search Modal Specific Styling */
 #webSearchModal .modal-content {
   max-width: 480px;
@@ -1245,4 +1264,33 @@ input[type="checkbox"] {
 .provider-badge.reconnect-needed {
   background: linear-gradient(135deg, var(--amber-500), var(--amber-600));
   color: white;
+}
+
+/* Back link button */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: none;
+  color: var(--primary-500);
+  text-decoration: none;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  border-radius: var(--radius-base);
+  transition: all var(--transition-fast) var(--ease-out);
+  cursor: pointer;
+  margin-bottom: var(--space-4);
+}
+
+.back-link:hover {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--primary-600);
+}
+
+.back-link:focus {
+  outline: none;
+  background: rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
