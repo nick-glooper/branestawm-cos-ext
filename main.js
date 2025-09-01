@@ -954,7 +954,6 @@ function setupEventListeners() {
     // Modals and settings
     addListener('settingsBtn', 'click', openSettings);
     addListener('advancedSetupBtn', 'click', openSettings);
-    addListener('exportBtn', 'click', () => showModal('exportModal'));
     addListener('exportCurrentBtn', 'click', () => {
         if (!currentFolio) {
             showMessage('No folio selected to export', 'error');

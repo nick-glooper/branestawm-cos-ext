@@ -35,6 +35,15 @@ let settings = {
     }
 };
 
+// Debounced save function to avoid excessive saves
+let saveTimeout;
+function debouncedSave() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        saveSettings();
+    }, 1000); // Save 1 second after last change
+}
+
 // Initialize settings page
 document.addEventListener('DOMContentLoaded', async function() {
     console.log('Branestawm settings page loading...');
@@ -135,12 +144,18 @@ function setupEventListeners() {
     // API configuration
     document.getElementById('apiEndpoint').addEventListener('input', function() {
         settings.apiEndpoint = this.value;
+        // Auto-save settings when API fields change (debounced)
+        debouncedSave();
     });
     document.getElementById('apiModel').addEventListener('input', function() {
         settings.model = this.value;
+        // Auto-save settings when API fields change (debounced)
+        debouncedSave();
     });
     document.getElementById('apiKey').addEventListener('input', function() {
         settings.apiKey = this.value;
+        // Auto-save settings when API fields change (debounced)
+        debouncedSave();
     });
     
     // Test connection
@@ -455,6 +470,8 @@ async function testConnection() {
         if (response.ok) {
             showTestResult('✅ Connection successful!', 'success');
             updateApiKeyStatus(true);
+            // Save settings after successful connection test
+            await saveSettings();
         } else {
             const errorText = await response.text();
             showTestResult(`❌ Connection failed: ${response.status} - ${errorText}`, 'error');
