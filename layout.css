@@ -57,7 +57,7 @@ body {
 }
 
 .header {
-  background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+  background: var(--primary-500);
   padding: var(--space-4) var(--space-6);
   border-bottom: 1px solid var(--border-primary);
   display: flex;

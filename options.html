@@ -698,18 +698,18 @@
             
             <section class="settings-section">
                 <h3>
-                    Authentication Method
+                    Cloud LLM
                 </h3>
                 <p class="help-text">Choose how you want to connect to AI services. You can change this anytime.</p>
                 
                 <div class="auth-method-selector">
                     <div class="auth-option" id="googleAuthOption" tabindex="0" role="button" aria-describedby="googleAuthDesc">
-                        <h4>Google OAuth</h4>
+                        <h4>Google Gemini</h4>
                         <p id="googleAuthDesc">Easy setup with Gemini</p>
                         <div class="provider-badge">Recommended</div>
                     </div>
                     <div class="auth-option" id="apiKeyOption" tabindex="0" role="button" aria-describedby="apiKeyDesc">
-                        <h4>API Key</h4>
+                        <h4>Advanced Setup</h4>
                         <p id="apiKeyDesc">Use your own API key</p>
                     </div>
                 </div>
@@ -789,6 +789,71 @@
                     <div class="provider-instructions" id="providerInstructions">
                         <!-- Provider-specific instructions will be shown here -->
                     </div>
+                </div>
+            </section>
+            
+            <section class="settings-section">
+                <h3>
+                    <span class="section-icon">🦙</span>
+                    Local LLM (Ollama)
+                </h3>
+                <p class="help-text">Configure local Ollama models for privacy-first, fast inference. Automatically detects available models and routes queries intelligently between local and cloud processing.</p>
+                
+                <div class="ollama-status">
+                    <div class="status-indicator">
+                        <div class="status-dot" id="ollamaStatusDot"></div>
+                        <span id="ollamaStatusText">Checking connection...</span>
+                    </div>
+                    <button class="btn small secondary" id="refreshOllamaBtn">Refresh</button>
+                </div>
+                
+                <div id="ollamaConfigSection" style="display: none;">
+                    <div class="form-group">
+                        <label for="ollamaModelSelect" class="label">Active Model</label>
+                        <select id="ollamaModelSelect" class="input">
+                            <option value="">No models available</option>
+                        </select>
+                        <div class="help-text">Select which Ollama model to use for local processing</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="routingPreference" class="label">Routing Preference</label>
+                        <select id="routingPreference" class="input">
+                            <option value="local-first">Local First (Recommended)</option>
+                            <option value="cloud-first">Cloud First</option>
+                            <option value="auto">Automatic</option>
+                        </select>
+                        <div class="help-text">How queries should be routed between local and cloud models</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="complexityThreshold" class="label">Complexity Threshold</label>
+                        <input type="range" id="complexityThreshold" class="range-input" min="0" max="1" step="0.1" value="0.6">
+                        <div class="range-labels">
+                            <span>Simple (Local)</span>
+                            <span id="complexityValue">0.6</span>
+                            <span>Complex (Cloud)</span>
+                        </div>
+                        <div class="help-text">Queries above this complexity automatically route to cloud models</div>
+                    </div>
+                    
+                    <div class="ollama-performance">
+                        <h4>Performance Statistics</h4>
+                        <div class="perf-grid" id="performanceStats">
+                            <!-- Performance stats will be populated here -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="ollamaSetupInstructions" class="setup-instructions">
+                    <h4>🚀 Setting up Ollama</h4>
+                    <ol>
+                        <li>Install Ollama from <a href="https://ollama.ai" target="_blank">ollama.ai</a></li>
+                        <li>Run <code>ollama pull gemma2</code> or your preferred model</li>
+                        <li>Start Ollama service: <code>ollama serve</code></li>
+                        <li>Refresh this page to detect your models</li>
+                    </ol>
+                    <p><strong>Benefits:</strong> Faster responses, complete privacy, no API costs, works offline</p>
                 </div>
             </section>
             
@@ -895,66 +960,49 @@
             
             <section class="settings-section">
                 <h3>
-                    <span class="section-icon">🦙</span>
-                    Local LLM (Ollama)
+                    <span class="section-icon">📁</span>
+                    Export
                 </h3>
-                <p class="help-text">Configure local Ollama models for privacy-first, fast inference. Automatically detects available models and routes queries intelligently between local and cloud processing.</p>
+                <p class="help-text">Export your conversations, folios, and settings for backup or sharing.</p>
                 
-                <div class="ollama-status">
-                    <div class="status-indicator">
-                        <div class="status-dot" id="ollamaStatusDot"></div>
-                        <span id="ollamaStatusText">Checking connection...</span>
-                    </div>
-                    <button class="btn small secondary" id="refreshOllamaBtn">Refresh</button>
-                </div>
-                
-                <div id="ollamaConfigSection" style="display: none;">
+                <div class="export-options">
                     <div class="form-group">
-                        <label for="ollamaModelSelect" class="label">Active Model</label>
-                        <select id="ollamaModelSelect" class="input">
-                            <option value="">No models available</option>
+                        <label for="exportFormat" class="label">Export Format</label>
+                        <select id="exportFormat" class="input">
+                            <option value="json">JSON (Complete Data)</option>
+                            <option value="text">Plain Text (Conversations Only)</option>
+                            <option value="markdown">Markdown (Formatted)</option>
                         </select>
-                        <div class="help-text">Select which Ollama model to use for local processing</div>
+                        <div class="help-text">Choose the format for your exported data</div>
                     </div>
                     
                     <div class="form-group">
-                        <label for="routingPreference" class="label">Routing Preference</label>
-                        <select id="routingPreference" class="input">
-                            <option value="local-first">Local First (Recommended)</option>
-                            <option value="cloud-first">Cloud First</option>
-                            <option value="auto">Automatic</option>
-                        </select>
-                        <div class="help-text">How queries should be routed between local and cloud models</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="complexityThreshold" class="label">Complexity Threshold</label>
-                        <input type="range" id="complexityThreshold" class="range-input" min="0" max="1" step="0.1" value="0.6">
-                        <div class="range-labels">
-                            <span>Simple (Local)</span>
-                            <span id="complexityValue">0.6</span>
-                            <span>Complex (Cloud)</span>
+                        <label class="label">What to Export</label>
+                        <div class="checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="exportConversations" checked>
+                                <span class="checkbox-text">Conversations</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="exportFolios" checked>
+                                <span class="checkbox-text">Folios</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="exportSettings">
+                                <span class="checkbox-text">Settings</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="exportPersonas">
+                                <span class="checkbox-text">Personas</span>
+                            </label>
                         </div>
-                        <div class="help-text">Queries above this complexity automatically route to cloud models</div>
-                    </div>
-                    
-                    <div class="ollama-performance">
-                        <h4>Performance Statistics</h4>
-                        <div class="perf-grid" id="performanceStats">
-                            <!-- Performance stats will be populated here -->
-                        </div>
+                        <div class="help-text">Select which data to include in your export</div>
                     </div>
                 </div>
                 
-                <div id="ollamaSetupInstructions" class="setup-instructions">
-                    <h4>🚀 Setting up Ollama</h4>
-                    <ol>
-                        <li>Install Ollama from <a href="https://ollama.ai" target="_blank">ollama.ai</a></li>
-                        <li>Run <code>ollama pull gemma2</code> or your preferred model</li>
-                        <li>Start Ollama service: <code>ollama serve</code></li>
-                        <li>Refresh this page to detect your models</li>
-                    </ol>
-                    <p><strong>Benefits:</strong> Faster responses, complete privacy, no API costs, works offline</p>
+                <div class="form-actions">
+                    <button class="btn" id="exportDataBtn">Export Data</button>
+                    <button class="btn secondary" id="importDataBtn">Import Data</button>
                 </div>
             </section>
             
