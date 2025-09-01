@@ -204,7 +204,7 @@ function setupEventListeners() {
     document.getElementById('personaName').addEventListener('input', function() {
         const charCount = document.getElementById('nameCharCount');
         charCount.textContent = this.value.length;
-        charCount.style.color = this.value.length > 12 ? 'var(--warning)' : 'var(--text-secondary)';
+        charCount.style.color = this.value.length > 25 ? 'var(--warning)' : 'var(--text-secondary)';
     });
     
     
@@ -865,23 +865,31 @@ function showPersonaModal(personaId = null) {
         const persona = settings.personas[personaId];
         modalTitle.textContent = 'Edit Persona';
         document.getElementById('personaName').value = persona.name;
-        document.getElementById('personaIdentity').value = persona.identity;
-        document.getElementById('personaCommunicationStyle').value = persona.communicationStyle;
-        document.getElementById('personaTone').value = persona.tone;
-        document.getElementById('personaRoleContext').value = persona.roleContext;
+        
+        // Handle both old and new persona structure
+        document.getElementById('companyContext').value = persona.companyContext || '';
+        document.getElementById('coreIdentity').value = persona.coreIdentity || persona.identity || '';
+        document.getElementById('communicationPreferences').value = persona.communicationPreferences || persona.communicationStyle || '';
+        document.getElementById('priorityFramework').value = persona.priorityFramework || '';
+        document.getElementById('roleFocus').value = persona.roleFocus || persona.roleContext || '';
+        document.getElementById('cognitiveMode').value = persona.cognitiveMode || '';
+        document.getElementById('workingStyle').value = persona.workingStyle || '';
         
         // Update character count
         const charCount = document.getElementById('nameCharCount');
         charCount.textContent = persona.name.length;
-        charCount.style.color = persona.name.length > 12 ? 'var(--warning)' : 'var(--text-secondary)';
+        charCount.style.color = persona.name.length > 25 ? 'var(--warning)' : 'var(--text-secondary)';
     } else {
         // Create new persona
         modalTitle.textContent = 'New Persona';
         document.getElementById('personaName').value = '';
-        document.getElementById('personaIdentity').value = '';
-        document.getElementById('personaCommunicationStyle').value = '';
-        document.getElementById('personaTone').value = '';
-        document.getElementById('personaRoleContext').value = '';
+        document.getElementById('companyContext').value = '';
+        document.getElementById('coreIdentity').value = '';
+        document.getElementById('communicationPreferences').value = '';
+        document.getElementById('priorityFramework').value = '';
+        document.getElementById('roleFocus').value = '';
+        document.getElementById('cognitiveMode').value = '';
+        document.getElementById('workingStyle').value = '';
         
         // Reset character count
         const charCount = document.getElementById('nameCharCount');
@@ -901,20 +909,23 @@ function closePersonaModal() {
 
 function savePersona() {
     const name = document.getElementById('personaName').value.trim();
-    const identity = document.getElementById('personaIdentity').value.trim();
-    const communicationStyle = document.getElementById('personaCommunicationStyle').value.trim();
-    const tone = document.getElementById('personaTone').value.trim();
-    const roleContext = document.getElementById('personaRoleContext').value.trim();
+    const companyContext = document.getElementById('companyContext').value.trim();
+    const coreIdentity = document.getElementById('coreIdentity').value.trim();
+    const communicationPreferences = document.getElementById('communicationPreferences').value.trim();
+    const priorityFramework = document.getElementById('priorityFramework').value.trim();
+    const roleFocus = document.getElementById('roleFocus').value.trim();
+    const cognitiveMode = document.getElementById('cognitiveMode').value.trim();
+    const workingStyle = document.getElementById('workingStyle').value.trim();
     
-    // Validation
-    if (!name || !identity || !communicationStyle || !tone || !roleContext) {
+    // Validation - only required fields
+    if (!name || !companyContext || !coreIdentity || !roleFocus) {
         showToast('Please fill in all required fields', 'error');
         return;
     }
     
     // Check name length
-    if (name.length > 15) {
-        showToast('Persona name must be 15 characters or less', 'error');
+    if (name.length > 30) {
+        showToast('Persona name must be 30 characters or less', 'error');
         return;
     }
     
@@ -932,10 +943,13 @@ function savePersona() {
         // Update existing persona
         const persona = settings.personas[currentEditingPersona];
         persona.name = name;
-        persona.identity = identity;
-        persona.communicationStyle = communicationStyle;
-        persona.tone = tone;
-        persona.roleContext = roleContext;
+        persona.companyContext = companyContext;
+        persona.coreIdentity = coreIdentity;
+        persona.communicationPreferences = communicationPreferences;
+        persona.priorityFramework = priorityFramework;
+        persona.roleFocus = roleFocus;
+        persona.cognitiveMode = cognitiveMode;
+        persona.workingStyle = workingStyle;
         persona.updatedAt = new Date().toISOString();
         showToast('Persona updated successfully!', 'success');
     } else {
@@ -944,10 +958,13 @@ function savePersona() {
         settings.personas[personaId] = {
             id: personaId,
             name: name,
-            identity: identity,
-            communicationStyle: communicationStyle,
-            tone: tone,
-            roleContext: roleContext,
+            companyContext: companyContext,
+            coreIdentity: coreIdentity,
+            communicationPreferences: communicationPreferences,
+            priorityFramework: priorityFramework,
+            roleFocus: roleFocus,
+            cognitiveMode: cognitiveMode,
+            workingStyle: workingStyle,
             isDefault: false,
             createdAt: new Date().toISOString()
         };
