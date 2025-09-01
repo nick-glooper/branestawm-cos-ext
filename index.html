@@ -124,6 +124,21 @@
                     </div>
                 </div>
                 <div class="chat-input">
+                    <div class="connection-warning" id="connectionWarning" style="display: none;">
+                        <div class="warning-content">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" class="warning-icon">
+                                <path d="M12,2L13.09,8.26L22,9L13.09,9.74L12,16L10.91,9.74L2,9L10.91,8.26L12,2M12,21A1.5,1.5 0 0,0 13.5,19.5A1.5,1.5 0 0,0 12,18A1.5,1.5 0 0,0 10.5,19.5A1.5,1.5 0 0,0 12,21Z"/>
+                            </svg>
+                            <div class="warning-text">
+                                <strong>AI Connection Required</strong>
+                                <p>You need to set up your AI connection to start chatting. Choose your preferred method:</p>
+                                <div class="warning-actions">
+                                    <button class="btn small" id="warningGoogleSignIn">Sign in with Google</button>
+                                    <button class="btn small secondary" id="warningAdvancedSetup">Advanced Setup</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="input-container">
                         <label for="messageInput" class="sr-only">Message input</label>
                         <textarea 
