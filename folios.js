@@ -168,12 +168,6 @@ function populateFoliosGrid() {
 }
 
 function createFolioCard(folio) {
-    const lastUsedDate = getFolioLastUsed(folio.id);
-    const lastUsedText = lastUsedDate ? new Date(lastUsedDate).toLocaleDateString() : 'Never';
-    
-    const artifactCount = folio.artifacts?.length || 0;
-    const persona = settings.personas[folio.assignedPersona];
-    
     const card = document.createElement('div');
     card.className = 'folio-card';
     if (folio.id === currentFolio) {
@@ -183,31 +177,34 @@ function createFolioCard(folio) {
     card.innerHTML = `
         <div class="folio-card-header">
             <div class="folio-card-title">${folio.title}</div>
-            <div class="folio-card-actions">
-                <button class="action-btn edit-btn" aria-label="Edit folio" onclick="editFolio('${folio.id}')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            <div class="folio-card-menu">
+                <button class="menu-btn" aria-label="Folio options">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z"/>
                     </svg>
                 </button>
-                <button class="action-btn delete-btn" aria-label="Delete folio" onclick="deleteFolio('${folio.id}')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                    </svg>
-                </button>
+                <div class="menu-dropdown">
+                    <button class="menu-item edit-folio-btn" data-folio-id="${folio.id}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                        </svg>
+                        Edit
+                    </button>
+                    <button class="menu-item delete-folio-btn" data-folio-id="${folio.id}">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                        </svg>
+                        Delete
+                    </button>
+                </div>
             </div>
         </div>
         <div class="folio-card-description">${folio.description || 'No description'}</div>
-        <div class="folio-card-stats">
-            <span class="stat">${folio.messages?.length || 0} messages</span>
-            <span class="stat">${artifactCount} notes</span>
-            ${persona ? `<span class="stat persona-indicator">${persona.name}</span>` : ''}
-        </div>
-        <div class="folio-card-meta">Last used: ${lastUsedText}</div>
     `;
     
     card.addEventListener('click', (e) => {
-        // Don't select if clicking on action buttons
-        if (e.target.closest('.action-btn')) return;
+        // Don't select if clicking on menu buttons or menu items
+        if (e.target.closest('.folio-card-menu')) return;
         selectFolio(folio.id);
     });
     

@@ -971,6 +971,37 @@ function setupEventListeners() {
     // Navigation
     addListener('browseFoliosBtn', 'click', showFolioSelectionModal);
     
+    // Folio modal menu event delegation
+    document.addEventListener('click', function(e) {
+        // Handle three-dot menu toggle
+        if (e.target.closest('.menu-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const menu = e.target.closest('.folio-card-menu');
+            const dropdown = menu.querySelector('.menu-dropdown');
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.menu-dropdown').forEach(d => {
+                if (d !== dropdown) d.classList.remove('show');
+            });
+            
+            dropdown.classList.toggle('show');
+        }
+        // Handle menu item clicks
+        else if (e.target.closest('.edit-folio-btn')) {
+            const folioId = e.target.closest('.edit-folio-btn').getAttribute('data-folio-id');
+            editFolio(folioId);
+        }
+        else if (e.target.closest('.delete-folio-btn')) {
+            const folioId = e.target.closest('.delete-folio-btn').getAttribute('data-folio-id');
+            deleteFolio(folioId);
+        }
+        // Close dropdowns when clicking outside
+        else {
+            document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.remove('show'));
+        }
+    });
+    
     // Modals and settings
     addListener('settingsBtn', 'click', openSettings);
     addListener('advancedSetupBtn', 'click', openSettings);
