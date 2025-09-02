@@ -130,6 +130,12 @@ body {
   overflow-y: auto;
 }
 
+/* Ensure sidebar sections are visible */
+.sidebar .sidebar-section {
+  display: block !important;
+  visibility: visible !important;
+}
+
 
 .section-actions {
   display: flex;
@@ -198,12 +204,13 @@ body {
 }
 
 .chat-messages {
-  flex: 1;
-  overflow-y: auto;
+  flex: 1 1 0 !important; /* Allow flex grow/shrink with zero basis */
+  overflow-y: auto !important;
   overflow-x: hidden;
   padding: var(--space-4) var(--space-6);
   scroll-behavior: smooth;
-  min-height: 0; /* Allows flex item to shrink */
+  min-height: 0 !important; /* Allows flex item to shrink */
+  max-height: none !important; /* Remove any max-height restrictions */
 }
 
 .chat-input {
