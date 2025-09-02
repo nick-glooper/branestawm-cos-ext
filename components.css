@@ -1319,8 +1319,18 @@ input[type="checkbox"] {
 
 /* ========== FOLIO MODAL CARDS ========== */
 
+.search-box {
+  margin-bottom: var(--space-4);
+}
+
+.folios-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* Gap is handled by margin-bottom on cards */
+}
+
 .folio-card {
-  background: var(--surface-primary);
+  background: var(--surface-primary) !important;
   border: 1px solid var(--border-primary);
   border-radius: var(--radius-lg);
   padding: var(--space-4);
@@ -1328,6 +1338,7 @@ input[type="checkbox"] {
   cursor: pointer;
   transition: all var(--transition-fast) var(--ease-out);
   position: relative;
+  color: var(--text-primary);
 }
 
 .folio-card:hover {

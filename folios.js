@@ -203,8 +203,13 @@ function createFolioCard(folio) {
     `;
     
     card.addEventListener('click', (e) => {
+        console.log('DEBUG: Folio card clicked', folio.id, e.target);
         // Don't select if clicking on menu buttons or menu items
-        if (e.target.closest('.folio-card-menu')) return;
+        if (e.target.closest('.folio-card-menu')) {
+            console.log('DEBUG: Click was on menu, ignoring');
+            return;
+        }
+        console.log('DEBUG: Calling selectFolio for', folio.id);
         selectFolio(folio.id);
     });
     
