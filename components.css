@@ -1348,15 +1348,15 @@ input[type="checkbox"] {
 }
 
 .folio-card.current {
-  background: var(--primary-50);
-  border-color: var(--primary-200);
-  color: var(--primary-700);
+  background: var(--surface-primary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
 }
 
 [data-mode="dark"] .folio-card.current {
-  background: var(--primary-900);
-  border-color: var(--primary-700);
-  color: var(--primary-200);
+  background: var(--surface-primary);
+  border-color: var(--border-primary);
+  color: var(--text-primary);
 }
 
 .folio-card-header {
