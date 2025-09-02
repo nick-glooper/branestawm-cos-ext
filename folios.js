@@ -112,21 +112,6 @@ function editFolio(folioId) {
     showModal('folioModal');
 }
 
-function switchFolio(folioId) {
-    if (!folios[folioId]) return;
-    
-    currentFolio = folioId;
-    
-    // Update recent folios
-    updateRecentFolios(folioId);
-    
-    // Clear chat display
-    const chatMessages = document.getElementById('chatMessages');
-    chatMessages.innerHTML = '';
-    
-    updateUI();
-    saveData();
-}
 
 function deleteFolio(folioId) {
     deleteTarget = { type: 'folio', id: folioId };
