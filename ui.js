@@ -8,7 +8,14 @@ function showModal(modalId) {
 }
 
 function closeModal(modalId) {
-    document.getElementById(modalId).classList.remove('show');
+    console.log('DEBUG: closeModal called for:', modalId);
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error('ERROR: Modal not found:', modalId);
+        return;
+    }
+    modal.classList.remove('show');
+    console.log('DEBUG: Modal closed successfully:', modalId);
 }
 
 // ========== MESSAGE SYSTEM ==========

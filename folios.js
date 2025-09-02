@@ -202,14 +202,20 @@ function createFolioCard(folio) {
 }
 
 function selectFolio(folioId) {
+    console.log('DEBUG: selectFolio called with folioId:', folioId);
     switchFolio(folioId);
+    console.log('DEBUG: switchFolio completed, now closing modal');
     closeModal('folioSelectionModal');
+    console.log('DEBUG: closeModal called for folioSelectionModal');
 }
 
 
 // ========== RECENT ITEMS MANAGEMENT ==========
 
 function updateRecentFolios(folioId) {
+    console.log('DEBUG: updateRecentFolios called with folioId:', folioId);
+    console.log('DEBUG: recentFolios before update:', recentFolios);
+    
     if (!recentFolios) recentFolios = [];
     
     // Remove if already exists
@@ -221,6 +227,7 @@ function updateRecentFolios(folioId) {
     // Keep only last 10
     recentFolios = recentFolios.slice(0, 10);
     
+    console.log('DEBUG: recentFolios after update:', recentFolios);
     saveData();
 }
 
