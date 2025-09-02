@@ -200,6 +200,17 @@ function setupEventListeners() {
     document.getElementById('cancelPersonaBtn').addEventListener('click', closePersonaModal);
     document.getElementById('savePersonaBtn').addEventListener('click', savePersona);
     
+    // Event delegation for persona buttons
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-persona-btn')) {
+            const personaId = e.target.closest('.edit-persona-btn').getAttribute('data-persona-id');
+            editPersona(personaId);
+        } else if (e.target.closest('.delete-persona-btn')) {
+            const personaId = e.target.closest('.delete-persona-btn').getAttribute('data-persona-id');
+            deletePersona(personaId);
+        }
+    });
+    
     // Character counter for persona name
     document.getElementById('personaName').addEventListener('input', function() {
         const charCount = document.getElementById('nameCharCount');
@@ -825,13 +836,13 @@ function createPersonaCard(persona) {
                 ${persona.isDefault ? '<span class="persona-default-badge">Default</span>' : ''}
             </div>
             <div class="persona-actions">
-                <button class="btn secondary small" onclick="editPersona('${persona.id}')">
+                <button class="btn secondary small edit-persona-btn" data-persona-id="${persona.id}">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                     </svg>
                     Edit
                 </button>
-                ${!persona.isDefault ? `<button class="btn secondary small" onclick="deletePersona('${persona.id}')" style="color: var(--error);">
+                ${!persona.isDefault ? `<button class="btn secondary small delete-persona-btn" data-persona-id="${persona.id}" style="color: var(--error);">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
                     </svg>
@@ -839,15 +850,15 @@ function createPersonaCard(persona) {
                 </button>` : ''}
             </div>
         </div>
-        <div class="persona-identity">${persona.identity}</div>
+        <div class="persona-identity">${persona.coreIdentity || persona.identity || ''}</div>
         <div class="persona-meta">
             <div class="persona-meta-item">
-                <div class="persona-meta-label">Communication Style</div>
-                <div class="persona-meta-value">${persona.communicationStyle}</div>
+                <div class="persona-meta-label">Context</div>
+                <div class="persona-meta-value">${persona.companyContext || 'Not specified'}</div>
             </div>
             <div class="persona-meta-item">
-                <div class="persona-meta-label">Tone</div>
-                <div class="persona-meta-value">${persona.tone}</div>
+                <div class="persona-meta-label">Role Focus</div>
+                <div class="persona-meta-value">${persona.roleFocus || persona.roleContext || 'Not specified'}</div>
             </div>
         </div>
     `;
@@ -1232,6 +1243,4 @@ function updatePerformanceStats() {
 }
 
 // Make functions globally accessible for HTML onclick handlers
-window.editPersona = editPersona;
-window.deletePersona = deletePersona;
 window.refreshOllamaStatus = refreshOllamaStatus;
