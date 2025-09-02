@@ -200,8 +200,11 @@ body {
 .chat-messages {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--space-4) var(--space-6);
   scroll-behavior: smooth;
+  height: 0; /* Forces flex item to respect container height */
+  max-height: 100%;
 }
 
 .chat-input {

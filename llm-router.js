@@ -4,7 +4,7 @@
 class LLMRouter {
     constructor(ollamaClient) {
         this.ollamaClient = ollamaClient;
-        this.routingPreference = 'local-first'; // local-first, cloud-first, auto
+        this.routingPreference = 'cloud-first'; // local-first, cloud-first, auto
         this.complexityThreshold = 0.6; // 0-1 scale, configurable
         this.maxLocalTokens = 8192; // Maximum tokens to send to local model
         this.fallbackEnabled = true;
@@ -471,7 +471,7 @@ class LLMRouter {
             }
             
             if (settings) {
-                this.routingPreference = settings.routingPreference || 'local-first';
+                this.routingPreference = settings.routingPreference || 'cloud-first';
                 this.complexityThreshold = settings.complexityThreshold || 0.6;
                 this.fallbackEnabled = settings.fallbackEnabled !== false;
             }
