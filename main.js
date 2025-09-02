@@ -553,7 +553,14 @@ function updateRecentFoliosWidget() {
     
     itemsList.innerHTML = '';
     
+    // Debug logging to help identify the issue
+    console.log('DEBUG: updateRecentFoliosWidget called');
+    console.log('DEBUG: recentFolios:', recentFolios);
+    console.log('DEBUG: folios object keys:', Object.keys(folios));
+    console.log('DEBUG: currentFolio:', currentFolio);
+    
     if (!recentFolios || recentFolios.length === 0) {
+        console.log('DEBUG: No recent folios found');
         itemsList.innerHTML = '<div class="empty-recent">No recent folios</div>';
         return;
     }
@@ -1227,12 +1234,14 @@ function populatePersonaDropdown() {
     });
 }
 
+
 // ========== INITIALIZATION ==========
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Load data from storage
         await loadData();
+        
         
         // Initialize UI systems
         initializeTheme();
