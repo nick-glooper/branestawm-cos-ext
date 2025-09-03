@@ -44,8 +44,19 @@ async function sendMessage() {
             timeZoneName: 'short'
         });
         
-        // Multi-layered context system
-        const systemPromptContent = buildContextualPrompt(message, currentFolio);
+        // Multi-layered context system with optimization
+        let systemPromptContent;
+        if (window.contextManager) {
+            try {
+                const optimizedContext = await window.contextManager.buildOptimalContext(currentFolio, message);
+                systemPromptContent = await buildOptimizedPrompt(optimizedContext, message, currentFolio);
+            } catch (error) {
+                console.warn('Context optimization failed, falling back to traditional prompt:', error);
+                systemPromptContent = await buildContextualPrompt(message, currentFolio);
+            }
+        } else {
+            systemPromptContent = await buildContextualPrompt(message, currentFolio);
+        }
 
         let messages = [
             { 
@@ -77,6 +88,16 @@ async function sendMessage() {
         // Save data through AppState for consistency
         await appState.saveData();
         
+        // Trigger background summarization if available
+        if (window.summarizationEngine) {
+            // Delay summarization to not block UI
+            setTimeout(() => {
+                window.summarizationEngine.updateFolioSummaries(currentFolio).catch(error => {
+                    console.warn('Background summarization failed:', error);
+                });
+            }, 2000); // 2 second delay
+        }
+        
     } catch (error) {
         console.error('Error sending message:', error);
         
@@ -96,45 +117,78 @@ async function sendMessage() {
 
 // ========== MESSAGE MANAGEMENT ==========
 
-async function addMessage(folioId, role, content) {
+async function addMessage(folioId, role, content, options = {}) {
     if (!folios[folioId]) return;
     
-    const message = {
-        id: generateId(),
-        role: role,
-        content: content,
-        timestamp: new Date().toISOString()
-    };
-    
     try {
-        // Use AppState for proper async data handling
-        const folio = await appState.getFolio(folioId);
-        if (!folio) {
-            console.error(`Folio ${folioId} not found`);
-            return;
+        // Use MessageManager for enhanced message structure
+        if (window.messageManager) {
+            const message = await window.messageManager.addMessageToFolio(folioId, role, content, options);
+            
+            // Update global references for backward compatibility
+            updateGlobalReferences();
+            
+            // Update UI
+            displayMessage(message);
+            scrollToBottom();
+            
+            return message;
+        } else {
+            // Fallback to legacy method
+            const message = {
+                id: generateId(),
+                role: role,
+                content: content,
+                timestamp: new Date().toISOString()
+            };
+            
+            const folio = await appState.getFolio(folioId);
+            if (!folio) {
+                console.error(`Folio ${folioId} not found`);
+                return;
+            }
+            
+            // Add message and update timestamp
+            const updatedMessages = [...folio.messages, message];
+            await appState.updateFolio(folioId, {
+                messages: updatedMessages,
+                lastUsed: new Date().toISOString()
+            });
+            
+            // Update global references for backward compatibility
+            updateGlobalReferences();
+            
+            // Update UI
+            displayMessage(message);
+            scrollToBottom();
+            
+            return message;
         }
-        
-        // Add message and update timestamp
-        const updatedMessages = [...folio.messages, message];
-        await appState.updateFolio(folioId, {
-            messages: updatedMessages,
-            lastUsed: new Date().toISOString()
-        });
-        
-        // Update global references for backward compatibility
-        updateGlobalReferences();
-        
-        // Update UI
-        displayMessage(message);
-        scrollToBottom();
         
     } catch (error) {
         console.error('Error adding message:', error);
-        // Fallback to old method
+        if (window.errorManager) {
+            window.errorManager.handleError(window.errorManager.createError('DATA_VALIDATION_FAILED', {
+                operation: 'addMessage',
+                folioId: folioId,
+                role: role,
+                error: error.message
+            }));
+        }
+        
+        // Emergency fallback
+        const message = {
+            id: generateId(),
+            role: role,
+            content: content,
+            timestamp: new Date().toISOString()
+        };
         folios[folioId].messages.push(message);
         folios[folioId].lastUsed = new Date().toISOString();
         displayMessage(message);
         scrollToBottom();
+        
+        return message;
     }
 }
 
@@ -142,7 +196,39 @@ function displayMessage(message) {
     const chatMessages = document.getElementById('chatMessages');
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${message.role}`;
-    messageDiv.innerHTML = formatMessage(message.content, message.role);
+    
+    // Add enhanced message classes if available
+    if (message.semanticType) {
+        messageDiv.classList.add(`semantic-${message.semanticType}`);
+    }
+    if (message.importance >= 4) {
+        messageDiv.classList.add('high-importance');
+    }
+    if (message.threadId) {
+        messageDiv.setAttribute('data-thread-id', message.threadId);
+    }
+    if (message.parentId) {
+        messageDiv.setAttribute('data-parent-id', message.parentId);
+    }
+    
+    // Create message content
+    const messageContent = formatMessage(message.content, message.role);
+    
+    // Add enhanced message metadata if available
+    let enhancedContent = messageContent;
+    if (message.schemaVersion >= 2 && message.semanticType && message.semanticType !== 'response') {
+        const metadata = [];
+        if (message.importance >= 4) metadata.push('❗ Important');
+        if (message.semanticType === 'task') metadata.push('📋 Task');
+        if (message.semanticType === 'query') metadata.push('❓ Query');
+        if (message.semanticType === 'summary') metadata.push('📝 Summary');
+        
+        if (metadata.length > 0) {
+            enhancedContent = `<div class="message-metadata">${metadata.join(' • ')}</div>${messageContent}`;
+        }
+    }
+    
+    messageDiv.innerHTML = enhancedContent;
     chatMessages.appendChild(messageDiv);
 }
 
@@ -309,13 +395,29 @@ function formatDataLakeForLLM(dataLake, currentFolioId) {
 
 // ========== CONTEXTUAL PROMPT SYSTEM ==========
 
-function buildContextualPrompt(query, folioId) {
+async function buildContextualPrompt(query, folioId) {
     const folio = folios[folioId];
     const persona = settings.personas[folio?.assignedPersona] || settings.personas['core'];
     
-    // Build and format complete data lake context
-    const dataLake = buildDataLakeContext();
-    const dataLakeContext = formatDataLakeForLLM(dataLake, folioId);
+    // Use optimized context with summarization if available
+    let contextData;
+    if (window.summarizationEngine) {
+        try {
+            contextData = await window.summarizationEngine.getOptimalContext(folioId, query, 4000);
+        } catch (error) {
+            console.warn('Failed to get optimal context, falling back to data lake:', error);
+            contextData = null;
+        }
+    }
+    
+    // Fallback to data lake context if summarization not available
+    if (!contextData) {
+        const dataLake = buildDataLakeContext();
+        contextData = {
+            dataLakeContext: formatDataLakeForLLM(dataLake, folioId),
+            compressionAchieved: false
+        };
+    }
     
     // Prepare date/time context
     const currentDate = new Date();
@@ -376,28 +478,152 @@ IMPORTANT: When users reference relative dates like "yesterday", "Saturday just 
 
 `;
 
-    // Add comprehensive data lake context
-    prompt += `${dataLakeContext}
+    // Add optimized context - either summarized or data lake
+    if (contextData.dataLakeContext) {
+        // Traditional data lake context
+        prompt += `${contextData.dataLakeContext}
+
+`;
+    } else if (contextData.summaries || contextData.messages) {
+        // Optimized context with summaries
+        prompt += `OPTIMIZED CONVERSATION CONTEXT:
+📊 Context Optimization: ${contextData.compressionAchieved ? 'ACTIVE' : 'STANDARD'}
+💬 Recent Messages: ${contextData.messages?.length || 0}
+📝 Summary Insights: ${contextData.summaries?.length || 0}
+🔢 Token Usage: ${contextData.tokenCount || 0}
 
 `;
 
+        // Add summaries if available
+        if (contextData.summaries && contextData.summaries.length > 0) {
+            prompt += `CONVERSATION SUMMARIES:
+`;
+            contextData.summaries.forEach(summary => {
+                prompt += `📋 ${summary.type} Summary (${summary.metadata?.timespan ? formatTimespan(summary.metadata.timespan) : 'Recent'}):
+${summary.content}
+
+`;
+            });
+        }
+
+        // Add recent messages context
+        if (contextData.messages && contextData.messages.length > 0) {
+            prompt += `RECENT CONVERSATION HISTORY:
+`;
+            contextData.messages.slice(-5).forEach(msg => {
+                const role = msg.role === 'user' ? 'You' : 'Assistant';
+                const importance = msg.importance >= 4 ? ' [IMPORTANT]' : '';
+                const semantic = msg.semanticType ? ` [${msg.semanticType.toUpperCase()}]` : '';
+                prompt += `${role}${importance}${semantic}: ${msg.content}
+
+`;
+            });
+        }
+    }
+
     // Add current context
     prompt += `CURRENT CONTEXT:
-The user is currently working in the "${folio?.title || 'General Folio'}" folio. Apply the persona characteristics and folio guidelines appropriately while maintaining access to your complete knowledge base.
+The user is currently working in the "${folio?.title || 'General Folio'}" folio. ${contextData.compressionAchieved ? 'Context has been optimized using intelligent summarization to focus on relevant information.' : 'Full conversation history is available.'}
 
-CROSS-FOLIO SEARCH CAPABILITY:
-You have full access to all conversations, artifacts, and data across ALL folios in the data lake above. When answering queries:
-- Search across all folios for relevant information (meetings, events, notes, etc.)
-- Reference specific folios by name when citing information
-- Combine information from multiple folios when relevant
-- Maintain context of which folio information originated from
+ENHANCED CAPABILITIES:
+${contextData.summaries ? `- Access to ${contextData.summaries.length} conversation summaries with key insights
+` : ''}${contextData.compressionAchieved ? `- Intelligent context compression (${Math.round((1 - contextData.tokenCount / 8000) * 100)}% token savings)
+` : ''}${contextData.messages ? `- Recent conversation continuity with ${contextData.messages.length} contextual messages
+` : ''}- Cross-folio search capability for comprehensive information access
+- Semantic understanding of message types and importance levels
 
 INSTRUCTIONS:
 - Respond using the specified persona's identity, communication style, and tone
 - Apply any folio-specific guidelines when relevant
-- Access your complete historical knowledge and data lake while filtering through the current persona/folio context
-- Use cross-folio search to find relevant information regardless of which folio it's stored in
+- Leverage summarized insights for comprehensive understanding
+- Reference specific information from summaries when relevant
+- Maintain conversation continuity using recent message context
+- Use cross-folio search to find relevant information regardless of source
 - Maintain consistency with the persona's role context and communication preferences`;
+
+    // Helper function for formatting timespan
+    function formatTimespan(ms) {
+        const hours = Math.floor(ms / (60 * 60 * 1000));
+        const days = Math.floor(hours / 24);
+        if (days > 0) return `${days} day${days > 1 ? 's' : ''}`;
+        if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''}`;
+        return 'Recent';
+    }
+
+    return prompt;
+}
+
+/**
+ * Build optimized prompt using ContextManager results
+ */
+async function buildOptimizedPrompt(optimizedContext, query, folioId) {
+    let prompt = optimizedContext.systemPrompt;
+    
+    // Add optimization context information
+    prompt += `\nCONTEXT OPTIMIZATION:
+📊 Token Usage: ${optimizedContext.metadata.totalTokens} tokens
+💬 Messages Included: ${optimizedContext.messages.length}
+📝 Summaries Included: ${optimizedContext.summaries.length}
+📄 Artifacts Included: ${optimizedContext.artifacts.length}
+⚡ Processing Time: ${optimizedContext.metadata.processingTime}ms
+🎯 Sources: ${optimizedContext.metadata.sources.join(', ')}
+${optimizedContext.metadata.compressionAchieved ? '✅ Context compression achieved for optimal performance' : '📋 Full context provided'}
+
+`;
+
+    // Add summaries if available
+    if (optimizedContext.summaries && optimizedContext.summaries.length > 0) {
+        prompt += `CONVERSATION SUMMARIES:\n`;
+        optimizedContext.summaries.forEach(summary => {
+            const timespan = summary.metadata?.timespan ? formatTimespan(summary.metadata.timespan) : 'Recent';
+            const importance = summary.metadata?.importance >= 4 ? ' [IMPORTANT]' : '';
+            prompt += `📋 ${summary.type} Summary (${timespan})${importance}:
+${summary.content}
+
+`;
+        });
+    }
+
+    // Add optimized message history
+    if (optimizedContext.messages && optimizedContext.messages.length > 0) {
+        prompt += `OPTIMIZED CONVERSATION HISTORY:\n`;
+        optimizedContext.messages.forEach(msg => {
+            const role = msg.role === 'user' ? 'You' : 'Assistant';
+            const importance = msg.importance >= 4 ? ' [IMPORTANT]' : '';
+            const semantic = msg.semanticType ? ` [${msg.semanticType.toUpperCase()}]` : '';
+            const relevance = msg.relevance ? ` (relevance: ${Math.round(msg.relevance * 100)}%)` : '';
+            const truncated = msg.truncated ? ' [TRUNCATED]' : '';
+            
+            prompt += `${role}${importance}${semantic}${truncated}: ${msg.content}${relevance}
+
+`;
+        });
+    }
+
+    // Add relevant artifacts
+    if (optimizedContext.artifacts && optimizedContext.artifacts.length > 0) {
+        prompt += `RELEVANT ARTIFACTS:\n`;
+        optimizedContext.artifacts.forEach(artifact => {
+            const relevance = artifact.relevance ? ` (relevance: ${Math.round(artifact.relevance * 100)}%)` : '';
+            prompt += `📄 ${artifact.title} [${artifact.type}]${relevance}:
+${artifact.content.substring(0, 300)}${artifact.content.length > 300 ? '...[truncated]' : ''}
+
+`;
+        });
+    }
+
+    // Add instructions
+    prompt += `ENHANCED CONTEXT INSTRUCTIONS:
+- This context has been intelligently optimized for relevance and token efficiency
+- Use the provided summaries to understand broader conversation themes
+- Reference specific information from the optimized message history
+- Leverage artifact content when relevant to the current query
+- Maintain conversation continuity using the selected contextual messages
+- The context selection prioritizes relevance, importance, and recency
+
+CURRENT QUERY CONTEXT:
+The user is asking: "${query}"
+Respond using the optimized context above while maintaining your persona and folio guidelines.`;
 
     return prompt;
 }

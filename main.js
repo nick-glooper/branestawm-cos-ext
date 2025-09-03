@@ -205,6 +205,50 @@ async function loadData() {
     updateGlobalReferences();
 }
 
+/**
+ * Migrate messages to enhanced structure if needed
+ */
+async function migrateMessagesIfNeeded() {
+    if (!window.messageManager) {
+        console.warn('MessageManager not available for migration');
+        return;
+    }
+    
+    try {
+        const allFolios = appState.getFolios();
+        let migratedCount = 0;
+        
+        for (const [folioId, folio] of Object.entries(allFolios)) {
+            if (!folio.messages || folio.messages.length === 0) continue;
+            
+            // Check if migration is needed
+            const stats = window.messageManager.getMessageStatistics(folioId);
+            if (stats && stats.migrationNeeded) {
+                console.log(`Migrating messages for folio: ${folio.title}`);
+                const success = await window.messageManager.migrateMessagesToEnhancedStructure(folioId);
+                if (success) {
+                    migratedCount++;
+                }
+            }
+        }
+        
+        if (migratedCount > 0) {
+            console.log(`Successfully migrated messages in ${migratedCount} folios`);
+            updateGlobalReferences();
+            await appState.saveData();
+        }
+        
+    } catch (error) {
+        console.error('Error during message migration:', error);
+        if (window.errorManager) {
+            window.errorManager.handleError(window.errorManager.createError('DATA_MIGRATION_FAILED', {
+                operation: 'migrateMessagesIfNeeded',
+                error: error.message
+            }));
+        }
+    }
+}
+
 // ========== SETUP AND INITIALIZATION ==========
 
 function showSetupModal() {
@@ -1417,6 +1461,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         // Update global references for backward compatibility
         updateGlobalReferences();
+        
+        // Migrate messages to enhanced structure if needed
+        await migrateMessagesIfNeeded();
         
         // Initialize UI systems
         initializeTheme();
