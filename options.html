@@ -810,6 +810,112 @@
             gap: var(--space-3);
             background: var(--bg-secondary);
         }
+        
+        /* Toggle Switch Styles */
+        .toggle-setting {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .toggle-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            cursor: pointer;
+        }
+        
+        .toggle-text {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border-secondary);
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        .toggle-input:checked + .toggle-slider {
+            background-color: var(--primary-500);
+        }
+        
+        .toggle-input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Tooltip functionality */
+        .option-info-tooltip {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            padding: var(--space-3);
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            margin-top: var(--space-2);
+        }
+        
+        .modal-title-with-info {
+            position: relative;
+        }
+        
+        .option-info-btn {
+            background: none;
+            border: none;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            padding: var(--space-1);
+            margin-left: var(--space-2);
+            border-radius: var(--radius-sm);
+            transition: color var(--duration-200);
+        }
+        
+        .option-info-btn:hover {
+            color: var(--text-primary);
+        }
+        
+        .option-info-btn.active + .option-info-tooltip {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -855,10 +961,15 @@
                 </div>
                 
                 <div class="form-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="airplaneModeToggle">
-                        <span class="checkbox-text">✈️ Airplane Mode (Force Local LLM Only)</span>
-                    </label>
+                    <div class="toggle-setting">
+                        <label class="toggle-label">
+                            <span class="toggle-text">Airplane Mode (Force Local LLM Only)</span>
+                            <div class="toggle-switch">
+                                <input type="checkbox" id="airplaneModeToggle" class="toggle-input">
+                                <span class="toggle-slider"></span>
+                            </div>
+                        </label>
+                    </div>
                     <div class="help-text">When enabled, all requests will be routed to your local Ollama model for privacy and offline use</div>
                 </div>
                 
@@ -872,7 +983,7 @@
                 <div class="form-actions">
                     <button class="btn secondary" id="manageCloudLlmsBtn">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M19,13H5V11H19V13Z"/>
+                            <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M13,7H11V11H7V13H11V17H13V13H17V11H13V7Z"/>
                         </svg>
                         Manage Cloud LLMs
                     </button>

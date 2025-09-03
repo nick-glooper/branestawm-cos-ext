@@ -300,6 +300,43 @@ function setupEventListeners() {
     
     // Cloud LLM Modal event listeners
     setupCloudLlmModalListeners();
+    
+    // Tooltip functionality
+    const aiModelsInfoBtn = document.getElementById('aiModelsInfoBtn');
+    if (aiModelsInfoBtn) {
+        aiModelsInfoBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            aiModelsInfoBtn.classList.toggle('active');
+        });
+        
+        // Close tooltip when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.modal-title-with-info')) {
+                aiModelsInfoBtn.classList.remove('active');
+            }
+        });
+    }
+    
+    // Cloud LLM Modal close functionality
+    const cloudLlmModalCloseBtn = document.querySelector('#cloudLlmModal .close-btn');
+    if (cloudLlmModalCloseBtn) {
+        cloudLlmModalCloseBtn.addEventListener('click', () => {
+            document.getElementById('cloudLlmModal').classList.remove('show');
+        });
+    }
+    
+    // Endpoint Modal close functionality
+    const endpointModalCloseBtn = document.querySelector('#endpointModal .close-btn');
+    if (endpointModalCloseBtn) {
+        endpointModalCloseBtn.addEventListener('click', closeEndpointModal);
+    }
+    
+    // Close modals when clicking outside
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('show');
+        }
+    });
 }
 
 // ========== AUTH METHOD SELECTION ==========
