@@ -569,32 +569,24 @@ function updateRecentFoliosWidget() {
             itemsList.innerHTML = '<div class="empty-recent">No recent folios</div>';
             return;
         }
-    } catch (error) {
-        console.error('ERROR in updateRecentFoliosWidget:', error);
-        const widget = document.getElementById('recentFoliosList');
-        if (widget) {
-            widget.innerHTML = '<div class="empty-recent">Error loading folios</div>';
+        
+        // Create a list with current folio first, then other recent folios
+        const displayFolios = [];
+        const pinnedFolios = settings.pinnedFolios || [];
+        
+        // Add current folio first (if not pinned)
+        if (currentFolio && folios[currentFolio] && !pinnedFolios.includes(currentFolio)) {
+            displayFolios.push(currentFolio);
         }
-        return;
-    }
-    
-    // Create a list with current folio first, then other recent folios
-    const displayFolios = [];
-    const pinnedFolios = settings.pinnedFolios || [];
-    
-    // Add current folio first (if not pinned)
-    if (currentFolio && folios[currentFolio] && !pinnedFolios.includes(currentFolio)) {
-        displayFolios.push(currentFolio);
-    }
-    
-    // Add other recent folios (excluding current folio and pinned folios to avoid duplicates)
-    recentFolios.slice(0, 8).forEach(folioId => {
-        if (folioId !== currentFolio && folios[folioId] && !pinnedFolios.includes(folioId)) {
-            displayFolios.push(folioId);
-        }
-    });
-    
-    displayFolios.forEach(folioId => {
+        
+        // Add other recent folios (excluding current folio and pinned folios to avoid duplicates)
+        recentFolios.slice(0, 8).forEach(folioId => {
+            if (folioId !== currentFolio && folios[folioId] && !pinnedFolios.includes(folioId)) {
+                displayFolios.push(folioId);
+            }
+        });
+        
+        displayFolios.forEach(folioId => {
         const folio = folios[folioId];
         if (!folio) return;
         
@@ -680,8 +672,16 @@ function updateRecentFoliosWidget() {
             deleteBtn.addEventListener('click', () => deleteFolio(folioId));
         }
         
-        itemsList.appendChild(item);
-    });
+            itemsList.appendChild(item);
+        });
+        
+    } catch (error) {
+        console.error('ERROR in updateRecentFoliosWidget:', error);
+        const widget = document.getElementById('recentFoliosList');
+        if (widget) {
+            widget.innerHTML = '<div class="empty-recent">Error loading folios</div>';
+        }
+    }
 }
 
 function updatePinnedFoliosWidget() {
