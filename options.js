@@ -293,9 +293,14 @@ function setupEventListeners() {
     // Manage Cloud LLMs button
     const manageCloudLlmsBtn = document.getElementById('manageCloudLlmsBtn');
     if (manageCloudLlmsBtn) {
-        manageCloudLlmsBtn.addEventListener('click', () => {
+        console.log('DEBUG: manageCloudLlmsBtn found and event listener added');
+        manageCloudLlmsBtn.addEventListener('click', (e) => {
+            console.log('DEBUG: manageCloudLlmsBtn clicked');
+            e.preventDefault();
             showCloudLlmModal();
         });
+    } else {
+        console.error('ERROR: manageCloudLlmsBtn not found!');
     }
     
     // Cloud LLM Modal event listeners
@@ -1378,9 +1383,18 @@ function setupCloudLlmModalListeners() {
  * Show the Cloud LLM management modal
  */
 function showCloudLlmModal() {
+    console.log('DEBUG: showCloudLlmModal called');
+    const modal = document.getElementById('cloudLlmModal');
+    if (!modal) {
+        console.error('ERROR: cloudLlmModal element not found!');
+        return;
+    }
+    
+    console.log('DEBUG: Populating endpoints and showing modal');
     populateEndpointsContainer();
     updateGoogleAuthStatus(!!settings.googleToken);
-    document.getElementById('cloudLlmModal').classList.add('show');
+    modal.classList.add('show');
+    console.log('DEBUG: Modal should now be visible');
 }
 
 /**
@@ -1723,6 +1737,10 @@ function updateActiveLlmStatus() {
             statusElement.className = 'status-indicator disconnected';
             statusText.textContent = 'Custom Endpoint Not Found';
         }
+    } else {
+        // Default status when no LLM is configured
+        statusElement.className = 'status-indicator checking';
+        statusText.textContent = 'Ready to Configure';
     }
 }
 
