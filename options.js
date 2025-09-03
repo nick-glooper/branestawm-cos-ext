@@ -128,85 +128,75 @@ async function saveSettings() {
 // ========== EVENT LISTENERS ==========
 
 function setupEventListeners() {
-    // Auth method selection
-    document.getElementById('googleAuthOption').addEventListener('click', () => {
-        selectAuthMethod('google');
-    });
+    console.log('DEBUG: Setting up event listeners...');
     
-    document.getElementById('apiKeyOption').addEventListener('click', () => {
-        selectAuthMethod('apikey');
-    });
-    
-    // Google OAuth
-    document.getElementById('googleSignInBtn').addEventListener('click', authenticateWithGoogle);
-    document.getElementById('googleReconnectBtn').addEventListener('click', authenticateWithGoogle);
-    document.getElementById('googleSignOutBtn').addEventListener('click', signOutFromGoogle);
-    
-    // Provider selection
-    document.querySelectorAll('.provider-card').forEach(card => {
-        card.addEventListener('click', () => {
-            selectProvider(card.dataset.provider);
-        });
-    });
-    
-    // API configuration
-    document.getElementById('apiEndpoint').addEventListener('input', function() {
-        settings.apiEndpoint = this.value;
-        // Auto-save settings when API fields change (debounced)
-        debouncedSave();
-    });
-    document.getElementById('apiModel').addEventListener('input', function() {
-        settings.model = this.value;
-        // Auto-save settings when API fields change (debounced)
-        debouncedSave();
-    });
-    document.getElementById('apiKey').addEventListener('input', function() {
-        settings.apiKey = this.value;
-        // Auto-save settings when API fields change (debounced)
-        debouncedSave();
-    });
-    
-    // Test connection
-    document.getElementById('testConnectionBtn').addEventListener('click', testConnection);
+    // Note: Old auth method selection and API configuration elements moved to modal
+    // These elements no longer exist in the main settings page
     
     // Appearance settings
-    document.getElementById('colorScheme').addEventListener('change', function() {
-        settings.colorScheme = this.value;
-        applyTheme(settings.colorScheme, settings.themeMode);
-    });
+    const colorScheme = document.getElementById('colorScheme');
+    if (colorScheme) {
+        colorScheme.addEventListener('change', function() {
+            settings.colorScheme = this.value;
+            applyTheme(settings.colorScheme, settings.themeMode);
+        });
+    }
     
-    document.getElementById('themeMode').addEventListener('change', function() {
-        settings.themeMode = this.value;
-        applyTheme(settings.colorScheme, settings.themeMode);
-        
-        // Setup/remove system theme listener
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        if (this.value === 'auto') {
-            mediaQuery.addEventListener('change', handleSystemThemeChange);
-        } else {
-            mediaQuery.removeEventListener('change', handleSystemThemeChange);
-        }
-    });
+    const themeMode = document.getElementById('themeMode');
+    if (themeMode) {
+        themeMode.addEventListener('change', function() {
+            settings.themeMode = this.value;
+            applyTheme(settings.colorScheme, settings.themeMode);
+            
+            // Setup/remove system theme listener
+            const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+            if (this.value === 'auto') {
+                mediaQuery.addEventListener('change', handleSystemThemeChange);
+            } else {
+                mediaQuery.removeEventListener('change', handleSystemThemeChange);
+            }
+        });
+    }
     
-    document.getElementById('showTooltips').addEventListener('change', function() {
-        settings.showTooltips = this.checked;
-        document.documentElement.classList.toggle('hide-tooltips', !this.checked);
-    });
+    const showTooltips = document.getElementById('showTooltips');
+    if (showTooltips) {
+        showTooltips.addEventListener('change', function() {
+            settings.showTooltips = this.checked;
+            document.documentElement.classList.toggle('hide-tooltips', !this.checked);
+        });
+    }
     
     // AI Behavior settings
-    document.getElementById('systemPrompt').addEventListener('input', function() {
-        settings.systemPrompt = this.value;
-    });
+    const systemPrompt = document.getElementById('systemPrompt');
+    if (systemPrompt) {
+        systemPrompt.addEventListener('input', function() {
+            settings.systemPrompt = this.value;
+        });
+    }
     
     // Persona management
-    document.getElementById('newPersonaBtn').addEventListener('click', () => {
-        showPersonaModal();
-    });
+    const newPersonaBtn = document.getElementById('newPersonaBtn');
+    if (newPersonaBtn) {
+        newPersonaBtn.addEventListener('click', () => {
+            showPersonaModal();
+        });
+    }
     
     // Persona modal events
-    document.querySelector('#personaModal .modal-close').addEventListener('click', closePersonaModal);
-    document.getElementById('cancelPersonaBtn').addEventListener('click', closePersonaModal);
-    document.getElementById('savePersonaBtn').addEventListener('click', savePersona);
+    const personaModalClose = document.querySelector('#personaModal .modal-close');
+    if (personaModalClose) {
+        personaModalClose.addEventListener('click', closePersonaModal);
+    }
+    
+    const cancelPersonaBtn = document.getElementById('cancelPersonaBtn');
+    if (cancelPersonaBtn) {
+        cancelPersonaBtn.addEventListener('click', closePersonaModal);
+    }
+    
+    const savePersonaBtn = document.getElementById('savePersonaBtn');
+    if (savePersonaBtn) {
+        savePersonaBtn.addEventListener('click', savePersona);
+    }
     
     // Event delegation for persona buttons
     document.addEventListener('click', function(e) {
@@ -247,22 +237,25 @@ function setupEventListeners() {
     document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
     
     // Back to Branestawm button
-    document.getElementById('backToBranestawmBtn').addEventListener('click', () => {
-        // Try to close the current tab
-        if (chrome.tabs) {
-            chrome.tabs.getCurrent((tab) => {
-                if (tab) {
-                    chrome.tabs.remove(tab.id);
-                } else {
-                    // Fallback: close window if not in a tab
-                    window.close();
-                }
-            });
-        } else {
-            // Fallback: close window
-            window.close();
-        }
-    });
+    const backToBranestawmBtn = document.getElementById('backToBranestawmBtn');
+    if (backToBranestawmBtn) {
+        backToBranestawmBtn.addEventListener('click', () => {
+            // Try to close the current tab
+            if (chrome.tabs) {
+                chrome.tabs.getCurrent((tab) => {
+                    if (tab) {
+                        chrome.tabs.remove(tab.id);
+                    } else {
+                        // Fallback: close window if not in a tab
+                        window.close();
+                    }
+                });
+            } else {
+                // Fallback: close window
+                window.close();
+            }
+        });
+    }
     
     // ========== NEW CLOUD LLM SYSTEM ==========
     
@@ -342,6 +335,8 @@ function setupEventListeners() {
             e.target.classList.remove('show');
         }
     });
+    
+    console.log('DEBUG: setupEventListeners completed successfully');
 }
 
 // ========== AUTH METHOD SELECTION ==========
