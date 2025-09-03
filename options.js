@@ -2,11 +2,19 @@
 // Handles all configuration and authentication
 
 let settings = {
+    // New LLM selection system
+    activeLlm: 'local', // 'local', 'google', 'custom-[id]'
+    airplaneMode: false,
+    
+    // Legacy settings (for backward compatibility)
     authMethod: null,
     googleToken: null,
     apiEndpoint: 'https://api.cerebras.ai/v1/chat/completions',
     apiKey: '',
     model: 'llama3.1-8b',
+    
+    // New custom endpoints structure
+    customEndpoints: {},
     systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
     showTooltips: true,
     syncKey: '',
@@ -255,6 +263,43 @@ function setupEventListeners() {
             window.close();
         }
     });
+    
+    // ========== NEW CLOUD LLM SYSTEM ==========
+    
+    // Active LLM selection
+    const activeLlmSelect = document.getElementById('activeLlmSelect');
+    if (activeLlmSelect) {
+        activeLlmSelect.addEventListener('change', (e) => {
+            settings.activeLlm = e.target.value;
+            updateActiveLlmStatus();
+            debouncedSave();
+        });
+    }
+    
+    // Airplane mode toggle
+    const airplaneModeToggle = document.getElementById('airplaneModeToggle');
+    if (airplaneModeToggle) {
+        airplaneModeToggle.addEventListener('change', (e) => {
+            settings.airplaneMode = e.target.checked;
+            if (e.target.checked) {
+                settings.activeLlm = 'local';
+                updateActiveLlmSelect();
+            }
+            updateActiveLlmStatus();
+            debouncedSave();
+        });
+    }
+    
+    // Manage Cloud LLMs button
+    const manageCloudLlmsBtn = document.getElementById('manageCloudLlmsBtn');
+    if (manageCloudLlmsBtn) {
+        manageCloudLlmsBtn.addEventListener('click', () => {
+            showCloudLlmModal();
+        });
+    }
+    
+    // Cloud LLM Modal event listeners
+    setupCloudLlmModalListeners();
 }
 
 // ========== AUTH METHOD SELECTION ==========
@@ -706,6 +751,16 @@ function updateUI() {
     
     // Update personas
     updatePersonasList();
+    
+    // ========== NEW CLOUD LLM SYSTEM UPDATES ==========
+    
+    // Migrate existing settings if needed
+    migrateExistingApiSettings();
+    
+    // Update new LLM system UI
+    updateActiveLlmSelect();
+    updateAirplaneModeCheckbox();
+    updateActiveLlmStatus();
     
     // Apply tooltip visibility
     document.documentElement.classList.toggle('hide-tooltips', !settings.showTooltips);
@@ -1242,5 +1297,448 @@ function updatePerformanceStats() {
     }
 }
 
+// ========== NEW CLOUD LLM SYSTEM FUNCTIONS ==========
+
+let currentEditingEndpoint = null;
+
+/**
+ * Setup event listeners for Cloud LLM modal
+ */
+function setupCloudLlmModalListeners() {
+    // Add endpoint button
+    const addEndpointBtn = document.getElementById('addEndpointBtn');
+    if (addEndpointBtn) {
+        addEndpointBtn.addEventListener('click', () => {
+            showEndpointModal();
+        });
+    }
+    
+    // Endpoint modal buttons
+    const saveEndpointBtn = document.getElementById('saveEndpointBtn');
+    if (saveEndpointBtn) {
+        saveEndpointBtn.addEventListener('click', saveEndpoint);
+    }
+    
+    const cancelEndpointBtn = document.getElementById('cancelEndpointBtn');
+    if (cancelEndpointBtn) {
+        cancelEndpointBtn.addEventListener('click', closeEndpointModal);
+    }
+    
+    const testEndpointBtn = document.getElementById('testEndpointBtn');
+    if (testEndpointBtn) {
+        testEndpointBtn.addEventListener('click', testEndpointConnection);
+    }
+    
+    // Provider template selection
+    document.querySelectorAll('.provider-template').forEach(template => {
+        template.addEventListener('click', () => {
+            selectProviderTemplate(template.dataset.provider);
+        });
+    });
+}
+
+/**
+ * Show the Cloud LLM management modal
+ */
+function showCloudLlmModal() {
+    populateEndpointsContainer();
+    updateGoogleAuthStatus(!!settings.googleToken);
+    document.getElementById('cloudLlmModal').classList.add('show');
+}
+
+/**
+ * Show the endpoint editor modal
+ */
+function showEndpointModal(endpointId = null) {
+    const modal = document.getElementById('endpointModal');
+    const title = document.getElementById('endpointModalTitle');
+    
+    // Clear previous selections
+    document.querySelectorAll('.provider-template').forEach(template => {
+        template.classList.remove('selected');
+    });
+    
+    if (endpointId) {
+        // Edit mode
+        currentEditingEndpoint = endpointId;
+        const endpoint = settings.customEndpoints[endpointId];
+        title.textContent = 'Edit Endpoint';
+        
+        document.getElementById('endpointName').value = endpoint.name;
+        document.getElementById('endpointUrl').value = endpoint.endpoint;
+        document.getElementById('endpointModel').value = endpoint.model;
+        document.getElementById('endpointApiKey').value = endpoint.apiKey;
+        
+        // Select provider template
+        const template = document.querySelector(`[data-provider="${endpoint.provider}"]`);
+        if (template) {
+            template.classList.add('selected');
+        }
+    } else {
+        // Create mode
+        currentEditingEndpoint = null;
+        title.textContent = 'Add Endpoint';
+        
+        document.getElementById('endpointName').value = '';
+        document.getElementById('endpointUrl').value = '';
+        document.getElementById('endpointModel').value = '';
+        document.getElementById('endpointApiKey').value = '';
+    }
+    
+    modal.classList.add('show');
+    document.getElementById('endpointName').focus();
+}
+
+/**
+ * Close endpoint editor modal
+ */
+function closeEndpointModal() {
+    document.getElementById('endpointModal').classList.remove('show');
+    currentEditingEndpoint = null;
+}
+
+/**
+ * Select provider template and pre-fill settings
+ */
+function selectProviderTemplate(provider) {
+    document.querySelectorAll('.provider-template').forEach(template => {
+        template.classList.remove('selected');
+    });
+    
+    document.querySelector(`[data-provider="${provider}"]`).classList.add('selected');
+    
+    // Pre-fill based on provider
+    const providerConfigs = {
+        cerebras: {
+            endpoint: 'https://api.cerebras.ai/v1/chat/completions',
+            model: 'llama3.1-8b',
+        },
+        openai: {
+            endpoint: 'https://api.openai.com/v1/chat/completions',
+            model: 'gpt-3.5-turbo',
+        },
+        openrouter: {
+            endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+            model: 'meta-llama/llama-3.2-3b-instruct:free',
+        },
+        custom: {
+            endpoint: '',
+            model: '',
+        }
+    };
+    
+    const config = providerConfigs[provider];
+    if (config) {
+        document.getElementById('endpointUrl').value = config.endpoint;
+        document.getElementById('endpointModel').value = config.model;
+    }
+}
+
+/**
+ * Save endpoint configuration
+ */
+function saveEndpoint() {
+    const name = document.getElementById('endpointName').value.trim();
+    const endpoint = document.getElementById('endpointUrl').value.trim();
+    const model = document.getElementById('endpointModel').value.trim();
+    const apiKey = document.getElementById('endpointApiKey').value.trim();
+    const selectedTemplate = document.querySelector('.provider-template.selected');
+    
+    if (!name || !endpoint || !model || !apiKey) {
+        showToast('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    const provider = selectedTemplate ? selectedTemplate.dataset.provider : 'custom';
+    
+    if (currentEditingEndpoint) {
+        // Update existing endpoint
+        settings.customEndpoints[currentEditingEndpoint] = {
+            ...settings.customEndpoints[currentEditingEndpoint],
+            name,
+            endpoint,
+            model,
+            apiKey,
+            provider,
+            updatedAt: new Date().toISOString()
+        };
+        showToast(`Endpoint "${name}" updated successfully!`, 'success');
+    } else {
+        // Create new endpoint
+        const endpointId = generateEndpointId();
+        settings.customEndpoints[endpointId] = {
+            id: endpointId,
+            name,
+            endpoint,
+            model,
+            apiKey,
+            provider,
+            createdAt: new Date().toISOString()
+        };
+        showToast(`Endpoint "${name}" created successfully!`, 'success');
+    }
+    
+    closeEndpointModal();
+    populateEndpointsContainer();
+    updateActiveLlmSelect();
+    saveSettings();
+}
+
+/**
+ * Test endpoint connection
+ */
+async function testEndpointConnection() {
+    const endpoint = document.getElementById('endpointUrl').value.trim();
+    const model = document.getElementById('endpointModel').value.trim();
+    const apiKey = document.getElementById('endpointApiKey').value.trim();
+    
+    if (!endpoint || !model || !apiKey) {
+        showEndpointTestResult('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    const testBtn = document.getElementById('testEndpointBtn');
+    testBtn.disabled = true;
+    testBtn.textContent = 'Testing...';
+    
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: model,
+                messages: [{ role: 'user', content: 'Test connection' }],
+                max_tokens: 1
+            })
+        });
+        
+        if (response.ok) {
+            showEndpointTestResult('✅ Connection successful!', 'success');
+        } else {
+            const errorText = await response.text();
+            showEndpointTestResult(`❌ Connection failed: ${response.status} - ${errorText}`, 'error');
+        }
+        
+    } catch (error) {
+        showEndpointTestResult(`❌ Connection failed: ${error.message}`, 'error');
+    } finally {
+        testBtn.disabled = false;
+        testBtn.textContent = 'Test Connection';
+    }
+}
+
+/**
+ * Show endpoint test result
+ */
+function showEndpointTestResult(message, type) {
+    const resultElement = document.getElementById('endpointTestResult');
+    resultElement.textContent = message;
+    resultElement.className = `test-result ${type}`;
+    resultElement.style.display = 'block';
+}
+
+/**
+ * Populate endpoints container
+ */
+function populateEndpointsContainer() {
+    const container = document.getElementById('endpointsContainer');
+    const emptyState = document.getElementById('emptyEndpoints');
+    
+    const endpoints = Object.values(settings.customEndpoints || {});
+    
+    if (endpoints.length === 0) {
+        emptyState.style.display = 'block';
+        return;
+    }
+    
+    emptyState.style.display = 'none';
+    
+    // Clear existing endpoints (except empty state)
+    const existingCards = container.querySelectorAll('.endpoint-card');
+    existingCards.forEach(card => card.remove());
+    
+    endpoints.forEach(endpoint => {
+        const card = createEndpointCard(endpoint);
+        container.insertBefore(card, emptyState);
+    });
+}
+
+/**
+ * Create endpoint card element
+ */
+function createEndpointCard(endpoint) {
+    const card = document.createElement('div');
+    card.className = 'endpoint-card';
+    
+    card.innerHTML = `
+        <div class="endpoint-header">
+            <div>
+                <div class="endpoint-title">${endpoint.name}</div>
+                <div class="endpoint-provider">${getProviderDisplayName(endpoint.provider)}</div>
+            </div>
+            <div class="endpoint-actions">
+                <button class="btn small secondary" onclick="editEndpoint('${endpoint.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                    </svg>
+                    Edit
+                </button>
+                <button class="btn small secondary" onclick="deleteEndpoint('${endpoint.id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                    </svg>
+                    Delete
+                </button>
+            </div>
+        </div>
+        <div class="endpoint-info">
+            Model: <span class="endpoint-model">${endpoint.model}</span>
+        </div>
+    `;
+    
+    return card;
+}
+
+/**
+ * Get provider display name
+ */
+function getProviderDisplayName(provider) {
+    const names = {
+        cerebras: 'Cerebras',
+        openai: 'OpenAI',
+        openrouter: 'OpenRouter',
+        custom: 'Custom'
+    };
+    return names[provider] || 'Custom';
+}
+
+/**
+ * Update active LLM dropdown options
+ */
+function updateActiveLlmSelect() {
+    const select = document.getElementById('activeLlmSelect');
+    const customGroup = document.getElementById('customEndpointsGroup');
+    
+    if (!select || !customGroup) return;
+    
+    // Clear custom endpoints
+    customGroup.innerHTML = '';
+    
+    // Add custom endpoints
+    Object.values(settings.customEndpoints || {}).forEach(endpoint => {
+        const option = document.createElement('option');
+        option.value = `custom-${endpoint.id}`;
+        option.textContent = endpoint.name;
+        customGroup.appendChild(option);
+    });
+    
+    // Set current selection
+    select.value = settings.activeLlm;
+    
+    // Handle airplane mode
+    if (settings.airplaneMode) {
+        select.value = 'local';
+        select.disabled = true;
+    } else {
+        select.disabled = false;
+    }
+}
+
+/**
+ * Update airplane mode checkbox
+ */
+function updateAirplaneModeCheckbox() {
+    const checkbox = document.getElementById('airplaneModeToggle');
+    if (checkbox) {
+        checkbox.checked = settings.airplaneMode;
+    }
+}
+
+/**
+ * Update active LLM status indicator
+ */
+function updateActiveLlmStatus() {
+    const statusElement = document.getElementById('activeLlmStatus');
+    const statusText = document.getElementById('activeLlmStatusText');
+    
+    if (!statusElement || !statusText) return;
+    
+    if (settings.airplaneMode) {
+        statusElement.className = 'status-indicator connected';
+        statusText.textContent = 'Airplane Mode - Using Local LLM';
+    } else if (settings.activeLlm === 'local') {
+        statusElement.className = 'status-indicator connected';
+        statusText.textContent = 'Using Local LLM (Ollama)';
+    } else if (settings.activeLlm === 'google') {
+        const connected = !!settings.googleToken;
+        statusElement.className = `status-indicator ${connected ? 'connected' : 'disconnected'}`;
+        statusText.textContent = connected ? 'Google Gemini Connected' : 'Google Gemini Not Connected';
+    } else if (settings.activeLlm.startsWith('custom-')) {
+        const endpointId = settings.activeLlm.replace('custom-', '');
+        const endpoint = settings.customEndpoints[endpointId];
+        if (endpoint) {
+            statusElement.className = 'status-indicator connected';
+            statusText.textContent = `Using ${endpoint.name}`;
+        } else {
+            statusElement.className = 'status-indicator disconnected';
+            statusText.textContent = 'Custom Endpoint Not Found';
+        }
+    }
+}
+
+/**
+ * Generate unique endpoint ID
+ */
+function generateEndpointId() {
+    return 'endpoint-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
+/**
+ * Migrate existing API settings to custom endpoint (backward compatibility)
+ */
+function migrateExistingApiSettings() {
+    // If we have old API settings but no custom endpoints, migrate them
+    if (settings.apiKey && settings.apiEndpoint && Object.keys(settings.customEndpoints).length === 0) {
+        const endpointId = generateEndpointId();
+        settings.customEndpoints[endpointId] = {
+            id: endpointId,
+            name: 'Migrated Endpoint',
+            endpoint: settings.apiEndpoint,
+            model: settings.model || 'llama3.1-8b',
+            apiKey: settings.apiKey,
+            provider: 'custom',
+            createdAt: new Date().toISOString()
+        };
+        
+        // Set as active LLM if not already set
+        if (!settings.activeLlm || settings.activeLlm === 'local') {
+            settings.activeLlm = `custom-${endpointId}`;
+        }
+        
+        console.log('Migrated existing API settings to custom endpoint');
+    }
+}
+
 // Make functions globally accessible for HTML onclick handlers
 window.refreshOllamaStatus = refreshOllamaStatus;
+window.editEndpoint = (endpointId) => showEndpointModal(endpointId);
+window.deleteEndpoint = (endpointId) => {
+    const endpoint = settings.customEndpoints[endpointId];
+    if (endpoint && confirm(`Are you sure you want to delete "${endpoint.name}"?`)) {
+        delete settings.customEndpoints[endpointId];
+        
+        // If this was the active LLM, switch to local
+        if (settings.activeLlm === `custom-${endpointId}`) {
+            settings.activeLlm = 'local';
+        }
+        
+        populateEndpointsContainer();
+        updateActiveLlmSelect();
+        updateActiveLlmStatus();
+        saveSettings();
+        showToast(`Endpoint "${endpoint.name}" deleted successfully`, 'success');
+    }
+};
