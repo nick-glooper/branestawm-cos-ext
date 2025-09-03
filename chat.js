@@ -25,7 +25,7 @@ async function sendMessage() {
     
     try {
         // Add user message to current folio's dialogue
-        addMessage(currentFolio, 'user', message);
+        await addMessage(currentFolio, 'user', message);
         
         // Show typing indicator
         const typingDiv = addTypingIndicator();
@@ -65,7 +65,7 @@ async function sendMessage() {
         removeTypingIndicator(typingDiv);
         
         // Add AI response to current folio's dialogue
-        addMessage(currentFolio, 'assistant', response);
+        await addMessage(currentFolio, 'assistant', response);
         
         // Update folio title if it's the first exchange
         const folio = folios[currentFolio];
@@ -74,8 +74,8 @@ async function sendMessage() {
             folio.lastUsed = new Date().toISOString();
         }
         
-        // Save data
-        await saveData();
+        // Save data through AppState for consistency
+        await appState.saveData();
         
     } catch (error) {
         console.error('Error sending message:', error);
@@ -87,7 +87,7 @@ async function sendMessage() {
         }
         
         // Show error message
-        addMessage(currentFolio, 'system', `Sorry, I encountered an error: ${error.message}. Please check your connection and try again.`);
+        await addMessage(currentFolio, 'system', `Sorry, I encountered an error: ${error.message}. Please check your connection and try again.`);
         showMessage('Error: ' + error.message, 'error');
     } finally {
         isProcessing = false;
@@ -96,7 +96,7 @@ async function sendMessage() {
 
 // ========== MESSAGE MANAGEMENT ==========
 
-function addMessage(folioId, role, content) {
+async function addMessage(folioId, role, content) {
     if (!folios[folioId]) return;
     
     const message = {
@@ -106,13 +106,36 @@ function addMessage(folioId, role, content) {
         timestamp: new Date().toISOString()
     };
     
-    // Add to folio's continuous dialogue
-    folios[folioId].messages.push(message);
-    folios[folioId].lastUsed = new Date().toISOString();
-    
-    // Update UI
-    displayMessage(message);
-    scrollToBottom();
+    try {
+        // Use AppState for proper async data handling
+        const folio = await appState.getFolio(folioId);
+        if (!folio) {
+            console.error(`Folio ${folioId} not found`);
+            return;
+        }
+        
+        // Add message and update timestamp
+        const updatedMessages = [...folio.messages, message];
+        await appState.updateFolio(folioId, {
+            messages: updatedMessages,
+            lastUsed: new Date().toISOString()
+        });
+        
+        // Update global references for backward compatibility
+        updateGlobalReferences();
+        
+        // Update UI
+        displayMessage(message);
+        scrollToBottom();
+        
+    } catch (error) {
+        console.error('Error adding message:', error);
+        // Fallback to old method
+        folios[folioId].messages.push(message);
+        folios[folioId].lastUsed = new Date().toISOString();
+        displayMessage(message);
+        scrollToBottom();
+    }
 }
 
 function displayMessage(message) {

@@ -4,87 +4,36 @@
 // ========== DATA PERSISTENCE ==========
 
 async function loadData() {
-    try {
-        const data = await chrome.storage.local.get(['settings', 'folios', 'conversations', 'artifacts', 'currentFolio', 'recentFolios', 'recentConversations', 'artifactTemplates']);
-        
-        if (data.settings) {
-            settings = { ...settings, ...data.settings };
-            // Ensure personas exist in settings
-            if (!settings.personas) {
-                settings.personas = {
-                    'core': {
-                        id: 'core',
-                        name: 'Core',
-                        identity: 'Helpful AI assistant and cognitive support specialist',
-                        communicationStyle: 'Clear, structured, and supportive',
-                        tone: 'Professional yet approachable',
-                        roleContext: 'General assistance, task breakdown, executive function support',
-                        isDefault: true,
-                        createdAt: new Date().toISOString()
-                    }
-                };
-            }
+    console.warn('DEPRECATED: loadData() in storage.js - use DataManager instead');
+    
+    // Delegate to DataManager for consistent behavior
+    if (window.dataManager) {
+        try {
+            await window.dataManager.loadData();
+            console.log('Data loaded via DataManager delegation');
+        } catch (error) {
+            console.error('Error loading data via DataManager:', error);
+            throw error;
         }
-        
-        if (data.folios) {
-            folios = data.folios;
-        }
-        
-        if (data.conversations) {
-            conversations = data.conversations;
-        }
-        
-        if (data.artifacts) {
-            artifacts = data.artifacts;
-        }
-        
-        if (data.currentFolio) {
-            currentFolio = data.currentFolio;
-        }
-        
-        if (data.recentFolios) {
-            recentFolios = data.recentFolios;
-        }
-        
-        if (data.recentConversations) {
-            recentConversations = data.recentConversations;
-        }
-        
-        // Ensure artifact templates exist
-        if (data.artifactTemplates) {
-            artifactTemplates = { ...artifactTemplates, ...data.artifactTemplates };
-        }
-        
-        // Migrate shared artifacts for existing folios
-        migrateSharedArtifacts();
-        
-        // Migrate persona names to remove "Persona" suffix
-        migratePersonaNames();
-        
-        console.log('Data loaded successfully');
-        
-    } catch (error) {
-        console.error('Error loading data:', error);
+    } else {
+        throw new Error('DataManager not available - legacy loadData cannot proceed');
     }
 }
 
 async function saveData() {
-    try {
-        await chrome.storage.local.set({
-            settings: settings,
-            folios: folios,
-            conversations: conversations,
-            artifacts: artifacts,
-            artifactTemplates: artifactTemplates,
-            currentFolio: currentFolio,
-            recentFolios: recentFolios,
-            recentConversations: recentConversations
-        });
-        
-        console.log('Data saved successfully');
-        
-    } catch (error) {
-        console.error('Error saving data:', error);
+    console.warn('DEPRECATED: saveData() in storage.js - use DataManager instead');
+    
+    // Delegate to DataManager for consistent behavior
+    if (window.dataManager) {
+        try {
+            await window.dataManager.saveData();
+            console.log('Data saved via DataManager delegation');
+        } catch (error) {
+            console.error('Error saving data via DataManager:', error);
+            throw error;
+        }
+    } else {
+        throw new Error('DataManager not available - legacy saveData cannot proceed');
     }
 }
 

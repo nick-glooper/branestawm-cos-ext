@@ -20,10 +20,16 @@ async function authenticateWithGoogle() {
         // Test the token with a simple API call
         await testGoogleConnection(token);
         
-        // Save auth method and token
-        settings.authMethod = 'google';
-        settings.googleToken = token;
-        await saveData();
+        // Save auth method and token through DataManager
+        if (window.dataManager) {
+            await window.dataManager.updateState('settings.authMethod', 'google');
+            await window.dataManager.updateState('settings.googleToken', token);
+        } else {
+            // Fallback for backward compatibility
+            settings.authMethod = 'google';
+            settings.googleToken = token;
+            await saveData();
+        }
         
         closeModal('setupModal');
         showMessage('Successfully connected to Google Gemini! You have 1,500 free requests per day.', 'success');
@@ -37,6 +43,12 @@ async function authenticateWithGoogle() {
         
     } catch (error) {
         console.error('Google auth error:', error);
+        
+        // Use ErrorManager for structured error handling
+        if (window.errorManager) {
+            window.errorManager.handleAPIError('google-auth', error);
+        }
+        
         showMessage('Google authentication failed: ' + error.message + '. Try the Advanced Setup instead.', 'error');
     }
 }
@@ -104,9 +116,13 @@ async function callGoogleGeminiAPI(messages) {
 
         if (!response.ok) {
             if (response.status === 401) {
-                // Token expired, clear it
-                settings.googleToken = null;
-                await saveData();
+                // Token expired, clear it through DataManager
+                if (window.dataManager) {
+                    await window.dataManager.updateState('settings.googleToken', null);
+                } else {
+                    settings.googleToken = null;
+                    await saveData();
+                }
                 throw new Error('Authentication expired. Please sign in again in Settings.');
             }
             const errorData = await response.text();

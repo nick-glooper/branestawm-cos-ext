@@ -1,80 +1,209 @@
 // Branestawm - Your AI Chief of Staff
 // Main application logic for full-page tab interface
 
-// ========== GLOBAL STATE ==========
+// Import DataManager for centralized state management
+// Note: Using script tag import since this is a Chrome extension
 
-// Hybrid LLM System
-let ollamaClient = null;
-let llmRouter = null;
-let modelManager = null;
-
-let currentFolio = 'general';
-let folios = {
-    'general': {
-        id: 'general',
-        title: 'General Folio',
-        description: 'General purpose folio for continuous dialogue',
-        guidelines: '', // Inherits from assigned persona
-        assignedPersona: 'core',
-        messages: [], // Single continuous dialogue
-        artifacts: [],
-        sharedArtifacts: [],
-        createdAt: new Date().toISOString(),
-        lastUsed: new Date().toISOString()
+/**
+ * Application State Manager
+ * Centralized state management with proper encapsulation
+ */
+class AppState {
+    constructor() {
+        // Hybrid LLM System
+        this.ollamaClient = null;
+        this.llmRouter = null;
+        this.modelManager = null;
+        
+        // UI State
+        this.isProcessing = false;
+        this.keepAlivePort = null;
+        this.deleteTarget = null;
+        
+        // Data Manager instance (initialized later)
+        this.dataManager = null;
+        
+        console.log('AppState initialized');
     }
-};
-// Remove conversations concept - each folio has one continuous dialogue
-// let conversations = {}; // No longer needed
-let artifacts = {};
-let artifactTemplates = {
-    'note': { name: 'General Note', icon: '📝', description: 'Simple markdown note' },
-    'summary': { name: 'Summary Document', icon: '📋', description: 'AI-generated summary from conversation' },
-    'plan': { name: 'Project Plan', icon: '📈', description: 'Structured project or task plan' },
-    'research': { name: 'Research Document', icon: '🔬', description: 'Research findings and analysis' },
-    'meeting': { name: 'Meeting Notes', icon: '👥', description: 'Meeting agenda, notes, and action items' },
-    'report': { name: 'Report', icon: '📊', description: 'Formal report or analysis' },
-    'template': { name: 'Custom Template', icon: '📄', description: 'Reusable document template' }
-};
-let settings = {
-    authMethod: null, // 'google' or 'apikey'
-    googleToken: null,
-    apiEndpoint: 'https://api.cerebras.ai/v1/chat/completions',
-    apiKey: '',
-    model: 'llama3.1-8b',
-    systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
-    showTooltips: true,
-    webSearchEnabled: true,
-    syncKey: '',
-    syncId: '',
-    jsonbinApiKey: '',
-    usePrivateBins: false,
-    autoSync: false,
-    // Glooper Design System settings
-    colorScheme: 'professional', // 'professional', 'warm', 'cool'
-    themeMode: 'dark', // 'light', 'dark', 'auto'
-    fontSize: 'standard', // 'compact', 'standard', 'large', 'xl'
-    reducedMotion: false,
-    highContrast: false,
-    // Persona system
-    personas: {
-        'core': {
-            id: 'core',
-            name: 'Core',
-            identity: 'Helpful AI assistant and cognitive support specialist',
-            communicationStyle: 'Clear, structured, and supportive',
-            tone: 'Professional yet approachable',
-            roleContext: 'General assistance, task breakdown, executive function support',
-            isDefault: true,
-            createdAt: new Date().toISOString()
+    
+    /**
+     * Initialize with DataManager
+     */
+    async initialize() {
+        // Get DataManager instance
+        this.dataManager = window.dataManager;
+        
+        if (!this.dataManager) {
+            throw new Error('DataManager not available - ensure data-manager.js is loaded first');
         }
+        
+        // Load all data through DataManager
+        await this.dataManager.loadData();
+        
+        console.log('AppState initialized with DataManager');
     }
-};
+    
+    /**
+     * Get current folio ID
+     */
+    getCurrentFolio() {
+        return this.dataManager.getState('currentFolio');
+    }
+    
+    /**
+     * Set current folio
+     */
+    async setCurrentFolio(folioId) {
+        await this.dataManager.updateState('currentFolio', folioId);
+        return folioId;
+    }
+    
+    /**
+     * Get all folios
+     */
+    getFolios() {
+        return this.dataManager.getState('folios');
+    }
+    
+    /**
+     * Get specific folio
+     */
+    getFolio(folioId) {
+        return this.dataManager.getState(`folios.${folioId}`);
+    }
+    
+    /**
+     * Update folio
+     */
+    async updateFolio(folioId, updates) {
+        const currentFolio = this.getFolio(folioId);
+        if (!currentFolio) {
+            throw new Error(`Folio ${folioId} not found`);
+        }
+        
+        const updatedFolio = { ...currentFolio, ...updates };
+        await this.dataManager.updateState(`folios.${folioId}`, updatedFolio);
+        return updatedFolio;
+    }
+    
+    /**
+     * Get all artifacts
+     */
+    getArtifacts() {
+        return this.dataManager.getState('artifacts');
+    }
+    
+    /**
+     * Get artifact templates
+     */
+    getArtifactTemplates() {
+        return this.dataManager.getState('artifactTemplates');
+    }
+    
+    /**
+     * Get settings
+     */
+    getSettings() {
+        return this.dataManager.getState('settings');
+    }
+    
+    /**
+     * Update settings
+     */
+    async updateSettings(updates) {
+        const currentSettings = this.getSettings();
+        const updatedSettings = { ...currentSettings, ...updates };
+        await this.dataManager.updateState('settings', updatedSettings);
+        return updatedSettings;
+    }
+    
+    /**
+     * Get recent folios
+     */
+    getRecentFolios() {
+        return this.dataManager.getState('recentFolios');
+    }
+    
+    /**
+     * Update recent folios
+     */
+    async updateRecentFolios(folioId) {
+        let recentFolios = this.getRecentFolios() || [];
+        
+        // Remove if already exists
+        recentFolios = recentFolios.filter(id => id !== folioId);
+        
+        // Add to beginning
+        recentFolios.unshift(folioId);
+        
+        // Keep only last 10
+        recentFolios = recentFolios.slice(0, 10);
+        
+        await this.dataManager.updateState('recentFolios', recentFolios);
+        return recentFolios;
+    }
+    
+    /**
+     * Save all data
+     */
+    async saveData() {
+        return await this.dataManager.saveData();
+    }
+    
+    /**
+     * Get complete state for backward compatibility
+     */
+    getCompatibilityState() {
+        const state = this.dataManager.getState();
+        return {
+            currentFolio: state.currentFolio,
+            folios: state.folios,
+            artifacts: state.artifacts,
+            artifactTemplates: state.artifactTemplates,
+            settings: state.settings,
+            recentFolios: state.recentFolios,
+            conversations: state.conversations || {} // for backward compatibility
+        };
+    }
+}
 
+// Create global AppState instance
+const appState = new AppState();
+
+// Backward compatibility - create global references that delegate to AppState
+let currentFolio, folios, artifacts, artifactTemplates, settings, recentFolios;
 let isProcessing = false;
 let keepAlivePort = null;
-let recentFolios = ['general'];
-// let recentConversations = []; // No longer needed - folios track their own dialogue
 let deleteTarget = null;
+
+/**
+ * Update backward compatibility variables
+ */
+function updateGlobalReferences() {
+    const state = appState.getCompatibilityState();
+    currentFolio = state.currentFolio;
+    folios = state.folios;
+    artifacts = state.artifacts;
+    artifactTemplates = state.artifactTemplates;
+    settings = state.settings;
+    recentFolios = state.recentFolios;
+}
+
+/**
+ * Legacy saveData function for backward compatibility
+ */
+async function saveData() {
+    await appState.saveData();
+    updateGlobalReferences();
+}
+
+/**
+ * Legacy loadData function for backward compatibility  
+ */
+async function loadData() {
+    await appState.dataManager.loadData();
+    updateGlobalReferences();
+}
 
 // ========== SETUP AND INITIALIZATION ==========
 
@@ -1283,9 +1412,11 @@ function populatePersonaDropdown() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        // Load data from storage
-        await loadData();
+        // Initialize AppState and DataManager
+        await appState.initialize();
         
+        // Update global references for backward compatibility
+        updateGlobalReferences();
         
         // Initialize UI systems
         initializeTheme();
@@ -1316,7 +1447,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             scrollToBottom();
         }
         
-        console.log('Branestawm initialized successfully');
+        console.log('Branestawm initialized successfully with new AppState architecture');
         
     } catch (error) {
         console.error('Error initializing Branestawm:', error);
