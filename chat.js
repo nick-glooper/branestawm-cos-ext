@@ -25,7 +25,14 @@ async function sendMessage() {
     
     try {
         // Add user message to current folio's dialogue
-        await addMessage(currentFolio, 'user', message);
+        const userMessage = await addMessage(currentFolio, 'user', message);
+        
+        // Notify folio switcher of user message
+        if (userMessage && window.folioSwitcher) {
+            document.dispatchEvent(new CustomEvent('message-sent', {
+                detail: { message: userMessage, folioId: currentFolio }
+            }));
+        }
         
         // Show typing indicator
         const typingDiv = addTypingIndicator();
@@ -76,7 +83,14 @@ async function sendMessage() {
         removeTypingIndicator(typingDiv);
         
         // Add AI response to current folio's dialogue
-        await addMessage(currentFolio, 'assistant', response);
+        const assistantMessage = await addMessage(currentFolio, 'assistant', response);
+        
+        // Notify folio switcher of assistant response
+        if (assistantMessage && window.folioSwitcher) {
+            document.dispatchEvent(new CustomEvent('message-received', {
+                detail: { message: assistantMessage, folioId: currentFolio }
+            }));
+        }
         
         // Update folio title if it's the first exchange
         const folio = folios[currentFolio];
@@ -467,6 +481,14 @@ Guidelines: ${folio.guidelines}`;
 ${settings.systemPrompt}
 
 `;
+
+    // Add user name context if provided
+    if (settings.userName && settings.userName.trim()) {
+        prompt += `USER INFORMATION:
+The user's name is ${settings.userName.trim()}. Address them by name naturally in your responses when appropriate.
+
+`;
+    }
 
     // Add temporal context
     prompt += `TEMPORAL CONTEXT:

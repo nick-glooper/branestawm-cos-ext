@@ -15,6 +15,10 @@ let settings = {
     
     // New custom endpoints structure
     customEndpoints: {},
+    
+    // User personalization
+    userName: '',
+    
     systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
     showTooltips: true,
     syncKey: '',
@@ -167,6 +171,13 @@ function setupEventListeners() {
     }
     
     // AI Behavior settings
+    const userName = document.getElementById('userName');
+    if (userName) {
+        userName.addEventListener('input', function() {
+            settings.userName = this.value.trim();
+        });
+    }
+    
     const systemPrompt = document.getElementById('systemPrompt');
     if (systemPrompt) {
         systemPrompt.addEventListener('input', function() {
@@ -772,6 +783,7 @@ function updateUI() {
     document.getElementById('apiEndpoint').value = settings.apiEndpoint || '';
     document.getElementById('apiModel').value = settings.model || '';
     document.getElementById('apiKey').value = settings.apiKey || '';
+    document.getElementById('userName').value = settings.userName || '';
     document.getElementById('systemPrompt').value = settings.systemPrompt || '';
     document.getElementById('showTooltips').checked = settings.showTooltips;
     
@@ -813,6 +825,7 @@ function resetSettings() {
             apiEndpoint: 'https://api.cerebras.ai/v1/chat/completions',
             apiKey: '',
             model: 'llama3.1-8b',
+            userName: '',
             systemPrompt: 'You are Branestawm, an indispensable AI Chief of Staff designed to provide cognitive support for neurodivergent users. Always break down complex tasks into clear, manageable steps. Provide patient, structured guidance. Use numbered lists and clear headings to organize information. Focus on being helpful, supportive, and understanding of executive function challenges.',
             showTooltips: true,
             syncKey: '',

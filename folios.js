@@ -7,10 +7,23 @@
 function switchFolio(folioId) {
     if (!folios[folioId]) return;
     
+    const previousFolio = currentFolio;
     currentFolio = folioId;
     
     // Update recent folios
     updateRecentFolios(folioId);
+    
+    // Notify folio switcher of manual folio change
+    if (window.folioSwitcher && previousFolio !== folioId) {
+        document.dispatchEvent(new CustomEvent('folio-changed', {
+            detail: { 
+                folioId, 
+                previousFolio,
+                source: 'manual_switch',
+                folio: folios[folioId]
+            }
+        }));
+    }
     
     // Clear and reload chat display with folio's dialogue
     const chatMessages = document.getElementById('chatMessages');
@@ -27,6 +40,9 @@ function switchFolio(folioId) {
     updateUI();
     saveData();
 }
+
+// Make switchFolio globally available for FolioSwitcher
+window.switchFolio = switchFolio;
 
 
 // ========== FOLIO MANAGEMENT ==========
