@@ -268,202 +268,97 @@ function setupEventListeners() {
         });
     }
     
-    // ========== NEW CLOUD LLM SYSTEM ==========
+    // ========== NEW THREE-TIER AI SETUP SYSTEM ==========
     
-    // Active LLM selection
-    const activeLlmSelect = document.getElementById('activeLlmSelect');
-    if (activeLlmSelect) {
-        activeLlmSelect.addEventListener('change', (e) => {
-            settings.activeLlm = e.target.value;
-            updateActiveLlmStatus();
-            debouncedSave();
+    // Primary Setup: Google Gemini OAuth
+    const googleSetupBtn = document.getElementById('googleSetupBtn');
+    if (googleSetupBtn) {
+        googleSetupBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            authenticateWithGoogleGemini();
         });
     }
     
-    // Airplane mode toggle
+    // Google Gemini Sign-Out button
+    const googleSignOutBtn = document.getElementById('googleSignOutBtn');
+    if (googleSignOutBtn) {
+        googleSignOutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            signOutFromGoogleGemini();
+        });
+    }
+    
+    // Advanced Setup: Custom API Keys - Expand/Collapse
+    const expandApiSetupBtn = document.getElementById('expandApiSetup');
+    const apiSetupAdvanced = document.getElementById('apiSetupAdvanced');
+    if (expandApiSetupBtn && apiSetupAdvanced) {
+        expandApiSetupBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isExpanded = apiSetupAdvanced.style.display !== 'none';
+            apiSetupAdvanced.style.display = isExpanded ? 'none' : 'block';
+            expandApiSetupBtn.innerHTML = isExpanded ? 
+                '🔽 Show Advanced API Setup' : 
+                '🔼 Hide Advanced API Setup';
+        });
+    }
+    
+    // Provider selection buttons
+    document.querySelectorAll('.provider-option').forEach(option => {
+        option.addEventListener('click', function() {
+            selectApiProvider(this.dataset.provider);
+        });
+    });
+    
+    // API Key input and test
+    const apiKeyInput = document.getElementById('advancedApiKey');
+    const testApiBtn = document.getElementById('testAdvancedApi');
+    if (apiKeyInput) {
+        apiKeyInput.addEventListener('input', function() {
+            settings.apiKey = this.value.trim();
+        });
+    }
+    if (testApiBtn) {
+        testApiBtn.addEventListener('click', testAdvancedApiConnection);
+    }
+    
+    // Airplane Mode Toggle and Expand
     const airplaneModeToggle = document.getElementById('airplaneModeToggle');
+    const expandOllamaBtn = document.getElementById('expandOllamaSetup');
+    const ollamaAdvanced = document.getElementById('ollamaAdvanced');
+    
     if (airplaneModeToggle) {
         airplaneModeToggle.addEventListener('change', (e) => {
             settings.airplaneMode = e.target.checked;
-            if (e.target.checked) {
-                settings.activeLlm = 'local';
-                updateActiveLlmSelect();
-            }
-            updateActiveLlmStatus();
+            updateAirplaneModeUI();
             debouncedSave();
         });
     }
     
-    // Manage Cloud LLMs button
-    const manageCloudLlmsBtn = document.getElementById('manageCloudLlmsBtn');
-    if (manageCloudLlmsBtn) {
-        console.log('DEBUG: manageCloudLlmsBtn found and event listener added');
-        manageCloudLlmsBtn.addEventListener('click', (e) => {
-            console.log('DEBUG: manageCloudLlmsBtn clicked');
+    if (expandOllamaBtn && ollamaAdvanced) {
+        expandOllamaBtn.addEventListener('click', (e) => {
             e.preventDefault();
-            showCloudLlmModal();
-        });
-    } else {
-        console.error('ERROR: manageCloudLlmsBtn not found!');
-    }
-    
-    // Cloud LLM Modal event listeners
-    setupCloudLlmModalListeners();
-    
-    // Tooltip functionality
-    const aiModelsInfoBtn = document.getElementById('aiModelsInfoBtn');
-    if (aiModelsInfoBtn) {
-        aiModelsInfoBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            aiModelsInfoBtn.classList.toggle('active');
-        });
-        
-        // Close tooltip when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.modal-title-with-info')) {
-                aiModelsInfoBtn.classList.remove('active');
-            }
+            const isExpanded = ollamaAdvanced.style.display !== 'none';
+            ollamaAdvanced.style.display = isExpanded ? 'none' : 'block';
+            expandOllamaBtn.innerHTML = isExpanded ? 
+                '🔽 Show Airplane Mode Setup' : 
+                '🔼 Hide Airplane Mode Setup';
         });
     }
     
-    // Cloud LLM Modal close functionality
-    const cloudLlmModalCloseBtn = document.querySelector('#cloudLlmModal .close-btn');
-    if (cloudLlmModalCloseBtn) {
-        cloudLlmModalCloseBtn.addEventListener('click', () => {
-            document.getElementById('cloudLlmModal').classList.remove('show');
-        });
-    }
-    
-    // Endpoint Modal close functionality
-    const endpointModalCloseBtn = document.querySelector('#endpointModal .close-btn');
-    if (endpointModalCloseBtn) {
-        endpointModalCloseBtn.addEventListener('click', closeEndpointModal);
-    }
-    
-    // Close modals when clicking outside
-    document.addEventListener('click', (e) => {
-        if (e.target.classList.contains('modal')) {
-            e.target.classList.remove('show');
-        }
-    });
+    // Old LLM management system removed - now using three-tier setup
     
     console.log('DEBUG: setupEventListeners completed successfully');
 }
 
-// ========== AUTH METHOD SELECTION ==========
+// Old auth method selection removed - now handled by three-tier system
 
-function selectAuthMethod(method) {
-    // Update UI
-    document.querySelectorAll('.auth-option').forEach(option => {
-        option.classList.remove('selected');
-    });
-    
-    document.querySelectorAll('.auth-section').forEach(section => {
-        section.classList.remove('active');
-    });
-    
-    if (method === 'google') {
-        document.getElementById('googleAuthOption').classList.add('selected');
-        document.getElementById('googleAuthSection').classList.add('active');
-        settings.authMethod = 'google';
-        // Automatically trigger Google OAuth when card is clicked
-        authenticateWithGoogle();
-    } else {
-        document.getElementById('apiKeyOption').classList.add('selected');
-        document.getElementById('apiKeySection').classList.add('active');
-        settings.authMethod = 'apikey';
-    }
-}
+// Old provider selection removed - now handled by selectApiProvider in three-tier system
 
-// ========== PROVIDER SELECTION ==========
+// ========== THREE-TIER AI SETUP SYSTEM ==========
 
-function selectProvider(provider) {
-    // Update UI
-    document.querySelectorAll('.provider-card').forEach(card => {
-        card.classList.remove('selected');
-    });
-    
-    document.querySelector(`[data-provider="${provider}"]`).classList.add('selected');
-    
-    // Update form fields based on provider
-    const providerConfigs = {
-        cerebras: {
-            endpoint: 'https://api.cerebras.ai/v1/chat/completions',
-            model: 'llama3.1-8b',
-            instructions: `
-                <h6>🚀 Cerebras Setup (Free):</h6>
-                <ol>
-                    <li>Go to <code>cloud.cerebras.ai</code></li>
-                    <li>Sign up for a free account</li>
-                    <li>Navigate to API Keys section</li>
-                    <li>Create a new API key</li>
-                    <li>Copy the key and paste it above</li>
-                </ol>
-                <p><strong>Benefits:</strong> Fast inference, generous free tier, Llama 3.1 70B model</p>
-            `
-        },
-        openai: {
-            endpoint: 'https://api.openai.com/v1/chat/completions',
-            model: 'gpt-3.5-turbo',
-            instructions: `
-                <h6>🤖 OpenAI Setup:</h6>
-                <ol>
-                    <li>Go to <code>platform.openai.com</code></li>
-                    <li>Sign in to your account</li>
-                    <li>Navigate to API Keys</li>
-                    <li>Create a new secret key</li>
-                    <li>Copy the key (starts with sk-)</li>
-                </ol>
-                <p><strong>Models:</strong> GPT-3.5 Turbo, GPT-4, GPT-4 Turbo</p>
-            `
-        },
-        openrouter: {
-            endpoint: 'https://openrouter.ai/api/v1/chat/completions',
-            model: 'deepseek/deepseek-chat',
-            instructions: `
-                <h6>🌐 OpenRouter Setup:</h6>
-                <ol>
-                    <li>Go to <code>openrouter.ai</code></li>
-                    <li>Create an account</li>
-                    <li>Go to Keys section</li>
-                    <li>Create a new API key</li>
-                    <li>Add credits to your account</li>
-                </ol>
-                <p><strong>Benefits:</strong> 40+ models, competitive pricing, unified API</p>
-            `
-        },
-        custom: {
-            endpoint: '',
-            model: '',
-            instructions: `
-                <h6>⚙️ Custom Endpoint Setup:</h6>
-                <ol>
-                    <li>Enter your OpenAI-compatible endpoint URL</li>
-                    <li>Specify the model name</li>
-                    <li>Add your API key</li>
-                    <li>Test the connection</li>
-                </ol>
-                <p><strong>Compatible with:</strong> LocalAI, Ollama, vLLM, and other OpenAI-compatible servers</p>
-            `
-        }
-    };
-    
-    const config = providerConfigs[provider];
-    if (config) {
-        document.getElementById('apiEndpoint').value = config.endpoint;
-        document.getElementById('apiModel').value = config.model;
-        document.getElementById('providerInstructions').innerHTML = config.instructions;
-        
-        settings.apiEndpoint = config.endpoint;
-        settings.model = config.model;
-    }
-}
-
-// ========== GOOGLE OAUTH ==========
-
-async function authenticateWithGoogle() {
+async function authenticateWithGoogleGemini() {
     try {
-        showToast('Connecting to Google...', 'info');
+        showToast('Connecting to Google Gemini...', 'info');
         
         const token = await new Promise((resolve, reject) => {
             chrome.identity.getAuthToken({ interactive: true }, (token) => {
@@ -478,17 +373,196 @@ async function authenticateWithGoogle() {
         // Test the token
         await testGoogleConnection(token);
         
-        // Save auth method and token
+        // Save as primary setup method
         settings.authMethod = 'google';
         settings.googleToken = token;
+        settings.activeLlm = 'google';
         
         showToast('Successfully connected to Google Gemini!', 'success');
-        updateGoogleAuthStatus(true);
+        updateGoogleGeminiStatus(true);
         
     } catch (error) {
-        console.error('Google auth error:', error);
-        showToast('Google authentication failed: ' + error.message, 'error');
-        updateGoogleAuthStatus(false);
+        console.error('Google Gemini auth error:', error);
+        showToast('Google Gemini authentication failed: ' + error.message, 'error');
+        updateGoogleGeminiStatus(false);
+    }
+}
+
+async function signOutFromGoogleGemini() {
+    try {
+        if (settings.googleToken) {
+            await new Promise((resolve) => {
+                chrome.identity.removeCachedAuthToken({ token: settings.googleToken }, resolve);
+            });
+        }
+        
+        settings.authMethod = null;
+        settings.googleToken = null;
+        settings.activeLlm = 'local'; // fallback
+        
+        showToast('Signed out from Google Gemini', 'info');
+        updateGoogleGeminiStatus(false);
+        
+    } catch (error) {
+        console.error('Sign out error:', error);
+        showToast('Error signing out: ' + error.message, 'error');
+    }
+}
+
+function updateGoogleGeminiStatus(connected) {
+    const statusElement = document.getElementById('googleGeminiStatus');
+    const statusText = document.getElementById('googleGeminiStatusText');
+    const setupBtn = document.getElementById('googleSetupBtn');
+    const signOutBtn = document.getElementById('googleSignOutBtn');
+    
+    if (statusElement && statusText) {
+        if (connected) {
+            statusElement.className = 'status-indicator connected';
+            statusText.textContent = 'Connected to Google Gemini';
+            if (setupBtn) setupBtn.style.display = 'none';
+            if (signOutBtn) signOutBtn.style.display = 'inline-flex';
+        } else {
+            statusElement.className = 'status-indicator disconnected';
+            statusText.textContent = 'Not connected';
+            if (setupBtn) setupBtn.style.display = 'inline-flex';
+            if (signOutBtn) signOutBtn.style.display = 'none';
+        }
+    }
+}
+
+function selectApiProvider(provider) {
+    // Update UI selection
+    document.querySelectorAll('.provider-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    document.querySelector(`[data-provider="${provider}"]`).classList.add('selected');
+    
+    // Update provider-specific settings
+    const providerConfigs = {
+        cerebras: {
+            endpoint: 'https://api.cerebras.ai/v1/chat/completions',
+            model: 'llama3.1-8b',
+            name: 'Cerebras'
+        },
+        openai: {
+            endpoint: 'https://api.openai.com/v1/chat/completions',
+            model: 'gpt-3.5-turbo',
+            name: 'OpenAI'
+        },
+        openrouter: {
+            endpoint: 'https://openrouter.ai/api/v1/chat/completions',
+            model: 'meta-llama/llama-3.2-3b-instruct:free',
+            name: 'OpenRouter'
+        }
+    };
+    
+    const config = providerConfigs[provider];
+    if (config) {
+        settings.apiEndpoint = config.endpoint;
+        settings.model = config.model;
+        settings.selectedProvider = provider;
+        
+        // Update status text
+        const statusText = document.getElementById('advancedApiStatusText');
+        if (statusText) {
+            statusText.textContent = `${config.name} selected - Add API key to test`;
+        }
+    }
+}
+
+async function testAdvancedApiConnection() {
+    if (!settings.apiEndpoint || !settings.apiKey) {
+        showToast('Please select a provider and add your API key', 'error');
+        return;
+    }
+    
+    const testBtn = document.getElementById('testAdvancedApi');
+    const statusElement = document.getElementById('advancedApiStatus');
+    const statusText = document.getElementById('advancedApiStatusText');
+    
+    testBtn.disabled = true;
+    testBtn.textContent = 'Testing...';
+    
+    try {
+        const response = await fetch(settings.apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${settings.apiKey}`
+            },
+            body: JSON.stringify({
+                model: settings.model,
+                messages: [{ role: 'user', content: 'Hello' }],
+                max_tokens: 10
+            })
+        });
+        
+        if (response.ok) {
+            settings.authMethod = 'apikey';
+            settings.activeLlm = 'custom';
+            statusElement.className = 'status-indicator connected';
+            statusText.textContent = 'API key working! Ready to use.';
+            showToast('✅ API connection successful!', 'success');
+            await saveSettings();
+        } else {
+            const errorText = await response.text();
+            statusElement.className = 'status-indicator disconnected';
+            statusText.textContent = `Connection failed: ${response.status}`;
+            showToast(`❌ Connection failed: ${response.status}`, 'error');
+        }
+        
+    } catch (error) {
+        statusElement.className = 'status-indicator disconnected';
+        statusText.textContent = 'Connection error';
+        showToast(`❌ Connection failed: ${error.message}`, 'error');
+    } finally {
+        testBtn.disabled = false;
+        testBtn.textContent = 'Test Connection';
+    }
+}
+
+function updateAirplaneModeUI() {
+    const checkbox = document.getElementById('airplaneModeToggle');
+    const statusElement = document.getElementById('ollamaStatus');
+    const statusText = document.getElementById('ollamaStatusText');
+    
+    if (checkbox && checkbox.checked) {
+        settings.activeLlm = 'local';
+        if (statusElement) statusElement.className = 'status-indicator connected';
+        if (statusText) statusText.textContent = 'Airplane Mode Active - Using Local AI';
+        
+        // Check actual Ollama status
+        updateOllamaConnectionStatus();
+    } else {
+        if (statusElement) statusElement.className = 'status-indicator disconnected';
+        if (statusText) statusText.textContent = 'Airplane Mode Disabled';
+    }
+}
+
+async function updateOllamaConnectionStatus() {
+    const statusElement = document.getElementById('ollamaStatus');
+    const statusText = document.getElementById('ollamaStatusText');
+    
+    if (!statusElement || !statusText) return;
+    
+    try {
+        // Check Ollama connection
+        const response = await fetch('http://localhost:11434/api/tags', {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            const modelCount = data.models?.length || 0;
+            statusElement.className = 'status-indicator connected';
+            statusText.textContent = `Connected to Ollama (${modelCount} models)`;
+        } else {
+            throw new Error('Ollama not responding');
+        }
+    } catch (error) {
+        statusElement.className = 'status-indicator disconnected';
+        statusText.textContent = 'Ollama not found - See setup instructions';
     }
 }
 
@@ -526,90 +600,14 @@ async function testGoogleConnection(token) {
     return true;
 }
 
+// Legacy Google Auth Status (kept for compatibility)
 function updateGoogleAuthStatus(connected) {
-    const statusElement = document.getElementById('googleStatus');
-    const statusText = document.getElementById('googleStatusText');
-    const signInBtn = document.getElementById('googleSignInBtn');
-    const signOutBtn = document.getElementById('googleSignOutBtn');
-    
-    if (connected) {
-        statusElement.className = 'status-indicator connected';
-        statusText.textContent = 'Connected to Google Gemini';
-        signInBtn.style.display = 'none';
-        signOutBtn.style.display = 'inline-flex';
-    } else {
-        statusElement.className = 'status-indicator disconnected';
-        statusText.textContent = 'Not connected';
-        signInBtn.style.display = 'inline-flex';
-        signOutBtn.style.display = 'none';
-    }
+    updateGoogleGeminiStatus(connected);
 }
 
 // ========== API KEY TESTING ==========
 
-async function testConnection() {
-    if (!settings.apiEndpoint || !settings.apiKey) {
-        showTestResult('Please fill in API endpoint and key', 'error');
-        return;
-    }
-    
-    const testBtn = document.getElementById('testConnectionBtn');
-    testBtn.disabled = true;
-    testBtn.textContent = 'Testing...';
-    
-    try {
-        const response = await fetch(settings.apiEndpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${settings.apiKey}`
-            },
-            body: JSON.stringify({
-                model: settings.model,
-                messages: [{ role: 'user', content: 'Hello' }],
-                max_tokens: 10
-            })
-        });
-        
-        if (response.ok) {
-            showTestResult('✅ Connection successful!', 'success');
-            updateApiKeyStatus(true);
-            // Save settings after successful connection test
-            await saveSettings();
-        } else {
-            const errorText = await response.text();
-            showTestResult(`❌ Connection failed: ${response.status} - ${errorText}`, 'error');
-            updateApiKeyStatus(false);
-        }
-        
-    } catch (error) {
-        showTestResult(`❌ Connection failed: ${error.message}`, 'error');
-        updateApiKeyStatus(false);
-    } finally {
-        testBtn.disabled = false;
-        testBtn.textContent = 'Test Connection';
-    }
-}
-
-function showTestResult(message, type) {
-    const resultElement = document.getElementById('testResult');
-    resultElement.textContent = message;
-    resultElement.className = `test-result ${type}`;
-    resultElement.style.display = 'block';
-}
-
-function updateApiKeyStatus(connected) {
-    const statusElement = document.getElementById('apiKeyStatus');
-    const statusText = document.getElementById('apiKeyStatusText');
-    
-    if (connected) {
-        statusElement.className = 'status-indicator connected';
-        statusText.textContent = 'API key configured and tested';
-    } else {
-        statusElement.className = 'status-indicator disconnected';
-        statusText.textContent = 'Not configured';
-    }
-}
+// Old connection testing functions removed - now handled by testAdvancedApiConnection
 
 // ========== SYNC FUNCTIONALITY ==========
 
@@ -770,46 +768,65 @@ async function decryptData(encryptedData, key) {
 // ========== UI UPDATES ==========
 
 function updateUI() {
-    // Update auth method selection
-    if (settings.authMethod === 'google') {
-        selectAuthMethod('google');
-        updateGoogleAuthStatus(!!settings.googleToken);
-    } else if (settings.authMethod === 'apikey') {
-        selectAuthMethod('apikey');
-        updateApiKeyStatus(!!settings.apiKey);
-    }
+    // Update basic form fields
+    const userName = document.getElementById('userName');
+    const systemPrompt = document.getElementById('systemPrompt');
+    const showTooltips = document.getElementById('showTooltips');
     
-    // Update form fields
-    document.getElementById('apiEndpoint').value = settings.apiEndpoint || '';
-    document.getElementById('apiModel').value = settings.model || '';
-    document.getElementById('apiKey').value = settings.apiKey || '';
-    document.getElementById('userName').value = settings.userName || '';
-    document.getElementById('systemPrompt').value = settings.systemPrompt || '';
-    document.getElementById('showTooltips').checked = settings.showTooltips;
+    if (userName) userName.value = settings.userName || '';
+    if (systemPrompt) systemPrompt.value = settings.systemPrompt || '';
+    if (showTooltips) showTooltips.checked = settings.showTooltips;
     
     // Update appearance settings
-    document.getElementById('colorScheme').value = settings.colorScheme || 'professional';
-    document.getElementById('themeMode').value = settings.themeMode || 'dark';
+    const colorScheme = document.getElementById('colorScheme');
+    const themeMode = document.getElementById('themeMode');
+    if (colorScheme) colorScheme.value = settings.colorScheme || 'professional';
+    if (themeMode) themeMode.value = settings.themeMode || 'dark';
     
     // Update sync settings
-    document.getElementById('enableSync').checked = settings.autoSync;
-    document.getElementById('syncKey').value = settings.syncKey || '';
-    document.getElementById('syncKeyGroup').style.display = settings.autoSync ? 'block' : 'none';
-    document.getElementById('uploadDataBtn').style.display = settings.autoSync ? 'inline-block' : 'none';
-    document.getElementById('downloadDataBtn').style.display = settings.autoSync ? 'inline-block' : 'none';
+    const enableSync = document.getElementById('enableSync');
+    const syncKey = document.getElementById('syncKey');
+    const syncKeyGroup = document.getElementById('syncKeyGroup');
+    const uploadDataBtn = document.getElementById('uploadDataBtn');
+    const downloadDataBtn = document.getElementById('downloadDataBtn');
+    
+    if (enableSync) enableSync.checked = settings.autoSync;
+    if (syncKey) syncKey.value = settings.syncKey || '';
+    if (syncKeyGroup) syncKeyGroup.style.display = settings.autoSync ? 'block' : 'none';
+    if (uploadDataBtn) uploadDataBtn.style.display = settings.autoSync ? 'inline-block' : 'none';
+    if (downloadDataBtn) downloadDataBtn.style.display = settings.autoSync ? 'inline-block' : 'none';
     
     // Update personas
     updatePersonasList();
     
-    // ========== NEW CLOUD LLM SYSTEM UPDATES ==========
+    // ========== THREE-TIER AI SETUP SYSTEM UPDATES ==========
     
-    // Migrate existing settings if needed
-    migrateExistingApiSettings();
+    // Update Google Gemini status
+    updateGoogleGeminiStatus(!!settings.googleToken);
     
-    // Update new LLM system UI
-    updateActiveLlmSelect();
-    updateAirplaneModeCheckbox();
-    updateActiveLlmStatus();
+    // Update Advanced API status
+    if (settings.selectedProvider && settings.apiKey) {
+        const statusElement = document.getElementById('advancedApiStatus');
+        const statusText = document.getElementById('advancedApiStatusText');
+        if (statusElement) statusElement.className = 'status-indicator connected';
+        if (statusText) statusText.textContent = `${settings.selectedProvider} API configured`;
+        
+        // Auto-select the provider
+        const providerOption = document.querySelector(`[data-provider="${settings.selectedProvider}"]`);
+        if (providerOption) {
+            document.querySelectorAll('.provider-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            providerOption.classList.add('selected');
+        }
+    }
+    
+    // Update Airplane Mode status
+    const airplaneModeToggle = document.getElementById('airplaneModeToggle');
+    if (airplaneModeToggle) {
+        airplaneModeToggle.checked = settings.airplaneMode;
+        updateAirplaneModeUI();
+    }
     
     // Apply tooltip visibility
     document.documentElement.classList.toggle('hide-tooltips', !settings.showTooltips);
@@ -1347,461 +1364,10 @@ function updatePerformanceStats() {
     }
 }
 
-// ========== NEW CLOUD LLM SYSTEM FUNCTIONS ==========
+// ========== OLD CLOUD LLM SYSTEM FUNCTIONS - REMOVED ==========
+// Replaced with three-tier system: Google Gemini OAuth / Advanced API / Airplane Mode
 
-let currentEditingEndpoint = null;
+// All old endpoint management, modal functions, and complex LLM switching removed.
+// The new system uses a simplified three-tier approach as implemented in options.html
 
-/**
- * Setup event listeners for Cloud LLM modal
- */
-function setupCloudLlmModalListeners() {
-    // Add endpoint button
-    const addEndpointBtn = document.getElementById('addEndpointBtn');
-    if (addEndpointBtn) {
-        addEndpointBtn.addEventListener('click', () => {
-            showEndpointModal();
-        });
-    }
-    
-    // Endpoint modal buttons
-    const saveEndpointBtn = document.getElementById('saveEndpointBtn');
-    if (saveEndpointBtn) {
-        saveEndpointBtn.addEventListener('click', saveEndpoint);
-    }
-    
-    const cancelEndpointBtn = document.getElementById('cancelEndpointBtn');
-    if (cancelEndpointBtn) {
-        cancelEndpointBtn.addEventListener('click', closeEndpointModal);
-    }
-    
-    const testEndpointBtn = document.getElementById('testEndpointBtn');
-    if (testEndpointBtn) {
-        testEndpointBtn.addEventListener('click', testEndpointConnection);
-    }
-    
-    // Provider template selection
-    document.querySelectorAll('.provider-template').forEach(template => {
-        template.addEventListener('click', () => {
-            selectProviderTemplate(template.dataset.provider);
-        });
-    });
-}
-
-/**
- * Show the Cloud LLM management modal
- */
-function showCloudLlmModal() {
-    console.log('DEBUG: showCloudLlmModal called');
-    const modal = document.getElementById('cloudLlmModal');
-    if (!modal) {
-        console.error('ERROR: cloudLlmModal element not found!');
-        return;
-    }
-    
-    console.log('DEBUG: Populating endpoints and showing modal');
-    populateEndpointsContainer();
-    updateGoogleAuthStatus(!!settings.googleToken);
-    modal.classList.add('show');
-    console.log('DEBUG: Modal should now be visible');
-}
-
-/**
- * Show the endpoint editor modal
- */
-function showEndpointModal(endpointId = null) {
-    const modal = document.getElementById('endpointModal');
-    const title = document.getElementById('endpointModalTitle');
-    
-    // Clear previous selections
-    document.querySelectorAll('.provider-template').forEach(template => {
-        template.classList.remove('selected');
-    });
-    
-    if (endpointId) {
-        // Edit mode
-        currentEditingEndpoint = endpointId;
-        const endpoint = settings.customEndpoints[endpointId];
-        title.textContent = 'Edit Endpoint';
-        
-        document.getElementById('endpointName').value = endpoint.name;
-        document.getElementById('endpointUrl').value = endpoint.endpoint;
-        document.getElementById('endpointModel').value = endpoint.model;
-        document.getElementById('endpointApiKey').value = endpoint.apiKey;
-        
-        // Select provider template
-        const template = document.querySelector(`[data-provider="${endpoint.provider}"]`);
-        if (template) {
-            template.classList.add('selected');
-        }
-    } else {
-        // Create mode
-        currentEditingEndpoint = null;
-        title.textContent = 'Add Endpoint';
-        
-        document.getElementById('endpointName').value = '';
-        document.getElementById('endpointUrl').value = '';
-        document.getElementById('endpointModel').value = '';
-        document.getElementById('endpointApiKey').value = '';
-    }
-    
-    modal.classList.add('show');
-    document.getElementById('endpointName').focus();
-}
-
-/**
- * Close endpoint editor modal
- */
-function closeEndpointModal() {
-    document.getElementById('endpointModal').classList.remove('show');
-    currentEditingEndpoint = null;
-}
-
-/**
- * Select provider template and pre-fill settings
- */
-function selectProviderTemplate(provider) {
-    document.querySelectorAll('.provider-template').forEach(template => {
-        template.classList.remove('selected');
-    });
-    
-    document.querySelector(`[data-provider="${provider}"]`).classList.add('selected');
-    
-    // Pre-fill based on provider
-    const providerConfigs = {
-        cerebras: {
-            endpoint: 'https://api.cerebras.ai/v1/chat/completions',
-            model: 'llama3.1-8b',
-        },
-        openai: {
-            endpoint: 'https://api.openai.com/v1/chat/completions',
-            model: 'gpt-3.5-turbo',
-        },
-        openrouter: {
-            endpoint: 'https://openrouter.ai/api/v1/chat/completions',
-            model: 'meta-llama/llama-3.2-3b-instruct:free',
-        },
-        custom: {
-            endpoint: '',
-            model: '',
-        }
-    };
-    
-    const config = providerConfigs[provider];
-    if (config) {
-        document.getElementById('endpointUrl').value = config.endpoint;
-        document.getElementById('endpointModel').value = config.model;
-    }
-}
-
-/**
- * Save endpoint configuration
- */
-function saveEndpoint() {
-    const name = document.getElementById('endpointName').value.trim();
-    const endpoint = document.getElementById('endpointUrl').value.trim();
-    const model = document.getElementById('endpointModel').value.trim();
-    const apiKey = document.getElementById('endpointApiKey').value.trim();
-    const selectedTemplate = document.querySelector('.provider-template.selected');
-    
-    if (!name || !endpoint || !model || !apiKey) {
-        showToast('Please fill in all required fields', 'error');
-        return;
-    }
-    
-    const provider = selectedTemplate ? selectedTemplate.dataset.provider : 'custom';
-    
-    if (currentEditingEndpoint) {
-        // Update existing endpoint
-        settings.customEndpoints[currentEditingEndpoint] = {
-            ...settings.customEndpoints[currentEditingEndpoint],
-            name,
-            endpoint,
-            model,
-            apiKey,
-            provider,
-            updatedAt: new Date().toISOString()
-        };
-        showToast(`Endpoint "${name}" updated successfully!`, 'success');
-    } else {
-        // Create new endpoint
-        const endpointId = generateEndpointId();
-        settings.customEndpoints[endpointId] = {
-            id: endpointId,
-            name,
-            endpoint,
-            model,
-            apiKey,
-            provider,
-            createdAt: new Date().toISOString()
-        };
-        showToast(`Endpoint "${name}" created successfully!`, 'success');
-    }
-    
-    closeEndpointModal();
-    populateEndpointsContainer();
-    updateActiveLlmSelect();
-    saveSettings();
-}
-
-/**
- * Test endpoint connection
- */
-async function testEndpointConnection() {
-    const endpoint = document.getElementById('endpointUrl').value.trim();
-    const model = document.getElementById('endpointModel').value.trim();
-    const apiKey = document.getElementById('endpointApiKey').value.trim();
-    
-    if (!endpoint || !model || !apiKey) {
-        showEndpointTestResult('Please fill in all required fields', 'error');
-        return;
-    }
-    
-    const testBtn = document.getElementById('testEndpointBtn');
-    testBtn.disabled = true;
-    testBtn.textContent = 'Testing...';
-    
-    try {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`
-            },
-            body: JSON.stringify({
-                model: model,
-                messages: [{ role: 'user', content: 'Test connection' }],
-                max_tokens: 1
-            })
-        });
-        
-        if (response.ok) {
-            showEndpointTestResult('✅ Connection successful!', 'success');
-        } else {
-            const errorText = await response.text();
-            showEndpointTestResult(`❌ Connection failed: ${response.status} - ${errorText}`, 'error');
-        }
-        
-    } catch (error) {
-        showEndpointTestResult(`❌ Connection failed: ${error.message}`, 'error');
-    } finally {
-        testBtn.disabled = false;
-        testBtn.textContent = 'Test Connection';
-    }
-}
-
-/**
- * Show endpoint test result
- */
-function showEndpointTestResult(message, type) {
-    const resultElement = document.getElementById('endpointTestResult');
-    resultElement.textContent = message;
-    resultElement.className = `test-result ${type}`;
-    resultElement.style.display = 'block';
-}
-
-/**
- * Populate endpoints container
- */
-function populateEndpointsContainer() {
-    const container = document.getElementById('endpointsContainer');
-    const emptyState = document.getElementById('emptyEndpoints');
-    
-    const endpoints = Object.values(settings.customEndpoints || {});
-    
-    if (endpoints.length === 0) {
-        emptyState.style.display = 'block';
-        return;
-    }
-    
-    emptyState.style.display = 'none';
-    
-    // Clear existing endpoints (except empty state)
-    const existingCards = container.querySelectorAll('.endpoint-card');
-    existingCards.forEach(card => card.remove());
-    
-    endpoints.forEach(endpoint => {
-        const card = createEndpointCard(endpoint);
-        container.insertBefore(card, emptyState);
-    });
-}
-
-/**
- * Create endpoint card element
- */
-function createEndpointCard(endpoint) {
-    const card = document.createElement('div');
-    card.className = 'endpoint-card';
-    
-    card.innerHTML = `
-        <div class="endpoint-header">
-            <div>
-                <div class="endpoint-title">${endpoint.name}</div>
-                <div class="endpoint-provider">${getProviderDisplayName(endpoint.provider)}</div>
-            </div>
-            <div class="endpoint-actions">
-                <button class="btn small secondary" onclick="editEndpoint('${endpoint.id}')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 0 0 0-1.41l-2.34-2.34a.996.996 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                    </svg>
-                    Edit
-                </button>
-                <button class="btn small secondary" onclick="deleteEndpoint('${endpoint.id}')">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-                    </svg>
-                    Delete
-                </button>
-            </div>
-        </div>
-        <div class="endpoint-info">
-            Model: <span class="endpoint-model">${endpoint.model}</span>
-        </div>
-    `;
-    
-    return card;
-}
-
-/**
- * Get provider display name
- */
-function getProviderDisplayName(provider) {
-    const names = {
-        cerebras: 'Cerebras',
-        openai: 'OpenAI',
-        openrouter: 'OpenRouter',
-        custom: 'Custom'
-    };
-    return names[provider] || 'Custom';
-}
-
-/**
- * Update active LLM dropdown options
- */
-function updateActiveLlmSelect() {
-    const select = document.getElementById('activeLlmSelect');
-    const customGroup = document.getElementById('customEndpointsGroup');
-    
-    if (!select || !customGroup) return;
-    
-    // Clear custom endpoints
-    customGroup.innerHTML = '';
-    
-    // Add custom endpoints
-    Object.values(settings.customEndpoints || {}).forEach(endpoint => {
-        const option = document.createElement('option');
-        option.value = `custom-${endpoint.id}`;
-        option.textContent = endpoint.name;
-        customGroup.appendChild(option);
-    });
-    
-    // Set current selection
-    select.value = settings.activeLlm;
-    
-    // Handle airplane mode
-    if (settings.airplaneMode) {
-        select.value = 'local';
-        select.disabled = true;
-    } else {
-        select.disabled = false;
-    }
-}
-
-/**
- * Update airplane mode checkbox
- */
-function updateAirplaneModeCheckbox() {
-    const checkbox = document.getElementById('airplaneModeToggle');
-    if (checkbox) {
-        checkbox.checked = settings.airplaneMode;
-    }
-}
-
-/**
- * Update active LLM status indicator
- */
-function updateActiveLlmStatus() {
-    const statusElement = document.getElementById('activeLlmStatus');
-    const statusText = document.getElementById('activeLlmStatusText');
-    
-    if (!statusElement || !statusText) return;
-    
-    if (settings.airplaneMode) {
-        statusElement.className = 'status-indicator connected';
-        statusText.textContent = 'Airplane Mode - Using Local LLM';
-    } else if (settings.activeLlm === 'local') {
-        statusElement.className = 'status-indicator connected';
-        statusText.textContent = 'Using Local LLM (Ollama)';
-    } else if (settings.activeLlm === 'google') {
-        const connected = !!settings.googleToken;
-        statusElement.className = `status-indicator ${connected ? 'connected' : 'disconnected'}`;
-        statusText.textContent = connected ? 'Google Gemini Connected' : 'Google Gemini Not Connected';
-    } else if (settings.activeLlm.startsWith('custom-')) {
-        const endpointId = settings.activeLlm.replace('custom-', '');
-        const endpoint = settings.customEndpoints[endpointId];
-        if (endpoint) {
-            statusElement.className = 'status-indicator connected';
-            statusText.textContent = `Using ${endpoint.name}`;
-        } else {
-            statusElement.className = 'status-indicator disconnected';
-            statusText.textContent = 'Custom Endpoint Not Found';
-        }
-    } else {
-        // Default status when no LLM is configured
-        statusElement.className = 'status-indicator checking';
-        statusText.textContent = 'Ready to Configure';
-    }
-}
-
-/**
- * Generate unique endpoint ID
- */
-function generateEndpointId() {
-    return 'endpoint-' + Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-}
-
-/**
- * Migrate existing API settings to custom endpoint (backward compatibility)
- */
-function migrateExistingApiSettings() {
-    // If we have old API settings but no custom endpoints, migrate them
-    if (settings.apiKey && settings.apiEndpoint && Object.keys(settings.customEndpoints).length === 0) {
-        const endpointId = generateEndpointId();
-        settings.customEndpoints[endpointId] = {
-            id: endpointId,
-            name: 'Migrated Endpoint',
-            endpoint: settings.apiEndpoint,
-            model: settings.model || 'llama3.1-8b',
-            apiKey: settings.apiKey,
-            provider: 'custom',
-            createdAt: new Date().toISOString()
-        };
-        
-        // Set as active LLM if not already set
-        if (!settings.activeLlm || settings.activeLlm === 'local') {
-            settings.activeLlm = `custom-${endpointId}`;
-        }
-        
-        console.log('Migrated existing API settings to custom endpoint');
-    }
-}
-
-// Make functions globally accessible for HTML onclick handlers
-window.refreshOllamaStatus = refreshOllamaStatus;
-window.editEndpoint = (endpointId) => showEndpointModal(endpointId);
-window.deleteEndpoint = (endpointId) => {
-    const endpoint = settings.customEndpoints[endpointId];
-    if (endpoint && confirm(`Are you sure you want to delete "${endpoint.name}"?`)) {
-        delete settings.customEndpoints[endpointId];
-        
-        // If this was the active LLM, switch to local
-        if (settings.activeLlm === `custom-${endpointId}`) {
-            settings.activeLlm = 'local';
-        }
-        
-        populateEndpointsContainer();
-        updateActiveLlmSelect();
-        updateActiveLlmStatus();
-        saveSettings();
-        showToast(`Endpoint "${endpoint.name}" deleted successfully`, 'success');
-    }
-};
+// End of options.js - Clean implementation of three-tier AI setup system

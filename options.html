@@ -936,7 +936,7 @@
             <section class="settings-section">
                 <div class="modal-title-with-info">
                     <h3>
-                        AI Models
+                        🤖 AI Assistant Setup
                         <button class="option-info-btn" id="aiModelsInfoBtn" aria-label="Information about AI model selection">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,7H13V9H11V7M11,11H13V17H11V11Z"/>
@@ -944,111 +944,239 @@
                         </button>
                     </h3>
                     <div class="option-info-tooltip" id="aiModelsInfoTooltip">
-                        Choose which AI model to use for conversations. You can switch between cloud and local models anytime.
+                        Choose your AI assistant. Google Gemini is recommended for the best experience with one-click setup.
                     </div>
                 </div>
                 
-                <div class="form-group">
-                    <label for="activeLlmSelect" class="label">Active AI Model</label>
-                    <select id="activeLlmSelect" class="input">
-                        <option value="local">🦙 Local (Ollama)</option>
-                        <option value="google">🚀 Google Gemini</option>
-                        <optgroup label="Custom Endpoints" id="customEndpointsGroup">
-                            <!-- Custom endpoints will be populated here -->
-                        </optgroup>
-                    </select>
-                    <div class="help-text">Select which AI model to use for conversations</div>
-                </div>
-                
-                <div class="form-group">
-                    <div class="toggle-setting">
-                        <label class="toggle-label">
-                            <span class="toggle-text">Airplane Mode (Force Local LLM Only)</span>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="airplaneModeToggle" class="toggle-input">
-                                <span class="toggle-slider"></span>
-                            </div>
-                        </label>
+                <!-- Primary Recommendation: Google Gemini -->
+                <div class="setup-option recommended">
+                    <div class="setup-header">
+                        <div class="setup-title">
+                            <h4>🌟 Google Gemini (Recommended)</h4>
+                            <span class="badge primary">Easiest Setup</span>
+                        </div>
+                        <div class="setup-status" id="googleSetupStatus">
+                            <span class="status-dot" id="googleStatusDot"></span>
+                            <span id="googleStatusText">Not connected</span>
+                        </div>
                     </div>
-                    <div class="help-text">When enabled, all requests will be routed to your local Ollama model for privacy and offline use</div>
-                </div>
-                
-                <div class="llm-status-section">
-                    <div class="status-indicator" id="activeLlmStatus">
-                        <span class="status-dot"></span>
-                        <span id="activeLlmStatusText">Checking connection...</span>
+                    <p class="setup-description">
+                        One-click authentication with Google. Fast, reliable, and includes the latest AI capabilities.
+                        Perfect for most users.
+                    </p>
+                    <div class="setup-actions">
+                        <button class="btn primary" id="connectGoogleBtn">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Connect with Google
+                        </button>
+                        <button class="btn secondary small" id="googleHelpBtn">How it works</button>
                     </div>
                 </div>
-                
-                <div class="form-actions">
-                    <button class="btn secondary" id="manageCloudLlmsBtn">
-                        Manage Cloud LLMs
-                    </button>
+
+                <!-- Advanced Option: Custom API Keys -->
+                <div class="setup-option">
+                    <div class="setup-header">
+                        <div class="setup-title">
+                            <h4>⚙️ Custom API Key</h4>
+                            <span class="badge secondary">Advanced</span>
+                        </div>
+                        <button class="expand-btn" id="expandCustomApiBtn" aria-expanded="false">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <p class="setup-description">
+                        Use your own API keys from providers like OpenAI, Anthropic, or others. 
+                        Requires technical setup but gives you full control.
+                    </p>
+                    <div class="setup-content" id="customApiContent" style="display: none;">
+                        <div class="setup-actions">
+                            <button class="btn secondary" id="manageApiKeysBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M7,14A2,2 0 0,1 5,12A2,2 0 0,1 7,10A2,2 0 0,1 9,12A2,2 0 0,1 7,14M12.65,10C11.83,7.67 9.61,6 7,6A6,6 0 0,0 1,12A6,6 0 0,0 7,18C9.61,18 11.83,16.33 12.65,14H17V18H21V14H23V10H12.65Z"/>
+                                </svg>
+                                Manage API Keys
+                            </button>
+                            <button class="btn secondary small" id="apiKeyHelpBtn">Setup Guide</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Airplane Mode: Local Ollama -->
+                <div class="setup-option airplane-mode">
+                    <div class="setup-header">
+                        <div class="setup-title">
+                            <h4>✈️ Airplane Mode (Local AI)</h4>
+                            <span class="badge warning">Expert Level</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="airplaneModeToggle" class="toggle-input">
+                            <span class="toggle-slider"></span>
+                        </div>
+                    </div>
+                    <p class="setup-description">
+                        <strong>Privacy-first option:</strong> Run AI completely locally on your device. 
+                        No internet required after setup, but slower and more complex to configure.
+                    </p>
+                    <div class="setup-warning">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z"/>
+                        </svg>
+                        <span>Requires technical knowledge. Only recommended for advanced users who need offline AI.</span>
+                    </div>
+                    <div class="setup-content" id="airplaneModeContent" style="display: none;">
+                        <div class="setup-actions">
+                            <button class="btn secondary" id="setupOllamaBtn">Configure Local AI</button>
+                            <button class="btn secondary small" id="ollamaHelpBtn">Setup Instructions</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Current Status -->
+                <div class="current-status">
+                    <div class="status-header">
+                        <h4>Current Setup</h4>
+                    </div>
+                    <div class="status-indicator" id="currentAiStatus">
+                        <span class="status-dot" id="currentStatusDot"></span>
+                        <span id="currentStatusText">Checking connection...</span>
+                    </div>
                 </div>
             </section>
             
-            <section class="settings-section">
-                <h3>
-                    <span class="section-icon">🦙</span>
-                    Local LLM (Ollama)
-                </h3>
-                <p class="help-text">Configure local Ollama models for privacy-first, fast inference. Automatically detects available models and routes queries intelligently between local and cloud processing.</p>
+            <!-- Advanced Ollama Configuration (Hidden by default) -->
+            <section class="settings-section advanced-section" id="ollamaAdvancedSection" style="display: none;">
+                <div class="section-header-with-warning">
+                    <h3>
+                        <span class="section-icon">🦙</span>
+                        Advanced: Local AI Configuration
+                    </h3>
+                    <div class="expert-warning">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z"/>
+                        </svg>
+                        <span>Expert configuration required</span>
+                    </div>
+                </div>
+                
+                <div class="advanced-warning">
+                    <h4>⚠️ Important Notes</h4>
+                    <ul>
+                        <li><strong>Technical Setup Required:</strong> This requires installing and managing Ollama software</li>
+                        <li><strong>Performance Impact:</strong> Local AI is significantly slower than cloud models</li>
+                        <li><strong>Model Management:</strong> You'll need to download and manage large AI models (4GB+ each)</li>
+                        <li><strong>System Requirements:</strong> Requires modern hardware with sufficient RAM (8GB+ recommended)</li>
+                    </ul>
+                </div>
+
+                <div class="ollama-setup-guide">
+                    <h4>📋 Updated Setup Instructions (2024)</h4>
+                    <div class="setup-steps">
+                        <div class="setup-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h5>Install Ollama</h5>
+                                <p>Download from <a href="https://ollama.ai" target="_blank" rel="noopener">ollama.ai</a></p>
+                                <div class="step-note">
+                                    <strong>Windows users:</strong> New installer includes a chat interface
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setup-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h5>Download a Model</h5>
+                                <p>Option A: Use Ollama's built-in chat interface to download a model</p>
+                                <p>Option B: Run in terminal: <code>ollama pull gemma2</code></p>
+                                <div class="step-note">
+                                    <strong>Recommended models:</strong> gemma2 (2B), llama3.2 (3B), or qwen2.5 (3B)
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setup-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h5>Start Ollama Service</h5>
+                                <p>Run in terminal: <code>ollama serve</code></p>
+                                <div class="step-note">
+                                    Keep this terminal open while using Branestawm
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="setup-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h5>Enable in Branestawm</h5>
+                                <p>Toggle "Airplane Mode" above, then refresh to detect your models</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 
                 <div class="ollama-status">
                     <div class="status-indicator">
                         <div class="status-dot" id="ollamaStatusDot"></div>
-                        <span id="ollamaStatusText">Checking connection...</span>
+                        <span id="ollamaStatusText">Not connected</span>
                     </div>
-                    <button class="btn small secondary" id="refreshOllamaBtn">Refresh</button>
+                    <button class="btn small secondary" id="refreshOllamaBtn">Check Connection</button>
                 </div>
                 
                 <div id="ollamaConfigSection" style="display: none;">
                     <div class="form-group">
-                        <label for="ollamaModelSelect" class="label">Active Model</label>
+                        <label for="ollamaModelSelect" class="label">Available Local Model</label>
                         <select id="ollamaModelSelect" class="input">
-                            <option value="">No models available</option>
+                            <option value="">No models detected</option>
                         </select>
-                        <div class="help-text">Select which Ollama model to use for local processing</div>
+                        <div class="help-text">Detected models from your local Ollama installation</div>
                     </div>
                     
-                    <div class="form-group">
-                        <label for="routingPreference" class="label">Routing Preference</label>
-                        <select id="routingPreference" class="input">
-                            <option value="local-first">Local First (Recommended)</option>
-                            <option value="cloud-first">Cloud First</option>
-                            <option value="auto">Automatic</option>
-                        </select>
-                        <div class="help-text">How queries should be routed between local and cloud models</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="complexityThreshold" class="label">Complexity Threshold</label>
-                        <input type="range" id="complexityThreshold" class="range-input" min="0" max="1" step="0.1" value="0.6">
-                        <div class="range-labels">
-                            <span>Simple (Local)</span>
-                            <span id="complexityValue">0.6</span>
-                            <span>Complex (Cloud)</span>
-                        </div>
-                        <div class="help-text">Queries above this complexity automatically route to cloud models</div>
-                    </div>
-                    
-                    <div class="ollama-performance">
+                    <div class="ollama-performance" id="ollamaPerformanceSection" style="display: none;">
                         <h4>Performance Statistics</h4>
                         <div class="perf-grid" id="performanceStats">
-                            <!-- Performance stats will be populated here -->
+                            <div class="perf-stat">
+                                <span class="perf-label">Response Time</span>
+                                <span class="perf-value" id="localResponseTime">--</span>
+                            </div>
+                            <div class="perf-stat">
+                                <span class="perf-label">Requests Handled</span>
+                                <span class="perf-value" id="localRequestCount">--</span>
+                            </div>
+                            <div class="perf-stat">
+                                <span class="perf-label">Success Rate</span>
+                                <span class="perf-value" id="localSuccessRate">--</span>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <div id="ollamaSetupInstructions" class="setup-instructions">
-                    <h4>🚀 Setting up Ollama</h4>
-                    <ol>
-                        <li>Install Ollama from <a href="https://ollama.ai" target="_blank">ollama.ai</a></li>
-                        <li>Run <code>ollama pull gemma2</code> or your preferred model</li>
-                        <li>Start Ollama service: <code>ollama serve</code></li>
-                        <li>Refresh this page to detect your models</li>
-                    </ol>
-                    <p><strong>Benefits:</strong> Faster responses, complete privacy, no API costs, works offline</p>
+                <div class="pros-cons">
+                    <div class="pros">
+                        <h5>✅ Benefits</h5>
+                        <ul>
+                            <li>Complete privacy - data never leaves your device</li>
+                            <li>Works offline once set up</li>
+                            <li>No API costs</li>
+                            <li>No rate limits</li>
+                        </ul>
+                    </div>
+                    <div class="cons">
+                        <h5>❌ Drawbacks</h5>
+                        <ul>
+                            <li>Complex technical setup</li>
+                            <li>Significantly slower responses (5-30 seconds)</li>
+                            <li>Lower quality responses than cloud models</li>
+                            <li>Uses significant system resources</li>
+                        </ul>
+                    </div>
                 </div>
             </section>
             
