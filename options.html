@@ -428,6 +428,172 @@
             line-height: var(--leading-normal);
         }
         
+        /* AI Connection Cards */
+        .ai-connection-card {
+            background: var(--surface-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: var(--radius-lg);
+            margin-bottom: var(--space-6);
+            transition: border-color var(--duration-200);
+        }
+        
+        .ai-connection-card.recommended {
+            border-color: var(--primary-400);
+            background: linear-gradient(135deg, var(--primary-50) 0%, var(--surface-primary) 100%);
+        }
+        
+        .ai-connection-card.airplane-mode {
+            border-color: var(--warning-400);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-5);
+            border-bottom: 1px solid var(--border-primary);
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+        
+        .card-title h4 {
+            margin: 0;
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+        }
+        
+        .card-description {
+            padding: var(--space-5);
+            padding-top: 0;
+            color: var(--text-secondary);
+            line-height: var(--leading-relaxed);
+        }
+        
+        .card-actions {
+            padding: var(--space-5);
+            padding-top: 0;
+            display: flex;
+            gap: var(--space-3);
+            align-items: center;
+        }
+        
+        .card-warning {
+            padding: var(--space-4);
+            background: var(--warning-50);
+            border: 1px solid var(--warning-200);
+            border-radius: var(--radius-md);
+            margin: var(--space-5);
+            margin-bottom: 0;
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+            font-size: var(--font-size-sm);
+            color: var(--warning-800);
+        }
+        
+        .expand-section {
+            padding: var(--space-5);
+            padding-top: 0;
+        }
+        
+        .expand-btn {
+            background: none;
+            border: none;
+            color: var(--primary-600);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            cursor: pointer;
+            padding: var(--space-2) 0;
+            text-align: left;
+            width: 100%;
+            transition: color var(--duration-200);
+        }
+        
+        .expand-btn:hover {
+            color: var(--primary-700);
+        }
+        
+        .expandable-content {
+            margin-top: var(--space-4);
+            padding-top: var(--space-4);
+            border-top: 1px solid var(--border-primary);
+        }
+        
+        .provider-selection h5 {
+            margin: 0 0 var(--space-4) 0;
+            font-size: var(--font-size-base);
+            font-weight: 600;
+        }
+        
+        .provider-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--space-3);
+            margin-bottom: var(--space-6);
+        }
+        
+        .provider-option {
+            padding: var(--space-4);
+            border: 2px solid var(--border-primary);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--duration-200);
+            text-align: center;
+        }
+        
+        .provider-option:hover {
+            border-color: var(--primary-300);
+        }
+        
+        .provider-option.selected {
+            border-color: var(--primary-500);
+            background: var(--primary-50);
+        }
+        
+        .provider-name {
+            font-weight: 600;
+            margin-bottom: var(--space-1);
+        }
+        
+        .provider-note {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+        
+        .setup-warning h5 {
+            margin: 0 0 var(--space-3) 0;
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            color: var(--warning-800);
+        }
+        
+        .setup-warning ul {
+            margin: 0;
+            padding-left: var(--space-5);
+        }
+        
+        .setup-warning li {
+            margin-bottom: var(--space-2);
+            color: var(--warning-700);
+        }
+        
+        .setup-guide h5 {
+            margin: var(--space-5) 0 var(--space-4) 0;
+            font-size: var(--font-size-base);
+            font-weight: 600;
+        }
+        
+        .section-description {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: var(--font-size-base);
+            line-height: var(--leading-relaxed);
+        }
+
         /* Ollama Section Styles */
         .ollama-status {
             display: flex;
@@ -930,42 +1096,37 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
                 </svg>
-                Back to Branestawm
+                <strong>Back to Branestawm</strong>
             </button>
             
             <section class="settings-section">
                 <div class="modal-title-with-info">
                     <h3>
-                        🤖 AI Assistant Setup
-                        <button class="option-info-btn" id="aiModelsInfoBtn" aria-label="Information about AI model selection">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M11,7H13V9H11V7M11,11H13V17H11V11Z"/>
-                            </svg>
-                        </button>
+                        AI Connections
                     </h3>
-                    <div class="option-info-tooltip" id="aiModelsInfoTooltip">
+                    <p class="section-description">
                         Choose your AI assistant. Google Gemini is recommended for the best experience with one-click setup.
-                    </div>
+                    </p>
                 </div>
                 
-                <!-- Primary Recommendation: Google Gemini -->
-                <div class="setup-option recommended">
-                    <div class="setup-header">
-                        <div class="setup-title">
-                            <h4>🌟 Google Gemini (Recommended)</h4>
-                            <span class="badge primary">Easiest Setup</span>
+                <!-- Google Gemini Card -->
+                <div class="ai-connection-card recommended">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <h4>🌟 Google Gemini</h4>
+                            <span class="badge primary">Recommended</span>
                         </div>
-                        <div class="setup-status" id="googleSetupStatus">
-                            <span class="status-dot" id="googleStatusDot"></span>
-                            <span id="googleStatusText">Not connected</span>
+                        <div class="status-indicator" id="googleGeminiStatus">
+                            <span class="status-dot"></span>
+                            <span id="googleGeminiStatusText">Not connected</span>
                         </div>
                     </div>
-                    <p class="setup-description">
+                    <p class="card-description">
                         One-click authentication with Google. Fast, reliable, and includes the latest AI capabilities.
                         Perfect for most users.
                     </p>
-                    <div class="setup-actions">
-                        <button class="btn primary" id="connectGoogleBtn">
+                    <div class="card-actions">
+                        <button class="btn primary" id="googleSetupBtn">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -974,45 +1135,68 @@
                             </svg>
                             Connect with Google
                         </button>
-                        <button class="btn secondary small" id="googleHelpBtn">How it works</button>
+                        <button class="btn secondary" id="googleSignOutBtn" style="display: none;">Sign Out</button>
                     </div>
                 </div>
 
-                <!-- Advanced Option: Custom API Keys -->
-                <div class="setup-option">
-                    <div class="setup-header">
-                        <div class="setup-title">
-                            <h4>⚙️ Custom API Key</h4>
+                <!-- Custom AI Card -->
+                <div class="ai-connection-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <h4>⚙️ Custom AI</h4>
                             <span class="badge secondary">Advanced</span>
                         </div>
-                        <button class="expand-btn" id="expandCustomApiBtn" aria-expanded="false">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/>
-                            </svg>
-                        </button>
+                        <div class="status-indicator" id="advancedApiStatus">
+                            <span class="status-dot"></span>
+                            <span id="advancedApiStatusText">Not configured</span>
+                        </div>
                     </div>
-                    <p class="setup-description">
+                    <p class="card-description">
                         Use your own API keys from providers like OpenAI, Anthropic, or others. 
                         Requires technical setup but gives you full control.
                     </p>
-                    <div class="setup-content" id="customApiContent" style="display: none;">
-                        <div class="setup-actions">
-                            <button class="btn secondary" id="manageApiKeysBtn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M7,14A2,2 0 0,1 5,12A2,2 0 0,1 7,10A2,2 0 0,1 9,12A2,2 0 0,1 7,14M12.65,10C11.83,7.67 9.61,6 7,6A6,6 0 0,0 1,12A6,6 0 0,0 7,18C9.61,18 11.83,16.33 12.65,14H17V18H21V14H23V10H12.65Z"/>
-                                </svg>
-                                Manage API Keys
-                            </button>
-                            <button class="btn secondary small" id="apiKeyHelpBtn">Setup Guide</button>
+                    <div class="expand-section">
+                        <button class="expand-btn" id="expandApiSetup">
+                            🔽 Show Advanced API Setup
+                        </button>
+                        <div class="expandable-content" id="apiSetupAdvanced" style="display: none;">
+                            <!-- Provider Selection -->
+                            <div class="provider-selection">
+                                <h5>Select Provider</h5>
+                                <div class="provider-grid">
+                                    <div class="provider-option" data-provider="cerebras">
+                                        <div class="provider-name">Cerebras</div>
+                                        <div class="provider-note">Free tier available</div>
+                                    </div>
+                                    <div class="provider-option" data-provider="openai">
+                                        <div class="provider-name">OpenAI</div>
+                                        <div class="provider-note">GPT models</div>
+                                    </div>
+                                    <div class="provider-option" data-provider="openrouter">
+                                        <div class="provider-name">OpenRouter</div>
+                                        <div class="provider-note">Many models</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- API Key Input -->
+                            <div class="form-group">
+                                <label for="advancedApiKey">API Key</label>
+                                <input type="password" id="advancedApiKey" class="input" placeholder="Enter your API key">
+                            </div>
+                            
+                            <div class="card-actions">
+                                <button class="btn primary" id="testAdvancedApi">Test Connection</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Airplane Mode: Local Ollama -->
-                <div class="setup-option airplane-mode">
-                    <div class="setup-header">
-                        <div class="setup-title">
-                            <h4>✈️ Airplane Mode (Local AI)</h4>
+                <!-- Local AI Card -->
+                <div class="ai-connection-card airplane-mode">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <h4>💻 Local AI</h4>
                             <span class="badge warning">Expert Level</span>
                         </div>
                         <div class="toggle-switch">
@@ -1020,32 +1204,83 @@
                             <span class="toggle-slider"></span>
                         </div>
                     </div>
-                    <p class="setup-description">
+                    <p class="card-description">
                         <strong>Privacy-first option:</strong> Run AI completely locally on your device. 
                         No internet required after setup, but slower and more complex to configure.
                     </p>
-                    <div class="setup-warning">
+                    <div class="card-warning">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z"/>
                         </svg>
                         <span>Requires technical knowledge. Only recommended for advanced users who need offline AI.</span>
                     </div>
-                    <div class="setup-content" id="airplaneModeContent" style="display: none;">
-                        <div class="setup-actions">
-                            <button class="btn secondary" id="setupOllamaBtn">Configure Local AI</button>
-                            <button class="btn secondary small" id="ollamaHelpBtn">Setup Instructions</button>
-                        </div>
+                    <div class="status-indicator" id="ollamaStatus">
+                        <span class="status-dot"></span>
+                        <span id="ollamaStatusText">Airplane Mode Disabled</span>
                     </div>
-                </div>
+                    
+                    <div class="expand-section">
+                        <button class="expand-btn" id="expandOllamaSetup">
+                            🔽 Show Airplane Mode Setup
+                        </button>
+                        <div class="expandable-content" id="ollamaAdvanced" style="display: none;">
+                            <div class="setup-warning">
+                                <h5>⚠️ Important Notes</h5>
+                                <ul>
+                                    <li><strong>Technical Setup Required:</strong> This requires installing and managing Ollama software</li>
+                                    <li><strong>Performance Impact:</strong> Local AI is significantly slower than cloud models</li>
+                                    <li><strong>Model Management:</strong> You'll need to download and manage large AI models (4GB+ each)</li>
+                                    <li><strong>System Requirements:</strong> Requires modern hardware with sufficient RAM (8GB+ recommended)</li>
+                                </ul>
+                            </div>
 
-                <!-- Current Status -->
-                <div class="current-status">
-                    <div class="status-header">
-                        <h4>Current Setup</h4>
-                    </div>
-                    <div class="status-indicator" id="currentAiStatus">
-                        <span class="status-dot" id="currentStatusDot"></span>
-                        <span id="currentStatusText">Checking connection...</span>
+                            <div class="setup-guide">
+                                <h5>📋 Setup Instructions (2024)</h5>
+                                <div class="setup-steps">
+                                    <div class="setup-step">
+                                        <div class="step-number">1</div>
+                                        <div class="step-content">
+                                            <h6>Install Ollama</h6>
+                                            <p>Download from <a href="https://ollama.ai" target="_blank" rel="noopener">ollama.ai</a></p>
+                                            <div class="step-note">
+                                                <strong>Windows users:</strong> New installer includes a chat interface
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="setup-step">
+                                        <div class="step-number">2</div>
+                                        <div class="step-content">
+                                            <h6>Download a Model</h6>
+                                            <p>Option A: Use Ollama's built-in chat interface to download a model</p>
+                                            <p>Option B: Run in terminal: <code>ollama pull gemma2</code></p>
+                                            <div class="step-note">
+                                                <strong>Recommended models:</strong> gemma2 (2B), llama3.2 (3B), or qwen2.5 (3B)
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="setup-step">
+                                        <div class="step-number">3</div>
+                                        <div class="step-content">
+                                            <h6>Start Ollama Service</h6>
+                                            <p>Run in terminal: <code>ollama serve</code></p>
+                                            <div class="step-note">
+                                                Keep this terminal open while using Branestawm
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="setup-step">
+                                        <div class="step-number">4</div>
+                                        <div class="step-content">
+                                            <h6>Enable in Branestawm</h6>
+                                            <p>Toggle "Local AI" above, then refresh to detect your models</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
