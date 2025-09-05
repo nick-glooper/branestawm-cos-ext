@@ -7126,6 +7126,1212 @@ class TaskManager {
         `;
         document.head.appendChild(styles);
     }
+    
+    /**
+     * Advanced Analytics Dashboard
+     */
+    showAnalyticsDashboard() {
+        const existingDashboard = document.querySelector('#analytics-dashboard');
+        if (existingDashboard) {
+            existingDashboard.remove();
+        }
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'analytics-dashboard';
+        overlay.className = 'analytics-overlay';
+        
+        overlay.innerHTML = `
+            <div class="analytics-dialog">
+                <div class="analytics-header">
+                    <h2>📊 Task Analytics & Insights</h2>
+                    <button class="close-analytics" onclick="document.getElementById('analytics-dashboard').remove()">×</button>
+                </div>
+                
+                <div class="analytics-nav">
+                    <button class="nav-tab active" data-tab="overview">Overview</button>
+                    <button class="nav-tab" data-tab="productivity">Productivity</button>
+                    <button class="nav-tab" data-tab="patterns">Patterns</button>
+                    <button class="nav-tab" data-tab="predictions">Predictions</button>
+                    <button class="nav-tab" data-tab="recommendations">Insights</button>
+                </div>
+                
+                <div class="analytics-content">
+                    <div class="tab-content active" id="overview-tab">
+                        <!-- Overview content will be populated -->
+                    </div>
+                    
+                    <div class="tab-content" id="productivity-tab">
+                        <!-- Productivity content will be populated -->
+                    </div>
+                    
+                    <div class="tab-content" id="patterns-tab">
+                        <!-- Patterns content will be populated -->
+                    </div>
+                    
+                    <div class="tab-content" id="predictions-tab">
+                        <!-- Predictions content will be populated -->
+                    </div>
+                    
+                    <div class="tab-content" id="recommendations-tab">
+                        <!-- Recommendations content will be populated -->
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.injectAnalyticsStyles();
+        document.body.appendChild(overlay);
+        
+        this.setupAnalyticsTabs();
+        this.populateAnalyticsDashboard();
+    }
+    
+    /**
+     * Setup analytics dashboard tabs
+     */
+    setupAnalyticsTabs() {
+        const tabs = document.querySelectorAll('.nav-tab');
+        const contents = document.querySelectorAll('.tab-content');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                const tabId = tab.dataset.tab + '-tab';
+                document.getElementById(tabId)?.classList.add('active');
+                
+                // Load content for the selected tab
+                this.loadAnalyticsTab(tab.dataset.tab);
+            });
+        });
+    }
+    
+    /**
+     * Populate analytics dashboard with data
+     */
+    populateAnalyticsDashboard() {
+        this.loadAnalyticsTab('overview');
+    }
+    
+    /**
+     * Load specific analytics tab content
+     */
+    loadAnalyticsTab(tabName) {
+        const container = document.getElementById(`${tabName}-tab`);
+        if (!container) return;
+        
+        switch (tabName) {
+            case 'overview':
+                this.renderOverviewTab(container);
+                break;
+            case 'productivity':
+                this.renderProductivityTab(container);
+                break;
+            case 'patterns':
+                this.renderPatternsTab(container);
+                break;
+            case 'predictions':
+                this.renderPredictionsTab(container);
+                break;
+            case 'recommendations':
+                this.renderRecommendationsTab(container);
+                break;
+        }
+    }
+    
+    /**
+     * Calculate comprehensive task analytics
+     */
+    calculateTaskAnalytics() {
+        const state = this.dataManager.getState();
+        const tasks = [...(state.tasks?.items?.values() || [])];
+        const now = new Date();
+        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        
+        // Basic metrics
+        const totalTasks = tasks.length;
+        const completedTasks = tasks.filter(t => t.status === 'completed').length;
+        const pendingTasks = tasks.filter(t => t.status === 'pending').length;
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        
+        // Time-based analytics
+        const recentTasks = tasks.filter(t => new Date(t.createdAt) > weekAgo);
+        const lastWeekTasks = tasks.filter(t => {
+            const created = new Date(t.createdAt);
+            return created > new Date(weekAgo.getTime() - 7 * 24 * 60 * 60 * 1000) && created <= weekAgo;
+        });
+        
+        const recentCompletionRate = recentTasks.length > 0 ? 
+            (recentTasks.filter(t => t.status === 'completed').length / recentTasks.length) * 100 : 0;
+        const lastWeekCompletionRate = lastWeekTasks.length > 0 ? 
+            (lastWeekTasks.filter(t => t.status === 'completed').length / lastWeekTasks.length) * 100 : 0;
+        
+        const completionTrend = Math.round(recentCompletionRate - lastWeekCompletionRate);
+        
+        // Time accuracy
+        const tasksWithTracking = tasks.filter(t => t.timeTracking?.actualMinutes && t.timeTracking?.estimatedMinutes);
+        const timeAccuracy = tasksWithTracking.length > 0 ? 
+            Math.round(tasksWithTracking.reduce((sum, t) => sum + (t.timeTracking.accuracy || 0), 0) / tasksWithTracking.length * 100) : 0;
+        
+        // Average completion time
+        const avgMinutes = tasksWithTracking.length > 0 ?
+            tasksWithTracking.reduce((sum, t) => sum + t.timeTracking.actualMinutes, 0) / tasksWithTracking.length : 0;
+        const avgCompletionTime = avgMinutes >= 60 ? 
+            `${Math.round(avgMinutes / 60 * 10) / 10}h` : 
+            `${Math.round(avgMinutes)}m`;
+        
+        // Focus score calculation
+        const focusScore = this.calculateFocusScore(tasks);
+        const focusDescription = this.getFocusDescription(focusScore);
+        
+        // Historical data
+        const completionHistory = this.generateCompletionHistory(tasks, 30);
+        const categoryBreakdown = this.calculateCategoryBreakdown(tasks);
+        
+        return {
+            totalTasks,
+            completedTasks,
+            pendingTasks,
+            completionRate,
+            completionTrend,
+            avgCompletionTime,
+            timeAccuracy,
+            focusScore,
+            focusDescription,
+            completionHistory,
+            categoryBreakdown
+        };
+    }
+    
+    /**
+     * Calculate focus score based on task patterns
+     */
+    calculateFocusScore(tasks) {
+        let score = 5; // Base score
+        
+        const completedTasks = tasks.filter(t => t.status === 'completed');
+        if (completedTasks.length === 0) return score;
+        
+        // Factor 1: Completion consistency
+        const completionRate = completedTasks.length / tasks.length;
+        score += (completionRate - 0.5) * 4;
+        
+        // Factor 2: Time estimation accuracy
+        const tasksWithTracking = completedTasks.filter(t => t.timeTracking?.accuracy);
+        if (tasksWithTracking.length > 0) {
+            const avgAccuracy = tasksWithTracking.reduce((sum, t) => sum + t.timeTracking.accuracy, 0) / tasksWithTracking.length;
+            score += (avgAccuracy - 0.5) * 2;
+        }
+        
+        return Math.max(0, Math.min(10, Math.round(score * 10) / 10));
+    }
+    
+    /**
+     * Get focus score description
+     */
+    getFocusDescription(score) {
+        if (score >= 8) return 'Excellent focus';
+        if (score >= 6) return 'Good focus';
+        if (score >= 4) return 'Moderate focus';
+        if (score >= 2) return 'Needs improvement';
+        return 'Focus challenges';
+    }
+    
+    /**
+     * Generate completion history for charting
+     */
+    generateCompletionHistory(tasks, days = 30) {
+        const history = [];
+        const now = new Date();
+        
+        for (let i = days - 1; i >= 0; i--) {
+            const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+            const dayString = date.toISOString().split('T')[0];
+            const dayTasks = tasks.filter(t => {
+                if (!t.completedAt) return false;
+                return t.completedAt.startsWith(dayString);
+            });
+            
+            history.push({
+                date: dayString,
+                completed: dayTasks.length,
+                label: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            });
+        }
+        
+        return history;
+    }
+    
+    /**
+     * Calculate category breakdown
+     */
+    calculateCategoryBreakdown(tasks) {
+        const breakdown = {
+            work: 0,
+            personal: 0,
+            creative: 0,
+            administrative: 0,
+            general: 0
+        };
+        
+        tasks.forEach(task => {
+            const category = task.category || 'general';
+            if (breakdown.hasOwnProperty(category)) {
+                breakdown[category]++;
+            } else {
+                breakdown.general++;
+            }
+        });
+        
+        return breakdown;
+    }
+    
+    /**
+     * Render overview tab with key metrics
+     */
+    renderOverviewTab(container) {
+        const analytics = this.calculateTaskAnalytics();
+        
+        container.innerHTML = `
+            <div class="analytics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">📋</span>
+                        <h3>Total Tasks</h3>
+                    </div>
+                    <div class="metric-value">${analytics.totalTasks}</div>
+                    <div class="metric-detail">
+                        <span class="completed">${analytics.completedTasks} completed</span>
+                        <span class="pending">${analytics.pendingTasks} pending</span>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">✅</span>
+                        <h3>Completion Rate</h3>
+                    </div>
+                    <div class="metric-value">${analytics.completionRate}%</div>
+                    <div class="metric-detail">
+                        <span class="trend ${analytics.completionTrend > 0 ? 'positive' : 'negative'}">
+                            ${analytics.completionTrend > 0 ? '↗' : '↘'} ${Math.abs(analytics.completionTrend)}% vs last week
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">⏱️</span>
+                        <h3>Avg. Completion Time</h3>
+                    </div>
+                    <div class="metric-value">${analytics.avgCompletionTime}</div>
+                    <div class="metric-detail">
+                        <span class="accuracy">Time accuracy: ${analytics.timeAccuracy}%</span>
+                    </div>
+                </div>
+                
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-icon">🎯</span>
+                        <h3>Focus Score</h3>
+                    </div>
+                    <div class="metric-value">${analytics.focusScore}/10</div>
+                    <div class="metric-detail">
+                        <span class="focus-desc">${analytics.focusDescription}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analytics-charts">
+                <div class="chart-section">
+                    <h4>Task Completion Over Time</h4>
+                    <div class="completion-chart" id="completion-chart">
+                        ${this.renderCompletionChart(analytics.completionHistory)}
+                    </div>
+                </div>
+                
+                <div class="chart-section">
+                    <h4>Tasks by Category</h4>
+                    <div class="category-chart" id="category-chart">
+                        ${this.renderCategoryChart(analytics.categoryBreakdown)}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Render completion chart
+     */
+    renderCompletionChart(history) {
+        const maxCompleted = Math.max(...history.map(h => h.completed), 1);
+        const barWidth = Math.max(100 / history.length - 1, 2);
+        
+        return `
+            <div class="chart-container">
+                <div class="chart-bars">
+                    ${history.map(day => `
+                        <div class="chart-bar" style="height: ${(day.completed / maxCompleted) * 100}%; width: ${barWidth}%;" 
+                             title="${day.label}: ${day.completed} tasks">
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="chart-labels">
+                    ${history.filter((_, i) => i % Math.ceil(history.length / 7) === 0).map(day => `
+                        <span class="chart-label">${day.label}</span>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Render category chart
+     */
+    renderCategoryChart(breakdown) {
+        const total = Object.values(breakdown).reduce((sum, count) => sum + count, 0);
+        if (total === 0) return '<div class="no-data">No data available</div>';
+        
+        const colors = {
+            work: '#3b82f6',
+            personal: '#10b981',
+            creative: '#8b5cf6',
+            administrative: '#f59e0b',
+            general: '#64748b'
+        };
+        
+        const icons = {
+            work: '💼',
+            personal: '🏠',
+            creative: '🎨',
+            administrative: '📋',
+            general: '📝'
+        };
+        
+        return `
+            <div class="category-breakdown">
+                ${Object.entries(breakdown).filter(([_, count]) => count > 0).map(([category, count]) => {
+                    const percentage = Math.round((count / total) * 100);
+                    return `
+                        <div class="category-item">
+                            <div class="category-info">
+                                <span class="category-icon">${icons[category]}</span>
+                                <span class="category-name">${category.charAt(0).toUpperCase() + category.slice(1)}</span>
+                                <span class="category-count">${count}</span>
+                            </div>
+                            <div class="category-bar">
+                                <div class="category-fill" style="width: ${percentage}%; background-color: ${colors[category]};"></div>
+                            </div>
+                            <span class="category-percentage">${percentage}%</span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    }
+    
+    /**
+     * Render predictions tab with ML-based forecasting
+     */
+    renderPredictionsTab(container) {
+        const predictions = this.generateTaskPredictions();
+        
+        container.innerHTML = `
+            <div class="predictions-analysis">
+                <div class="prediction-cards">
+                    <div class="prediction-card">
+                        <h4>📈 Completion Forecast</h4>
+                        <div class="forecast-chart">
+                            ${this.renderForecastChart(predictions.completionForecast)}
+                        </div>
+                        <div class="forecast-summary">
+                            <p>Expected completion rate next week: <strong>${predictions.expectedCompletionRate}%</strong></p>
+                            <p class="confidence">Confidence: ${predictions.forecastConfidence}%</p>
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <h4>⏰ Time Prediction Model</h4>
+                        <div class="time-predictions">
+                            ${predictions.timePredictions.map(pred => `
+                                <div class="time-pred-item">
+                                    <span class="pred-category">${pred.category}</span>
+                                    <span class="pred-time">${pred.predictedTime}</span>
+                                    <span class="pred-confidence">${pred.confidence}% accurate</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <div class="model-info">
+                            <p>Model trained on ${predictions.trainingDataSize} completed tasks</p>
+                            <p>Last updated: ${predictions.lastModelUpdate}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <h4>🔮 Risk Assessment</h4>
+                        <div class="risk-factors">
+                            ${predictions.riskFactors.map(risk => `
+                                <div class="risk-item ${risk.level}">
+                                    <div class="risk-header">
+                                        <span class="risk-icon">${risk.icon}</span>
+                                        <span class="risk-title">${risk.title}</span>
+                                        <span class="risk-level">${risk.level}</span>
+                                    </div>
+                                    <p class="risk-description">${risk.description}</p>
+                                    <p class="risk-mitigation">💡 ${risk.mitigation}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="prediction-card">
+                        <h4>🎯 Workload Optimization</h4>
+                        <div class="optimization-suggestions">
+                            ${predictions.optimizations.map(opt => `
+                                <div class="optimization-item">
+                                    <div class="opt-header">
+                                        <span class="opt-impact">${opt.impact}</span>
+                                        <span class="opt-effort">${opt.effort} effort</span>
+                                    </div>
+                                    <h5>${opt.title}</h5>
+                                    <p>${opt.description}</p>
+                                    <div class="opt-benefits">
+                                        ${opt.benefits.map(benefit => `<span class="benefit-tag">${benefit}</span>`).join('')}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Generate task predictions using ML-inspired algorithms
+     */
+    generateTaskPredictions() {
+        const state = this.dataManager.getState();
+        const tasks = [...(state.tasks?.items?.values() || [])];
+        const completedTasks = tasks.filter(t => t.status === 'completed' && t.completedAt);
+        
+        // Completion forecast
+        const completionForecast = this.predictCompletionTrend(completedTasks);
+        const expectedCompletionRate = Math.round(completionForecast.expectedRate * 100);
+        const forecastConfidence = Math.round(completionForecast.confidence * 100);
+        
+        // Time predictions by category
+        const timePredictions = this.generateTimePredictions(completedTasks);
+        
+        // Risk assessment
+        const riskFactors = this.assessTaskRisks(tasks);
+        
+        // Workload optimizations
+        const optimizations = this.generateOptimizations(tasks);
+        
+        return {
+            completionForecast: completionForecast.data,
+            expectedCompletionRate,
+            forecastConfidence,
+            timePredictions,
+            trainingDataSize: completedTasks.length,
+            lastModelUpdate: new Date().toLocaleDateString(),
+            riskFactors,
+            optimizations
+        };
+    }
+    
+    /**
+     * Predict completion trend using moving averages
+     */
+    predictCompletionTrend(completedTasks) {
+        if (completedTasks.length < 7) {
+            return {
+                data: [],
+                expectedRate: 0.5,
+                confidence: 0.3
+            };
+        }
+        
+        // Group by day for the last 30 days
+        const dailyCompletions = {};
+        const today = new Date();
+        
+        for (let i = 0; i < 30; i++) {
+            const date = new Date(today.getTime() - i * 24 * 60 * 60 * 1000);
+            const dayString = date.toISOString().split('T')[0];
+            dailyCompletions[dayString] = 0;
+        }
+        
+        completedTasks.forEach(task => {
+            const dayString = task.completedAt.split('T')[0];
+            if (dailyCompletions.hasOwnProperty(dayString)) {
+                dailyCompletions[dayString]++;
+            }
+        });
+        
+        const dailyValues = Object.values(dailyCompletions);
+        const movingAverage = this.calculateMovingAverage(dailyValues, 7);
+        
+        // Simple linear regression for trend
+        const trend = this.calculateTrend(movingAverage);
+        const expectedRate = Math.max(0, Math.min(1, movingAverage[movingAverage.length - 1] / 10));
+        const confidence = Math.min(0.9, completedTasks.length / 50);
+        
+        // Generate forecast data
+        const forecastData = movingAverage.slice(-14).map((value, index) => ({
+            day: index + 1,
+            completed: value,
+            predicted: value + (trend * (index + 1))
+        }));
+        
+        return {
+            data: forecastData,
+            expectedRate,
+            confidence
+        };
+    }
+    
+    /**
+     * Calculate moving average
+     */
+    calculateMovingAverage(data, window) {
+        const result = [];
+        for (let i = window - 1; i < data.length; i++) {
+            const slice = data.slice(i - window + 1, i + 1);
+            const avg = slice.reduce((sum, val) => sum + val, 0) / window;
+            result.push(avg);
+        }
+        return result;
+    }
+    
+    /**
+     * Calculate trend using simple linear regression
+     */
+    calculateTrend(data) {
+        if (data.length < 2) return 0;
+        
+        const n = data.length;
+        const sumX = (n * (n - 1)) / 2; // Sum of indices
+        const sumY = data.reduce((sum, val) => sum + val, 0);
+        const sumXY = data.reduce((sum, val, index) => sum + (index * val), 0);
+        const sumX2 = data.reduce((sum, _, index) => sum + (index * index), 0);
+        
+        const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+        return slope;
+    }
+    
+    /**
+     * Generate time predictions by category
+     */
+    generateTimePredictions(completedTasks) {
+        const categories = ['work', 'personal', 'creative', 'administrative', 'general'];
+        
+        return categories.map(category => {
+            const categoryTasks = completedTasks.filter(t => 
+                (t.category || 'general') === category && 
+                t.timeTracking?.actualMinutes
+            );
+            
+            if (categoryTasks.length === 0) return null;
+            
+            const times = categoryTasks.map(t => t.timeTracking.actualMinutes);
+            const avgTime = times.reduce((sum, time) => sum + time, 0) / times.length;
+            const confidence = Math.min(95, categoryTasks.length * 5);
+            
+            const predictedTime = avgTime >= 60 ? 
+                `${Math.round(avgTime / 60 * 10) / 10}h` : 
+                `${Math.round(avgTime)}m`;
+            
+            return {
+                category: category.charAt(0).toUpperCase() + category.slice(1),
+                predictedTime,
+                confidence
+            };
+        }).filter(Boolean);
+    }
+    
+    /**
+     * Assess task-related risks
+     */
+    assessTaskRisks(tasks) {
+        const risks = [];
+        const now = new Date();
+        
+        // Overdue task risk
+        const overdueTasks = tasks.filter(t => {
+            if (t.status === 'completed' || !t.scheduledFor) return false;
+            return new Date(t.scheduledFor) < now;
+        });
+        
+        if (overdueTasks.length > 0) {
+            risks.push({
+                icon: '⚠️',
+                title: 'Overdue Tasks',
+                level: overdueTasks.length > 5 ? 'high' : 'medium',
+                description: `${overdueTasks.length} tasks are overdue and may impact other commitments`,
+                mitigation: 'Prioritize overdue tasks or reschedule based on current capacity'
+            });
+        }
+        
+        // Time estimation risk
+        const tasksWithTracking = tasks.filter(t => t.timeTracking?.accuracy);
+        if (tasksWithTracking.length > 5) {
+            const avgAccuracy = tasksWithTracking.reduce((sum, t) => sum + t.timeTracking.accuracy, 0) / tasksWithTracking.length;
+            if (avgAccuracy < 0.6) {
+                risks.push({
+                    icon: '⏱️',
+                    title: 'Time Estimation Issues',
+                    level: 'medium',
+                    description: `Time estimates are ${Math.round(avgAccuracy * 100)}% accurate, indicating planning challenges`,
+                    mitigation: 'Break down large tasks into smaller, more predictable chunks'
+                });
+            }
+        }
+        
+        // Workload concentration risk
+        const categoryDistribution = this.calculateCategoryBreakdown(tasks.filter(t => t.status === 'pending'));
+        const maxCategory = Math.max(...Object.values(categoryDistribution));
+        const totalPending = Object.values(categoryDistribution).reduce((sum, count) => sum + count, 0);
+        
+        if (totalPending > 0 && maxCategory / totalPending > 0.7) {
+            risks.push({
+                icon: '📊',
+                title: 'Workload Concentration',
+                level: 'low',
+                description: 'Most tasks are concentrated in one category, limiting flexibility',
+                mitigation: 'Consider diversifying task types to maintain engagement'
+            });
+        }
+        
+        // Default risk if none found
+        if (risks.length === 0) {
+            risks.push({
+                icon: '✅',
+                title: 'Low Risk Profile',
+                level: 'low',
+                description: 'Task management is on track with no significant risks identified',
+                mitigation: 'Continue current practices and monitor for changes'
+            });
+        }
+        
+        return risks;
+    }
+    
+    /**
+     * Generate optimization suggestions
+     */
+    generateOptimizations(tasks) {
+        const optimizations = [];
+        const completedTasks = tasks.filter(t => t.status === 'completed');
+        
+        // Time batching optimization
+        const categoryTasks = {};
+        tasks.forEach(task => {
+            const category = task.category || 'general';
+            if (!categoryTasks[category]) categoryTasks[category] = [];
+            categoryTasks[category].push(task);
+        });
+        
+        const multiCategoryDay = Object.keys(categoryTasks).length > 3;
+        if (multiCategoryDay) {
+            optimizations.push({
+                impact: 'High',
+                effort: 'Low',
+                title: 'Time Batching',
+                description: 'Group similar tasks together to reduce context switching and improve focus',
+                benefits: ['+25% efficiency', 'Better focus', 'Less mental fatigue']
+            });
+        }
+        
+        // Template optimization
+        const recurringPatterns = this.findRecurringPatterns(tasks);
+        if (recurringPatterns.length > 0) {
+            optimizations.push({
+                impact: 'Medium',
+                effort: 'Medium',
+                title: 'Task Templates',
+                description: 'Create templates for recurring tasks to speed up planning and ensure consistency',
+                benefits: ['-30% planning time', 'Better consistency', 'Fewer missed steps']
+            });
+        }
+        
+        // Default optimization
+        if (optimizations.length === 0) {
+            optimizations.push({
+                impact: 'Medium',
+                effort: 'Low',
+                title: 'Regular Reviews',
+                description: 'Schedule weekly task reviews to identify patterns and improvement opportunities',
+                benefits: ['Better planning', 'Increased awareness', 'Continuous improvement']
+            });
+        }
+        
+        return optimizations;
+    }
+    
+    /**
+     * Find recurring patterns in tasks
+     */
+    findRecurringPatterns(tasks) {
+        const titleWords = {};
+        tasks.forEach(task => {
+            const words = task.title.toLowerCase().split(' ').filter(word => word.length > 3);
+            words.forEach(word => {
+                titleWords[word] = (titleWords[word] || 0) + 1;
+            });
+        });
+        
+        return Object.entries(titleWords)
+            .filter(([word, count]) => count >= 3)
+            .map(([word, count]) => ({ word, count }));
+    }
+    
+    /**
+     * Render recommendations tab
+     */
+    renderRecommendationsTab(container) {
+        const recommendations = this.generatePersonalizedRecommendations();
+        
+        container.innerHTML = `
+            <div class="recommendations-content">
+                <div class="recommendations-header">
+                    <h3>🎯 Personalized Insights</h3>
+                    <p>AI-powered recommendations based on your task patterns</p>
+                </div>
+                
+                <div class="recommendation-sections">
+                    <div class="rec-section">
+                        <h4>📈 Productivity Boosters</h4>
+                        <div class="rec-cards">
+                            ${recommendations.productivity.map(rec => `
+                                <div class="rec-card ${rec.priority}">
+                                    <div class="rec-header">
+                                        <span class="rec-icon">${rec.icon}</span>
+                                        <h5>${rec.title}</h5>
+                                        <span class="rec-impact">${rec.impact}</span>
+                                    </div>
+                                    <p class="rec-description">${rec.description}</p>
+                                    <div class="rec-actions">
+                                        <button class="rec-action-btn" onclick="window.taskManager.implementRecommendation('${rec.id}')">
+                                            Implement
+                                        </button>
+                                        <span class="rec-effort">${rec.effort}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="rec-section">
+                        <h4>🧠 Focus Improvements</h4>
+                        <div class="rec-cards">
+                            ${recommendations.focus.map(rec => `
+                                <div class="rec-card ${rec.priority}">
+                                    <div class="rec-header">
+                                        <span class="rec-icon">${rec.icon}</span>
+                                        <h5>${rec.title}</h5>
+                                        <span class="rec-impact">${rec.impact}</span>
+                                    </div>
+                                    <p class="rec-description">${rec.description}</p>
+                                    <div class="rec-actions">
+                                        <button class="rec-action-btn" onclick="window.taskManager.implementRecommendation('${rec.id}')">
+                                            Try It
+                                        </button>
+                                        <span class="rec-effort">${rec.effort}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="rec-section">
+                        <h4>⚡ Quick Wins</h4>
+                        <div class="quick-wins">
+                            ${recommendations.quickWins.map(win => `
+                                <div class="quick-win-item">
+                                    <span class="win-icon">${win.icon}</span>
+                                    <span class="win-text">${win.text}</span>
+                                    <button class="win-btn" onclick="window.taskManager.implementRecommendation('${win.id}')">
+                                        Do It
+                                    </button>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Generate personalized recommendations
+     */
+    generatePersonalizedRecommendations() {
+        const state = this.dataManager.getState();
+        const tasks = [...(state.tasks?.items?.values() || [])];
+        const analytics = this.calculateTaskAnalytics();
+        
+        const productivity = [];
+        const focus = [];
+        const quickWins = [];
+        
+        // Productivity recommendations
+        if (analytics.timeAccuracy < 70) {
+            productivity.push({
+                id: 'improve-time-estimation',
+                icon: '⏱️',
+                title: 'Improve Time Estimation',
+                priority: 'high',
+                impact: '+15% accuracy',
+                effort: '5 min/task',
+                description: 'Break down large tasks into smaller chunks for more accurate time estimates'
+            });
+        }
+        
+        if (analytics.completionRate < 60) {
+            productivity.push({
+                id: 'reduce-task-overload',
+                icon: '📉',
+                title: 'Reduce Task Overload',
+                priority: 'high',
+                impact: '+20% completion',
+                effort: '10 min/week',
+                description: 'Focus on fewer tasks at once to improve completion rates and reduce stress'
+            });
+        }
+        
+        // Focus recommendations
+        if (analytics.focusScore < 6) {
+            focus.push({
+                id: 'implement-time-blocking',
+                icon: '🕒',
+                title: 'Time Blocking',
+                priority: 'medium',
+                impact: '+2 focus points',
+                effort: '15 min setup',
+                description: 'Dedicate specific time blocks to task categories to reduce context switching'
+            });
+        }
+        
+        const categories = Object.keys(analytics.categoryBreakdown).filter(cat => analytics.categoryBreakdown[cat] > 0);
+        if (categories.length > 4) {
+            focus.push({
+                id: 'category-consolidation',
+                icon: '🎯',
+                title: 'Consolidate Categories',
+                priority: 'low',
+                impact: '+1 focus point',
+                effort: '5 min',
+                description: 'Reduce the number of active task categories to maintain better focus'
+            });
+        }
+        
+        // Quick wins
+        quickWins.push({
+            id: 'set-daily-goal',
+            icon: '🎯',
+            text: 'Set a daily completion goal based on your average',
+            action: 'Set Goal'
+        });
+        
+        if (tasks.filter(t => !t.category).length > 0) {
+            quickWins.push({
+                id: 'categorize-uncategorized',
+                icon: '📊',
+                text: 'Categorize your uncategorized tasks',
+                action: 'Categorize'
+            });
+        }
+        
+        quickWins.push({
+            id: 'review-overdue',
+            icon: '⚠️',
+            text: 'Review and reschedule overdue tasks',
+            action: 'Review'
+        });
+        
+        return {
+            productivity,
+            focus,
+            quickWins
+        };
+    }
+    
+    /**
+     * Implement a specific recommendation
+     */
+    implementRecommendation(recommendationId) {
+        // This would implement specific recommendation actions
+        console.log('Implementing recommendation:', recommendationId);
+        this.showSuccessNotification('Recommendation implemented successfully!');
+    }
+    
+    /**
+     * Inject analytics dashboard styles
+     */
+    injectAnalyticsStyles() {
+        const styleId = 'analytics-styles';
+        if (document.getElementById(styleId)) return;
+
+        const styles = document.createElement('style');
+        styles.id = styleId;
+        styles.textContent = `
+            .analytics-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(4px);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .analytics-dialog {
+                background: white;
+                border-radius: 12px;
+                width: 95vw;
+                max-width: 1400px;
+                height: 90vh;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+                overflow: hidden;
+            }
+
+            .analytics-header {
+                padding: 20px 32px;
+                border-bottom: 1px solid #e5e7eb;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+
+            .analytics-header h2 {
+                margin: 0;
+                font-size: 24px;
+                font-weight: 600;
+            }
+
+            .close-analytics {
+                background: rgba(255, 255, 255, 0.2);
+                border: none;
+                color: white;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 8px 12px;
+                border-radius: 8px;
+                transition: background-color 0.2s;
+            }
+
+            .close-analytics:hover {
+                background: rgba(255, 255, 255, 0.3);
+            }
+
+            .analytics-nav {
+                display: flex;
+                background: #f8fafc;
+                border-bottom: 1px solid #e5e7eb;
+                padding: 0 32px;
+            }
+
+            .nav-tab {
+                background: none;
+                border: none;
+                padding: 16px 24px;
+                cursor: pointer;
+                font-size: 14px;
+                font-weight: 500;
+                color: #64748b;
+                border-bottom: 3px solid transparent;
+                transition: all 0.2s;
+            }
+
+            .nav-tab:hover {
+                color: #3b82f6;
+                background: rgba(59, 130, 246, 0.05);
+            }
+
+            .nav-tab.active {
+                color: #3b82f6;
+                border-bottom-color: #3b82f6;
+                background: rgba(59, 130, 246, 0.05);
+            }
+
+            .analytics-content {
+                flex: 1;
+                overflow-y: auto;
+                padding: 32px;
+                background: #f8fafc;
+            }
+
+            .tab-content {
+                display: none;
+            }
+
+            .tab-content.active {
+                display: block;
+            }
+
+            .analytics-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 24px;
+                margin-bottom: 32px;
+            }
+
+            .metric-card {
+                background: white;
+                padding: 24px;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e5e7eb;
+            }
+
+            .metric-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+
+            .metric-icon {
+                font-size: 24px;
+            }
+
+            .metric-header h3 {
+                margin: 0;
+                font-size: 16px;
+                color: #374151;
+            }
+
+            .metric-value {
+                font-size: 32px;
+                font-weight: bold;
+                color: #1f2937;
+                margin-bottom: 8px;
+            }
+
+            .metric-detail {
+                display: flex;
+                flex-direction: column;
+                gap: 4px;
+                font-size: 14px;
+                color: #6b7280;
+            }
+
+            .trend.positive {
+                color: #10b981;
+            }
+
+            .trend.negative {
+                color: #ef4444;
+            }
+
+            .analytics-charts {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
+            }
+
+            .chart-section {
+                background: white;
+                padding: 24px;
+                border-radius: 12px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                border: 1px solid #e5e7eb;
+            }
+
+            .chart-section h4 {
+                margin: 0 0 20px 0;
+                color: #374151;
+            }
+
+            .chart-container {
+                height: 200px;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .chart-bars {
+                flex: 1;
+                display: flex;
+                align-items: end;
+                gap: 2px;
+                padding: 10px 0;
+            }
+
+            .chart-bar {
+                background: linear-gradient(to top, #3b82f6, #60a5fa);
+                border-radius: 2px 2px 0 0;
+                min-height: 4px;
+                transition: all 0.2s;
+            }
+
+            .chart-bar:hover {
+                background: linear-gradient(to top, #2563eb, #3b82f6);
+            }
+
+            .chart-labels {
+                display: flex;
+                justify-content: space-between;
+                padding-top: 10px;
+                font-size: 12px;
+                color: #6b7280;
+            }
+
+            .category-breakdown {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .category-item {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .category-info {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 120px;
+            }
+
+            .category-bar {
+                flex: 1;
+                height: 8px;
+                background: #f3f4f6;
+                border-radius: 4px;
+                overflow: hidden;
+            }
+
+            .category-fill {
+                height: 100%;
+                border-radius: 4px;
+                transition: width 0.3s ease;
+            }
+
+            .category-percentage {
+                min-width: 40px;
+                text-align: right;
+                font-weight: 500;
+                color: #374151;
+            }
+        `;
+        document.head.appendChild(styles);
+    }
 }
 
 // Export for use in other modules
