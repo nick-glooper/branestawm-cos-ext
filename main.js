@@ -1459,6 +1459,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Initialize AppState and DataManager
         await appState.initialize();
         
+        // Initialize TaskManager for time-first task management
+        if (window.TaskManager && window.dataManager) {
+            window.taskManager = new TaskManager(window.dataManager);
+            console.log('TaskManager initialized');
+        } else {
+            console.warn('TaskManager or DataManager not available - task extraction disabled');
+        }
+        
         // Update global references for backward compatibility
         updateGlobalReferences();
         

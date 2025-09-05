@@ -100,7 +100,21 @@ class DataManager {
             
             currentFolio: 'general',
             recentFolios: ['general'],
-            recentConversations: []
+            recentConversations: [],
+            
+            // Task management system
+            tasks: {
+                items: {},  // Will be converted to Map at runtime
+                timeline: {
+                    overdue: [],    // Will be converted to Set at runtime  
+                    today: [],
+                    tomorrow: [],
+                    thisWeek: [],
+                    future: [],
+                    someday: []
+                },
+                lastUpdated: new Date().toISOString()
+            }
         };
         
         // Current state - will be populated from storage
@@ -147,12 +161,17 @@ class DataManager {
             console.log('DataManager: Loading data from storage...');
             
             const data = await this._getFromStorage([
-                'settings', 'folios', 'conversations', 'artifacts', 
+                'settings', 'folios', 'conversations', 'artifacts', 'tasks',
                 'currentFolio', 'recentFolios', 'recentConversations', 'artifactTemplates'
             ]);
             
             // Merge with defaults to ensure all properties exist
             this.state = this._mergeWithDefaults(data);
+            
+            // Convert task storage from plain objects to Maps/Sets
+            if (this.state.tasks) {
+                this.state.tasks = this._deserializeTasks(this.state.tasks);
+            }
             
             // Run data migrations if needed
             await this._runMigrations();
@@ -206,6 +225,7 @@ class DataManager {
                 conversations: this.state.conversations,
                 artifacts: this.state.artifacts,
                 artifactTemplates: this.state.artifactTemplates,
+                tasks: this._serializeTasks(this.state.tasks),
                 currentFolio: this.state.currentFolio,
                 recentFolios: this.state.recentFolios,
                 recentConversations: this.state.recentConversations
@@ -320,6 +340,84 @@ class DataManager {
         } finally {
             this.isProcessingTransaction = false;
         }
+    }
+    
+    /**
+     * Task storage serialization methods
+     */
+    _serializeTasks(tasks) {
+        if (!tasks) return null;
+        
+        const serialized = {
+            items: {},
+            timeline: {},
+            lastUpdated: tasks.lastUpdated
+        };
+        
+        // Convert Map to plain object
+        if (tasks.items instanceof Map) {
+            for (const [key, value] of tasks.items) {
+                serialized.items[key] = value;
+            }
+        } else {
+            serialized.items = tasks.items || {};
+        }
+        
+        // Convert Sets to arrays
+        if (tasks.timeline) {
+            for (const [category, items] of Object.entries(tasks.timeline)) {
+                if (items instanceof Set) {
+                    serialized.timeline[category] = Array.from(items);
+                } else {
+                    serialized.timeline[category] = Array.isArray(items) ? items : [];
+                }
+            }
+        }
+        
+        return serialized;
+    }
+    
+    _deserializeTasks(tasks) {
+        if (!tasks) {
+            return {
+                items: new Map(),
+                timeline: {
+                    overdue: new Set(),
+                    today: new Set(),
+                    tomorrow: new Set(),
+                    thisWeek: new Set(),
+                    future: new Set(),
+                    someday: new Set()
+                },
+                lastUpdated: new Date().toISOString()
+            };
+        }
+        
+        const deserialized = {
+            lastUpdated: tasks.lastUpdated || new Date().toISOString()
+        };
+        
+        // Convert plain object to Map
+        deserialized.items = new Map();
+        if (tasks.items && typeof tasks.items === 'object') {
+            for (const [key, value] of Object.entries(tasks.items)) {
+                deserialized.items.set(key, value);
+            }
+        }
+        
+        // Convert arrays to Sets
+        deserialized.timeline = {};
+        const categories = ['overdue', 'today', 'tomorrow', 'thisWeek', 'future', 'someday'];
+        for (const category of categories) {
+            const items = tasks.timeline?.[category];
+            if (Array.isArray(items)) {
+                deserialized.timeline[category] = new Set(items);
+            } else {
+                deserialized.timeline[category] = new Set();
+            }
+        }
+        
+        return deserialized;
     }
     
     /**

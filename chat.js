@@ -146,6 +146,13 @@ async function addMessage(folioId, role, content, options = {}) {
             displayMessage(message);
             scrollToBottom();
             
+            // Trigger task extraction for user messages
+            if (role === 'user' && window.taskManager) {
+                window.dispatchEvent(new CustomEvent('branestawm:messageAdded', {
+                    detail: { message, folioId }
+                }));
+            }
+            
             return message;
         } else {
             // Fallback to legacy method
