@@ -3174,6 +3174,891 @@ class TaskManager {
     }
     
     /**
+     * Cross-folio task synchronization
+     */
+    async syncTaskAcrossFolios(taskId, targetFolioIds = []) {
+        const state = this.dataManager.getState();
+        const task = state.tasks?.items.get(taskId);
+        
+        if (!task || !targetFolioIds.length) return false;
+        
+        const syncedTasks = [];
+        
+        for (const folioId of targetFolioIds) {
+            if (!state.folios[folioId]) continue;
+            
+            // Create synchronized task copy
+            const syncedTask = {
+                ...task,
+                id: this.generateTaskId(),
+                originalTaskId: taskId,
+                sourcefolio: task.folioId,
+                folioId: folioId,
+                syncStatus: 'synced',
+                lastSyncAt: new Date().toISOString(),
+                syncedAt: new Date().toISOString()
+            };
+            
+            // Update sync relationships
+            if (!task.syncedTo) task.syncedTo = [];
+            task.syncedTo.push(syncedTask.id);
+            
+            state.tasks.items.set(syncedTask.id, syncedTask);
+            syncedTasks.push(syncedTask);
+        }
+        
+        await this.dataManager.saveData();
+        this.triggerTimelineUIUpdate();
+        
+        return syncedTasks;
+    }
+    
+    /**
+     * Get all tasks across folios
+     */
+    getAllTasksAcrossFolios(filterOptions = {}) {
+        const state = this.dataManager.getState();
+        const allTasks = [];
+        
+        if (!state.tasks?.items) return allTasks;
+        
+        for (const [taskId, task] of state.tasks.items) {
+            // Apply filters
+            if (filterOptions.folioIds && !filterOptions.folioIds.includes(task.folioId)) continue;
+            if (filterOptions.category && task.category !== filterOptions.category) continue;
+            if (filterOptions.status && task.status !== filterOptions.status) continue;
+            if (filterOptions.assignedTo && task.assignedTo !== filterOptions.assignedTo) continue;
+            
+            // Apply search query
+            if (filterOptions.searchQuery) {
+                const query = filterOptions.searchQuery.toLowerCase();
+                const searchableText = `${task.title} ${task.description || ''}`.toLowerCase();
+                if (!searchableText.includes(query)) continue;
+            }
+            
+            allTasks.push(task);
+        }
+        
+        return allTasks.sort((a, b) => {
+            // Priority: overdue > today > tomorrow > future
+            const priorityOrder = ['overdue', 'today', 'tomorrow', 'thisWeek', 'future', 'someday'];
+            const aPriority = priorityOrder.indexOf(a.timeCategory || 'future');
+            const bPriority = priorityOrder.indexOf(b.timeCategory || 'future');
+            
+            if (aPriority !== bPriority) return aPriority - bPriority;
+            
+            // Secondary sort by creation date
+            return new Date(b.createdAt) - new Date(a.createdAt);
+        });
+    }
+    
+    /**
+     * Show unified task view across all folios
+     */
+    showUnifiedTaskView() {
+        const existingView = document.querySelector('#unified-task-view');
+        if (existingView) {
+            existingView.remove();
+        }
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'unified-task-view';
+        overlay.className = 'unified-view-overlay';
+        
+        overlay.innerHTML = `
+            <div class="unified-view-dialog">
+                <div class="unified-view-header">
+                    <h2>All Tasks Across Folios</h2>
+                    <button class="close-unified-view" onclick="document.getElementById('unified-task-view').remove()">×</button>
+                </div>
+                
+                <div class="unified-view-filters">
+                    <div class="filter-row">
+                        <input type="text" id="unified-search" placeholder="Search tasks..." class="search-input">
+                        <select id="folio-filter" class="filter-select">
+                            <option value="">All Folios</option>
+                        </select>
+                        <select id="category-filter" class="filter-select">
+                            <option value="">All Categories</option>
+                            <option value="work">Work</option>
+                            <option value="personal">Personal</option>
+                            <option value="creative">Creative</option>
+                            <option value="administrative">Admin</option>
+                        </select>
+                        <select id="status-filter" class="filter-select">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="unified-tasks-container" id="unified-tasks-list">
+                    <!-- Tasks will be populated here -->
+                </div>
+            </div>
+        `;
+        
+        this.injectUnifiedViewStyles();
+        document.body.appendChild(overlay);
+        
+        this.populateUnifiedTaskView();
+        this.setupUnifiedViewFilters();
+    }
+    
+    /**
+     * Populate the unified task view
+     */
+    populateUnifiedTaskView() {
+        const state = this.dataManager.getState();
+        const container = document.getElementById('unified-tasks-list');
+        const folioFilter = document.getElementById('folio-filter');
+        
+        // Populate folio filter options
+        for (const [folioId, folio] of Object.entries(state.folios)) {
+            const option = document.createElement('option');
+            option.value = folioId;
+            option.textContent = folio.title;
+            folioFilter.appendChild(option);
+        }
+        
+        this.updateUnifiedTaskDisplay();
+    }
+    
+    /**
+     * Update the unified task display based on filters
+     */
+    updateUnifiedTaskDisplay() {
+        const container = document.getElementById('unified-tasks-list');
+        if (!container) return;
+        
+        const filters = {
+            searchQuery: document.getElementById('unified-search')?.value || '',
+            folioIds: document.getElementById('folio-filter')?.value ? [document.getElementById('folio-filter').value] : null,
+            category: document.getElementById('category-filter')?.value || null,
+            status: document.getElementById('status-filter')?.value || null
+        };
+        
+        const tasks = this.getAllTasksAcrossFolios(filters);
+        const state = this.dataManager.getState();
+        
+        if (tasks.length === 0) {
+            container.innerHTML = '<div class="no-tasks-message">No tasks match the current filters</div>';
+            return;
+        }
+        
+        const tasksByFolio = {};
+        tasks.forEach(task => {
+            if (!tasksByFolio[task.folioId]) {
+                tasksByFolio[task.folioId] = [];
+            }
+            tasksByFolio[task.folioId].push(task);
+        });
+        
+        let html = '';
+        
+        for (const [folioId, folioTasks] of Object.entries(tasksByFolio)) {
+            const folio = state.folios[folioId];
+            if (!folio) continue;
+            
+            html += `
+                <div class="folio-task-section">
+                    <div class="folio-header">
+                        <span class="folio-name">${folio.title}</span>
+                        <span class="task-count">${folioTasks.length} task${folioTasks.length > 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="folio-tasks">
+                        ${folioTasks.map(task => this.renderUnifiedTaskItem(task)).join('')}
+                    </div>
+                </div>
+            `;
+        }
+        
+        container.innerHTML = html;
+    }
+    
+    /**
+     * Render a task item in the unified view
+     */
+    renderUnifiedTaskItem(task) {
+        const categoryInfo = this.getCategoryInfo(task.category || 'general');
+        const isOverdue = task.timeCategory === 'overdue';
+        const hasDeadline = task.scheduledFor || task.deadline;
+        
+        return `
+            <div class="unified-task-item ${task.status}" data-task-id="${task.id}">
+                <div class="task-main-content">
+                    <div class="task-header-row">
+                        <div class="task-category" style="color: ${categoryInfo.color};">
+                            ${categoryInfo.icon} ${categoryInfo.name}
+                        </div>
+                        <div class="task-status ${task.status}">${task.status}</div>
+                    </div>
+                    
+                    <div class="task-title" onclick="window.taskManager.navigateToTask('${task.id}')">
+                        ${task.title}
+                    </div>
+                    
+                    ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                    
+                    <div class="task-metadata">
+                        ${hasDeadline ? `
+                            <span class="task-deadline ${isOverdue ? 'overdue' : ''}">
+                                📅 ${task.scheduledFor || task.deadline}
+                            </span>
+                        ` : ''}
+                        
+                        ${task.timeTracking?.estimatedMinutes ? `
+                            <span class="task-estimate">
+                                ⏱️ ~${Math.round(task.timeTracking.estimatedMinutes / 60 * 10) / 10}h
+                            </span>
+                        ` : ''}
+                        
+                        ${task.dependencies?.length ? `
+                            <span class="task-dependencies">
+                                🔗 ${task.dependencies.length} dependencies
+                            </span>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <div class="task-actions">
+                    <button onclick="window.taskManager.showTaskActionMenu('${task.id}')" class="task-action-btn">
+                        ⋮
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Setup unified view filters
+     */
+    setupUnifiedViewFilters() {
+        const searchInput = document.getElementById('unified-search');
+        const folioFilter = document.getElementById('folio-filter');
+        const categoryFilter = document.getElementById('category-filter');
+        const statusFilter = document.getElementById('status-filter');
+        
+        const updateDisplay = () => this.updateUnifiedTaskDisplay();
+        
+        searchInput?.addEventListener('input', updateDisplay);
+        folioFilter?.addEventListener('change', updateDisplay);
+        categoryFilter?.addEventListener('change', updateDisplay);
+        statusFilter?.addEventListener('change', updateDisplay);
+    }
+    
+    /**
+     * Route task to best folio based on context
+     */
+    suggestBestFolioForTask(taskText, context = '') {
+        const state = this.dataManager.getState();
+        const suggestions = [];
+        
+        // Analyze task content
+        const taskCategory = this.categorizeTask(taskText, context);
+        const taskKeywords = this.extractKeywords(taskText + ' ' + context);
+        
+        // Score each folio based on relevance
+        for (const [folioId, folio] of Object.entries(state.folios)) {
+            if (folioId === 'general') continue; // Skip general folio for routing
+            
+            let score = 0;
+            let reasons = [];
+            
+            // Check folio title and description
+            const folioKeywords = this.extractKeywords(
+                `${folio.title} ${folio.description || ''} ${folio.guidelines || ''}`
+            );
+            
+            const keywordOverlap = this.calculateSimilarity(taskKeywords, folioKeywords);
+            if (keywordOverlap > 0.2) {
+                score += keywordOverlap * 50;
+                reasons.push(`Keyword match (${Math.round(keywordOverlap * 100)}%)`);
+            }
+            
+            // Check existing tasks in folio for category patterns
+            const folioTasks = [...(state.tasks?.items || new Map()).values()]
+                .filter(task => task.folioId === folioId);
+            
+            const categoryMatch = folioTasks.some(task => task.category === taskCategory);
+            if (categoryMatch) {
+                score += 30;
+                reasons.push(`Similar tasks exist (${taskCategory})`);
+            }
+            
+            // Check persona assignment match
+            if (folio.assignedPersona) {
+                const persona = state.settings?.personas[folio.assignedPersona];
+                if (persona) {
+                    const personaKeywords = this.extractKeywords(
+                        `${persona.roleContext} ${persona.identity}`
+                    );
+                    const personaOverlap = this.calculateSimilarity(taskKeywords, personaKeywords);
+                    if (personaOverlap > 0.15) {
+                        score += personaOverlap * 25;
+                        reasons.push(`Persona expertise match`);
+                    }
+                }
+            }
+            
+            // Check recent activity in folio
+            const recentActivity = folio.lastUsed && 
+                (Date.now() - new Date(folio.lastUsed)) < (7 * 24 * 60 * 60 * 1000); // 7 days
+            if (recentActivity) {
+                score += 10;
+                reasons.push('Recently active folio');
+            }
+            
+            if (score > 20) {
+                suggestions.push({
+                    folioId,
+                    folio,
+                    score: Math.round(score),
+                    reasons,
+                    confidence: Math.min(score / 100, 1.0)
+                });
+            }
+        }
+        
+        return suggestions
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3);
+    }
+    
+    /**
+     * Create task dependency relationship
+     */
+    async createTaskDependency(taskId, dependsOnTaskId, dependencyType = 'blocks') {
+        const state = this.dataManager.getState();
+        const task = state.tasks?.items.get(taskId);
+        const dependsOnTask = state.tasks?.items.get(dependsOnTaskId);
+        
+        if (!task || !dependsOnTask) return false;
+        
+        // Initialize dependencies
+        if (!task.dependencies) task.dependencies = [];
+        if (!dependsOnTask.dependents) dependsOnTask.dependents = [];
+        
+        // Create dependency relationship
+        const dependency = {
+            taskId: dependsOnTaskId,
+            type: dependencyType,
+            createdAt: new Date().toISOString(),
+            folioId: dependsOnTask.folioId
+        };
+        
+        const dependent = {
+            taskId: taskId,
+            type: dependencyType,
+            createdAt: new Date().toISOString(),
+            folioId: task.folioId
+        };
+        
+        // Avoid duplicates
+        const existingDep = task.dependencies.find(dep => dep.taskId === dependsOnTaskId);
+        if (!existingDep) {
+            task.dependencies.push(dependency);
+            dependsOnTask.dependents.push(dependent);
+        }
+        
+        await this.dataManager.saveData();
+        
+        // Check if task is now unblocked
+        if (dependsOnTask.status === 'completed') {
+            this.checkTaskUnblocked(taskId);
+        }
+        
+        return true;
+    }
+    
+    /**
+     * Check if task is unblocked and notify
+     */
+    async checkTaskUnblocked(taskId) {
+        const state = this.dataManager.getState();
+        const task = state.tasks?.items.get(taskId);
+        
+        if (!task || !task.dependencies) return;
+        
+        const blockingDeps = task.dependencies.filter(dep => 
+            dep.type === 'blocks' || dep.type === 'requires'
+        );
+        
+        const allResolved = blockingDeps.every(dep => {
+            const dependencyTask = state.tasks.items.get(dep.taskId);
+            return dependencyTask && dependencyTask.status === 'completed';
+        });
+        
+        if (allResolved && task.status !== 'completed') {
+            // Task is now unblocked - send notification
+            this.showTaskUnblockedNotification(task);
+        }
+    }
+    
+    /**
+     * Show task unblocked notification
+     */
+    showTaskUnblockedNotification(task) {
+        const notification = document.createElement('div');
+        notification.className = 'task-notification task-unblocked-notification';
+        notification.innerHTML = `
+            <div class="notification-header">
+                <span class="notification-icon">🔓</span>
+                <span class="notification-title">Task Unblocked!</span>
+                <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+            </div>
+            <div class="notification-body">
+                <div class="task-title">${task.title}</div>
+                <div class="task-message">All dependencies completed - ready to work on!</div>
+                <div class="notification-actions">
+                    <button onclick="window.taskManager.navigateToTask('${task.id}')" class="btn-primary">View Task</button>
+                    <button onclick="window.taskManager.startTaskTimer('${task.id}')" class="btn-secondary">Start Working</button>
+                </div>
+            </div>
+        `;
+        
+        this.injectNotificationStyles();
+        document.body.appendChild(notification);
+        
+        // Auto-remove after 8 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 8000);
+    }
+    
+    /**
+     * Get folio-specific task templates
+     */
+    getFolioTaskTemplates(folioId) {
+        const state = this.dataManager.getState();
+        const folio = state.folios[folioId];
+        
+        if (!folio) return [];
+        
+        // Initialize folio templates if not exist
+        if (!state.folioTaskTemplates) {
+            state.folioTaskTemplates = {};
+        }
+        
+        if (!state.folioTaskTemplates[folioId]) {
+            state.folioTaskTemplates[folioId] = this.generateDefaultFolioTemplates(folio);
+        }
+        
+        return state.folioTaskTemplates[folioId];
+    }
+    
+    /**
+     * Generate default templates based on folio context
+     */
+    generateDefaultFolioTemplates(folio) {
+        const templates = [];
+        const folioText = `${folio.title} ${folio.description || ''} ${folio.guidelines || ''}`.toLowerCase();
+        
+        // Analyze folio context to suggest relevant templates
+        if (/project|development|coding|software/g.test(folioText)) {
+            templates.push({
+                type: 'project-task',
+                name: 'Development Task',
+                icon: '⚡',
+                description: 'Software development task',
+                subtasks: [
+                    'Plan implementation approach',
+                    'Write code and tests',
+                    'Review and refactor',
+                    'Test thoroughly',
+                    'Document changes'
+                ],
+                estimatedTime: '2-4 hours',
+                category: 'work'
+            });
+        }
+        
+        if (/research|analysis|study/g.test(folioText)) {
+            templates.push({
+                type: 'research-deep',
+                name: 'Deep Research',
+                icon: '🔬',
+                description: 'Comprehensive research task',
+                subtasks: [
+                    'Define research scope and questions',
+                    'Identify authoritative sources',
+                    'Conduct systematic review',
+                    'Analyze and synthesize findings',
+                    'Create summary report'
+                ],
+                estimatedTime: '3-6 hours',
+                category: 'work'
+            });
+        }
+        
+        if (/client|customer|business/g.test(folioText)) {
+            templates.push({
+                type: 'client-interaction',
+                name: 'Client Task',
+                icon: '🤝',
+                description: 'Client-related task',
+                subtasks: [
+                    'Prepare client materials',
+                    'Schedule appropriate time',
+                    'Conduct interaction/meeting',
+                    'Follow up on action items',
+                    'Update client records'
+                ],
+                estimatedTime: '1-2 hours',
+                category: 'work'
+            });
+        }
+        
+        // Always include generic templates
+        templates.push({
+            type: 'quick-task',
+            name: 'Quick Task',
+            icon: '⚡',
+            description: 'Simple task for this folio',
+            subtasks: [
+                'Complete the main action',
+                'Verify results',
+                'Update status'
+            ],
+            estimatedTime: '15-30 minutes',
+            category: 'general'
+        });
+        
+        return templates;
+    }
+    
+    /**
+     * Migrate task to different folio
+     */
+    async migrateTaskToFolio(taskId, targetFolioId, options = {}) {
+        const state = this.dataManager.getState();
+        const task = state.tasks?.items.get(taskId);
+        const targetFolio = state.folios[targetFolioId];
+        
+        if (!task || !targetFolio) return false;
+        
+        // Create migration record
+        const migration = {
+            taskId: taskId,
+            fromFolio: task.folioId,
+            toFolio: targetFolioId,
+            migratedAt: new Date().toISOString(),
+            reason: options.reason || 'Manual migration',
+            preserveOriginal: options.preserveOriginal || false
+        };
+        
+        if (options.preserveOriginal) {
+            // Create copy in target folio
+            const migratedTask = {
+                ...task,
+                id: this.generateTaskId(),
+                folioId: targetFolioId,
+                originalTaskId: taskId,
+                migratedFrom: task.folioId,
+                createdAt: new Date().toISOString(),
+                status: 'pending'
+            };
+            
+            state.tasks.items.set(migratedTask.id, migratedTask);
+            
+            // Mark original as migrated
+            task.migratedTo = migratedTask.id;
+            task.migrationRecord = migration;
+        } else {
+            // Move task to target folio
+            task.folioId = targetFolioId;
+            task.migrationRecord = migration;
+        }
+        
+        await this.dataManager.saveData();
+        this.triggerTimelineUIUpdate();
+        
+        return true;
+    }
+    
+    /**
+     * Duplicate task with options
+     */
+    async duplicateTask(taskId, options = {}) {
+        const state = this.dataManager.getState();
+        const originalTask = state.tasks?.items.get(taskId);
+        
+        if (!originalTask) return null;
+        
+        const duplicatedTask = {
+            ...originalTask,
+            id: this.generateTaskId(),
+            title: options.newTitle || `${originalTask.title} (Copy)`,
+            description: options.newDescription || originalTask.description,
+            folioId: options.targetFolioId || originalTask.folioId,
+            status: 'pending',
+            createdAt: new Date().toISOString(),
+            duplicatedFrom: taskId,
+            
+            // Reset tracking data
+            timeTracking: null,
+            completedAt: null,
+            startedAt: null
+        };
+        
+        // Handle subtasks if they exist
+        if (originalTask.subtasks && options.includeSubtasks !== false) {
+            duplicatedTask.subtasks = originalTask.subtasks.map(subtask => ({
+                ...subtask,
+                id: this.generateTaskId(),
+                status: 'pending',
+                createdAt: new Date().toISOString(),
+                parentTaskId: duplicatedTask.id
+            }));
+        }
+        
+        state.tasks.items.set(duplicatedTask.id, duplicatedTask);
+        await this.dataManager.saveData();
+        this.triggerTimelineUIUpdate();
+        
+        return duplicatedTask;
+    }
+    
+    /**
+     * Navigate to task in its folio
+     */
+    navigateToTask(taskId) {
+        const state = this.dataManager.getState();
+        const task = state.tasks?.items.get(taskId);
+        
+        if (!task) return false;
+        
+        // Switch to task's folio if different from current
+        if (state.currentFolio !== task.folioId) {
+            // Emit event for folio switching
+            window.dispatchEvent(new CustomEvent('switchFolio', {
+                detail: { folioId: task.folioId, focusTaskId: taskId }
+            }));
+        }
+        
+        // Highlight task in timeline
+        setTimeout(() => {
+            const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+            if (taskElement) {
+                taskElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                taskElement.classList.add('task-highlighted');
+                setTimeout(() => taskElement.classList.remove('task-highlighted'), 3000);
+            }
+        }, 500);
+        
+        return true;
+    }
+    
+    /**
+     * Show task action menu for cross-folio operations
+     */
+    showTaskActionMenu(taskId) {
+        const existingMenu = document.querySelector('.task-action-menu');
+        if (existingMenu) existingMenu.remove();
+        
+        const state = this.dataManager.getState();
+        const task = state.tasks?.items.get(taskId);
+        if (!task) return;
+        
+        const menu = document.createElement('div');
+        menu.className = 'task-action-menu';
+        
+        const availableFolios = Object.entries(state.folios)
+            .filter(([folioId]) => folioId !== task.folioId)
+            .map(([folioId, folio]) => `<option value="${folioId}">${folio.title}</option>`)
+            .join('');
+        
+        menu.innerHTML = `
+            <div class="action-menu-content">
+                <div class="menu-header">
+                    <span class="menu-title">Task Actions</span>
+                    <button class="close-menu" onclick="this.closest('.task-action-menu').remove()">×</button>
+                </div>
+                
+                <div class="menu-actions">
+                    <button onclick="window.taskManager.navigateToTask('${taskId}')" class="menu-action">
+                        👁️ View in Folio
+                    </button>
+                    
+                    <button onclick="window.taskManager.startTaskTimer('${taskId}')" class="menu-action">
+                        ⏱️ Start Timer
+                    </button>
+                    
+                    <button onclick="window.taskManager.showDuplicateDialog('${taskId}')" class="menu-action">
+                        📋 Duplicate Task
+                    </button>
+                    
+                    <div class="menu-action-group">
+                        <label>Migrate to Folio:</label>
+                        <select id="migrate-folio-${taskId}" class="folio-select">
+                            <option value="">Choose folio...</option>
+                            ${availableFolios}
+                        </select>
+                        <button onclick="window.taskManager.performMigration('${taskId}')" class="menu-action-btn">
+                            Migrate
+                        </button>
+                    </div>
+                    
+                    <div class="menu-action-group">
+                        <label>Sync to Folio:</label>
+                        <select id="sync-folio-${taskId}" class="folio-select">
+                            <option value="">Choose folio...</option>
+                            ${availableFolios}
+                        </select>
+                        <button onclick="window.taskManager.performSync('${taskId}')" class="menu-action-btn">
+                            Sync
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        this.injectTaskMenuStyles();
+        document.body.appendChild(menu);
+        
+        // Position menu near click point or center if not available
+        menu.style.position = 'fixed';
+        menu.style.top = '50%';
+        menu.style.left = '50%';
+        menu.style.transform = 'translate(-50%, -50%)';
+        menu.style.zIndex = '10000';
+    }
+    
+    /**
+     * Perform task migration from action menu
+     */
+    async performMigration(taskId) {
+        const targetFolioId = document.getElementById(`migrate-folio-${taskId}`)?.value;
+        if (!targetFolioId) return;
+        
+        const success = await this.migrateTaskToFolio(taskId, targetFolioId, {
+            reason: 'User-initiated migration from unified view'
+        });
+        
+        if (success) {
+            this.showSuccessNotification('Task migrated successfully');
+            this.updateUnifiedTaskDisplay();
+        }
+        
+        document.querySelector('.task-action-menu')?.remove();
+    }
+    
+    /**
+     * Perform task sync from action menu
+     */
+    async performSync(taskId) {
+        const targetFolioId = document.getElementById(`sync-folio-${taskId}`)?.value;
+        if (!targetFolioId) return;
+        
+        const syncedTasks = await this.syncTaskAcrossFolios(taskId, [targetFolioId]);
+        
+        if (syncedTasks && syncedTasks.length > 0) {
+            this.showSuccessNotification('Task synced successfully');
+            this.updateUnifiedTaskDisplay();
+        }
+        
+        document.querySelector('.task-action-menu')?.remove();
+    }
+    
+    /**
+     * Show duplicate task dialog
+     */
+    showDuplicateDialog(taskId) {
+        const state = this.dataManager.getState();
+        const task = state.tasks?.items.get(taskId);
+        if (!task) return;
+        
+        const dialog = document.createElement('div');
+        dialog.className = 'duplicate-task-dialog';
+        
+        const availableFolios = Object.entries(state.folios)
+            .map(([folioId, folio]) => `<option value="${folioId}" ${folioId === task.folioId ? 'selected' : ''}>${folio.title}</option>`)
+            .join('');
+        
+        dialog.innerHTML = `
+            <div class="dialog-content">
+                <div class="dialog-header">
+                    <h3>Duplicate Task</h3>
+                    <button onclick="this.closest('.duplicate-task-dialog').remove()">×</button>
+                </div>
+                
+                <div class="dialog-body">
+                    <label>New Title:</label>
+                    <input type="text" id="duplicate-title" value="${task.title} (Copy)" class="text-input">
+                    
+                    <label>Target Folio:</label>
+                    <select id="duplicate-folio" class="folio-select">
+                        ${availableFolios}
+                    </select>
+                    
+                    <label>
+                        <input type="checkbox" id="include-subtasks" checked>
+                        Include subtasks
+                    </label>
+                </div>
+                
+                <div class="dialog-actions">
+                    <button onclick="window.taskManager.performDuplication('${taskId}')" class="btn-primary">
+                        Duplicate
+                    </button>
+                    <button onclick="this.closest('.duplicate-task-dialog').remove()" class="btn-secondary">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(dialog);
+        document.querySelector('.task-action-menu')?.remove();
+    }
+    
+    /**
+     * Perform task duplication
+     */
+    async performDuplication(taskId) {
+        const newTitle = document.getElementById('duplicate-title')?.value;
+        const targetFolioId = document.getElementById('duplicate-folio')?.value;
+        const includeSubtasks = document.getElementById('include-subtasks')?.checked;
+        
+        if (!newTitle || !targetFolioId) return;
+        
+        const duplicatedTask = await this.duplicateTask(taskId, {
+            newTitle,
+            targetFolioId,
+            includeSubtasks
+        });
+        
+        if (duplicatedTask) {
+            this.showSuccessNotification('Task duplicated successfully');
+            this.updateUnifiedTaskDisplay();
+        }
+        
+        document.querySelector('.duplicate-task-dialog')?.remove();
+    }
+    
+    /**
+     * Show success notification
+     */
+    showSuccessNotification(message) {
+        const notification = document.createElement('div');
+        notification.className = 'success-notification';
+        notification.innerHTML = `
+            <div class="notification-content">
+                <span class="success-icon">✅</span>
+                <span class="success-message">${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => notification.remove(), 3000);
+    }
+    
+    /**
      * Update planning dialog to show created subtasks
      */
     updatePlanningDialogWithSubtasks(dialog, createdSubtasks) {
@@ -5673,6 +6558,572 @@ class TaskManager {
             }
         `;
         
+        document.head.appendChild(styles);
+    }
+    
+    /**
+     * Inject styles for unified task view
+     */
+    injectUnifiedViewStyles() {
+        const styleId = 'unified-view-styles';
+        if (document.getElementById(styleId)) return;
+
+        const styles = document.createElement('style');
+        styles.id = styleId;
+        styles.textContent = `
+            .unified-view-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                backdrop-filter: blur(4px);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .unified-view-dialog {
+                background: white;
+                border-radius: 12px;
+                width: 90vw;
+                max-width: 1200px;
+                height: 80vh;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+                overflow: hidden;
+            }
+
+            .unified-view-header {
+                padding: 24px 32px;
+                border-bottom: 1px solid #e5e7eb;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: #f9fafb;
+            }
+
+            .unified-view-header h2 {
+                margin: 0;
+                color: #1f2937;
+                font-size: 24px;
+                font-weight: 600;
+            }
+
+            .close-unified-view {
+                background: none;
+                border: none;
+                font-size: 24px;
+                color: #6b7280;
+                cursor: pointer;
+                padding: 4px;
+                border-radius: 6px;
+                transition: all 0.2s;
+            }
+
+            .close-unified-view:hover {
+                background: #e5e7eb;
+                color: #374151;
+            }
+
+            .unified-view-filters {
+                padding: 16px 32px;
+                border-bottom: 1px solid #e5e7eb;
+                background: white;
+            }
+
+            .filter-row {
+                display: flex;
+                gap: 16px;
+                align-items: center;
+            }
+
+            .search-input,
+            .filter-select {
+                padding: 8px 12px;
+                border: 1px solid #d1d5db;
+                border-radius: 6px;
+                font-size: 14px;
+                outline: none;
+                transition: border-color 0.2s;
+            }
+
+            .search-input {
+                flex: 1;
+                min-width: 200px;
+            }
+
+            .search-input:focus,
+            .filter-select:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+            .filter-select {
+                min-width: 120px;
+            }
+
+            .unified-tasks-container {
+                flex: 1;
+                overflow-y: auto;
+                padding: 24px 32px;
+                background: #f9fafb;
+            }
+
+            .folio-task-section {
+                margin-bottom: 32px;
+            }
+
+            .folio-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 16px;
+                padding: 12px 0;
+                border-bottom: 2px solid #e5e7eb;
+            }
+
+            .folio-name {
+                font-size: 18px;
+                font-weight: 600;
+                color: #1f2937;
+            }
+
+            .task-count {
+                color: #6b7280;
+                font-size: 14px;
+                background: #e5e7eb;
+                padding: 4px 12px;
+                border-radius: 12px;
+            }
+
+            .folio-tasks {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+            }
+
+            .unified-task-item {
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                padding: 16px;
+                display: flex;
+                align-items: flex-start;
+                justify-content: space-between;
+                transition: all 0.2s;
+                cursor: pointer;
+            }
+
+            .unified-task-item:hover {
+                border-color: #3b82f6;
+                box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+            }
+
+            .unified-task-item.completed {
+                opacity: 0.7;
+                background: #f3f4f6;
+            }
+
+            .unified-task-item.in-progress {
+                border-left: 4px solid #3b82f6;
+            }
+
+            .task-main-content {
+                flex: 1;
+            }
+
+            .task-header-row {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                margin-bottom: 8px;
+            }
+
+            .task-category {
+                font-size: 12px;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .task-status {
+                font-size: 11px;
+                text-transform: uppercase;
+                font-weight: 600;
+                padding: 2px 8px;
+                border-radius: 10px;
+                background: #e5e7eb;
+                color: #6b7280;
+            }
+
+            .task-status.pending {
+                background: #fef3c7;
+                color: #d97706;
+            }
+
+            .task-status.in-progress {
+                background: #dbeafe;
+                color: #2563eb;
+            }
+
+            .task-status.completed {
+                background: #d1fae5;
+                color: #065f46;
+            }
+
+            .task-title {
+                font-size: 16px;
+                font-weight: 500;
+                color: #1f2937;
+                margin-bottom: 8px;
+                cursor: pointer;
+            }
+
+            .task-title:hover {
+                color: #3b82f6;
+            }
+
+            .task-description {
+                color: #6b7280;
+                font-size: 14px;
+                margin-bottom: 12px;
+                line-height: 1.4;
+            }
+
+            .task-metadata {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 12px;
+                font-size: 12px;
+            }
+
+            .task-deadline,
+            .task-estimate,
+            .task-dependencies {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                color: #6b7280;
+            }
+
+            .task-deadline.overdue {
+                color: #dc2626;
+                font-weight: 600;
+            }
+
+            .task-actions {
+                flex-shrink: 0;
+                margin-left: 16px;
+            }
+
+            .task-action-btn {
+                background: none;
+                border: none;
+                color: #6b7280;
+                font-size: 18px;
+                cursor: pointer;
+                padding: 4px;
+                border-radius: 4px;
+                transition: all 0.2s;
+            }
+
+            .task-action-btn:hover {
+                background: #f3f4f6;
+                color: #374151;
+            }
+
+            .no-tasks-message {
+                text-align: center;
+                color: #6b7280;
+                font-size: 16px;
+                padding: 48px;
+                background: white;
+                border-radius: 8px;
+                border: 1px dashed #d1d5db;
+            }
+
+            .task-highlighted {
+                animation: highlight 2s ease-in-out;
+                border-color: #3b82f6 !important;
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.3) !important;
+            }
+
+            @keyframes highlight {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.02); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(styles);
+    }
+
+    /**
+     * Inject styles for task action menu
+     */
+    injectTaskMenuStyles() {
+        const styleId = 'task-menu-styles';
+        if (document.getElementById(styleId)) return;
+
+        const styles = document.createElement('style');
+        styles.id = styleId;
+        styles.textContent = `
+            .task-action-menu {
+                position: fixed;
+                background: white;
+                border: 1px solid #e5e7eb;
+                border-radius: 8px;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+                z-index: 10001;
+                min-width: 280px;
+                overflow: hidden;
+            }
+
+            .action-menu-content {
+                padding: 0;
+            }
+
+            .menu-header {
+                background: #f9fafb;
+                padding: 12px 16px;
+                border-bottom: 1px solid #e5e7eb;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .menu-title {
+                font-weight: 600;
+                color: #1f2937;
+                font-size: 14px;
+            }
+
+            .close-menu {
+                background: none;
+                border: none;
+                color: #6b7280;
+                font-size: 18px;
+                cursor: pointer;
+                padding: 2px;
+                border-radius: 4px;
+            }
+
+            .close-menu:hover {
+                background: #e5e7eb;
+            }
+
+            .menu-actions {
+                padding: 8px 0;
+            }
+
+            .menu-action {
+                width: 100%;
+                background: none;
+                border: none;
+                padding: 12px 16px;
+                text-align: left;
+                cursor: pointer;
+                font-size: 14px;
+                color: #374151;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                transition: background-color 0.2s;
+            }
+
+            .menu-action:hover {
+                background: #f3f4f6;
+            }
+
+            .menu-action-group {
+                padding: 12px 16px;
+                border-top: 1px solid #f3f4f6;
+            }
+
+            .menu-action-group label {
+                display: block;
+                font-size: 12px;
+                color: #6b7280;
+                margin-bottom: 6px;
+                font-weight: 500;
+            }
+
+            .folio-select {
+                width: 100%;
+                padding: 6px 8px;
+                border: 1px solid #d1d5db;
+                border-radius: 4px;
+                font-size: 13px;
+                margin-bottom: 8px;
+            }
+
+            .menu-action-btn {
+                background: #3b82f6;
+                color: white;
+                border: none;
+                padding: 6px 12px;
+                border-radius: 4px;
+                font-size: 13px;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            }
+
+            .menu-action-btn:hover {
+                background: #2563eb;
+            }
+
+            .duplicate-task-dialog {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10002;
+            }
+
+            .dialog-content {
+                background: white;
+                border-radius: 8px;
+                width: 400px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+                overflow: hidden;
+            }
+
+            .dialog-header {
+                background: #f9fafb;
+                padding: 16px 20px;
+                border-bottom: 1px solid #e5e7eb;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+
+            .dialog-header h3 {
+                margin: 0;
+                font-size: 16px;
+                color: #1f2937;
+            }
+
+            .dialog-header button {
+                background: none;
+                border: none;
+                font-size: 18px;
+                color: #6b7280;
+                cursor: pointer;
+            }
+
+            .dialog-body {
+                padding: 20px;
+            }
+
+            .dialog-body label {
+                display: block;
+                margin-bottom: 6px;
+                font-size: 14px;
+                color: #374151;
+                font-weight: 500;
+            }
+
+            .text-input {
+                width: 100%;
+                padding: 8px 12px;
+                border: 1px solid #d1d5db;
+                border-radius: 6px;
+                margin-bottom: 16px;
+                font-size: 14px;
+            }
+
+            .text-input:focus {
+                outline: none;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            }
+
+            .dialog-actions {
+                padding: 16px 20px;
+                background: #f9fafb;
+                display: flex;
+                gap: 12px;
+                justify-content: flex-end;
+            }
+
+            .btn-primary {
+                background: #3b82f6;
+                color: white;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            }
+
+            .btn-primary:hover {
+                background: #2563eb;
+            }
+
+            .btn-secondary {
+                background: #f3f4f6;
+                color: #374151;
+                border: none;
+                padding: 8px 16px;
+                border-radius: 6px;
+                font-size: 14px;
+                cursor: pointer;
+                transition: background-color 0.2s;
+            }
+
+            .btn-secondary:hover {
+                background: #e5e7eb;
+            }
+
+            .success-notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #10b981;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+                z-index: 10003;
+                animation: slideIn 0.3s ease-out;
+            }
+
+            .notification-content {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .success-icon {
+                font-size: 16px;
+            }
+
+            .success-message {
+                font-size: 14px;
+                font-weight: 500;
+            }
+
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
         document.head.appendChild(styles);
     }
 }
