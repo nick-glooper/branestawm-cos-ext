@@ -149,6 +149,20 @@ class TaskManager {
     }
     
     /**
+     * Pause a task timer
+     */
+    async pauseTask(taskId) {
+        return await this.scheduler.pauseTaskTimer(taskId);
+    }
+    
+    /**
+     * Resume a paused task timer
+     */
+    async resumeTask(taskId) {
+        return await this.scheduler.resumeTaskTimer(taskId);
+    }
+    
+    /**
      * Get all tasks
      */
     getAllTasks() {
@@ -192,6 +206,13 @@ class TaskManager {
     }
     
     /**
+     * Scroll to and highlight a specific task
+     */
+    highlightTask(taskId) {
+        return this.renderer.scrollToAndHighlightTask(taskId);
+    }
+    
+    /**
      * Setup event listeners for task management
      */
     setupEventListeners() {
@@ -203,9 +224,18 @@ class TaskManager {
             } else if (e.target.matches('.btn-complete')) {
                 const taskId = e.target.dataset.taskId;
                 this.completeTask(taskId);
+            } else if (e.target.matches('.btn-pause')) {
+                const taskId = e.target.dataset.taskId;
+                this.pauseTask(taskId);
+            } else if (e.target.matches('.btn-resume')) {
+                const taskId = e.target.dataset.taskId;
+                this.resumeTask(taskId);
             } else if (e.target.matches('.btn-delete')) {
                 const taskId = e.target.dataset.taskId;
                 this.deleteTask(taskId);
+            } else if (e.target.matches('.btn-highlight')) {
+                const taskId = e.target.dataset.taskId;
+                this.highlightTask(taskId);
             }
         });
         

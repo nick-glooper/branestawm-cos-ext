@@ -61,12 +61,64 @@ class TaskScheduler {
                 startedAt: null,
                 completedAt: null,
                 actualMinutes: null,
-                accuracy: null
+                accuracy: null,
+                pausedAt: null,
+                totalPausedTime: 0,
+                isPaused: false
             };
         }
         
         task.timeTracking.startedAt = new Date().toISOString();
         task.status = 'in-progress';
+        
+        await this.dataManager.saveData();
+        this.triggerTimelineUIUpdate();
+        
+        return true;
+    }
+    
+    /**
+     * Pause a running task timer
+     */
+    async pauseTaskTimer(taskId) {
+        const state = this.dataManager.getState();
+        const task = state.tasks?.items.get(taskId);
+        
+        if (!task || task.status !== 'in-progress' || !task.timeTracking?.startedAt) {
+            return false;
+        }
+        
+        if (task.timeTracking.isPaused) {
+            return false; // Already paused
+        }
+        
+        task.timeTracking.pausedAt = new Date().toISOString();
+        task.timeTracking.isPaused = true;
+        
+        await this.dataManager.saveData();
+        this.triggerTimelineUIUpdate();
+        
+        return true;
+    }
+    
+    /**
+     * Resume a paused task timer
+     */
+    async resumeTaskTimer(taskId) {
+        const state = this.dataManager.getState();
+        const task = state.tasks?.items.get(taskId);
+        
+        if (!task || task.status !== 'in-progress' || !task.timeTracking?.isPaused) {
+            return false;
+        }
+        
+        // Calculate paused duration and add to total
+        const pausedDuration = new Date() - new Date(task.timeTracking.pausedAt);
+        task.timeTracking.totalPausedTime += pausedDuration;
+        
+        // Reset pause state
+        task.timeTracking.pausedAt = null;
+        task.timeTracking.isPaused = false;
         
         await this.dataManager.saveData();
         this.triggerTimelineUIUpdate();

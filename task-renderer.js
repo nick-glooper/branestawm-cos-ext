@@ -389,6 +389,39 @@ class TaskRenderer {
             .task-confirmation-actions .btn.primary:hover {
                 background: #2563eb;
             }
+
+            /* Task highlight animation */
+            .task-highlighted {
+                animation: task-highlight 3s ease-in-out;
+                background: linear-gradient(90deg, #fef3c7, #fbbf24, #fef3c7);
+                background-size: 200% 200%;
+                border: 2px solid #f59e0b;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+            }
+
+            @keyframes task-highlight {
+                0% {
+                    background-position: 0% 50%;
+                    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
+                }
+                25% {
+                    background-position: 100% 50%;
+                    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0.3);
+                }
+                50% {
+                    background-position: 0% 50%;
+                    box-shadow: 0 0 0 15px rgba(245, 158, 11, 0.2);
+                }
+                75% {
+                    background-position: 100% 50%;
+                    box-shadow: 0 0 0 10px rgba(245, 158, 11, 0.1);
+                }
+                100% {
+                    background-position: 0% 50%;
+                    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+                }
+            }
         `;
         
         document.head.appendChild(styles);
@@ -458,6 +491,33 @@ class TaskRenderer {
             'completed': '✅ Completed'
         };
         return statusMap[status] || status;
+    }
+    
+    /**
+     * Scroll to and highlight a specific task
+     */
+    scrollToAndHighlightTask(taskId) {
+        const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
+        
+        if (taskElement) {
+            // Scroll the task into view
+            taskElement.scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'center' 
+            });
+            
+            // Add highlight effect
+            taskElement.classList.add('task-highlighted');
+            
+            // Remove highlight after a few seconds
+            setTimeout(() => {
+                taskElement.classList.remove('task-highlighted');
+            }, 3000);
+            
+            return true;
+        }
+        
+        return false;
     }
     
     /**

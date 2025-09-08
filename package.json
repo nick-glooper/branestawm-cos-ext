@@ -1,0 +1,54 @@
+{
+  "name": "branestawm-extension",
+  "version": "1.0.0",
+  "description": "Your indispensable AI Chief of Staff - cognitive prosthetic for neurodivergent users",
+  "main": "main.js",
+  "scripts": {
+    "build": "node build.js",
+    "build:prod": "NODE_ENV=production node build.js",
+    "test": "node test-runner.js",
+    "test:watch": "node test-runner.js --watch",
+    "lint": "node linter.js",
+    "dev": "node build.js && echo 'Build completed. Load unpacked extension from ./build directory'",
+    "clean": "rm -rf build dist",
+    "validate": "npm run lint && npm run test && npm run build"
+  },
+  "keywords": [
+    "chrome-extension",
+    "ai",
+    "productivity",
+    "neurodivergent",
+    "task-management",
+    "cognitive-support"
+  ],
+  "author": "Branestawm Team",
+  "license": "MIT",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/branestawm/cos-ext.git"
+  },
+  "bugs": {
+    "url": "https://github.com/branestawm/cos-ext/issues"
+  },
+  "homepage": "https://github.com/branestawm/cos-ext#readme",
+  "extensionConfig": {
+    "manifestVersion": 3,
+    "permissions": [
+      "storage",
+      "activeTab",
+      "identity"
+    ],
+    "hostPermissions": [
+      "https://*/*",
+      "http://localhost:*/*"
+    ],
+    "contentScriptMatches": [
+      "https://www.google.com/search*",
+      "https://www.perplexity.ai/*"
+    ]
+  }
+}
