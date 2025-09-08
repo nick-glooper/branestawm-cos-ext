@@ -4,7 +4,12 @@
 // ========== MODAL MANAGEMENT ==========
 
 function showModal(modalId) {
-    document.getElementById(modalId).classList.add('show');
+    const modal = document.getElementById(modalId);
+    if (!modal) {
+        console.error('ERROR: Modal not found:', modalId);
+        return;
+    }
+    modal.classList.add('show');
 }
 
 function closeModal(modalId) {

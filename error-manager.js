@@ -239,11 +239,16 @@ class ErrorManager {
             };
         }
         
+        // Handle cases where errorInfo might be null, undefined, or an object
+        const safeErrorInfo = errorInfo || {};
+        
         return {
             timestamp: new Date().toISOString(),
             id: this._generateErrorId(),
-            category: this.errorTypes[errorInfo.type] || 'unknown',
-            ...errorInfo
+            type: safeErrorInfo.type || 'UNKNOWN_ERROR',
+            message: safeErrorInfo.message || 'No error message provided',
+            category: this.errorTypes[safeErrorInfo.type] || 'unknown',
+            ...safeErrorInfo
         };
     }
     
@@ -307,7 +312,13 @@ class ErrorManager {
     
     _reportToConsole(error) {
         const logMethod = error.critical ? console.error : console.warn;
-        logMethod(`[ErrorManager] ${error.type}:`, error);
+        logMethod(`[ErrorManager] ${error.type}:`, {
+            message: error.message,
+            context: error.context,
+            stack: error.stack,
+            timestamp: error.timestamp,
+            id: error.id
+        });
     }
     
     _generateErrorId() {

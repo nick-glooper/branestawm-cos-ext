@@ -875,7 +875,8 @@ class MemoryOptimizer {
                 try {
                     observer.observe({ entryTypes: ['memory'] });
                 } catch (e) {
-                    // Memory entries might not be supported
+                    // Memory entries not supported in Chrome extensions - use alternative tracking
+                    console.debug('Memory performance observer not supported, using alternative tracking');
                 }
             }
             
