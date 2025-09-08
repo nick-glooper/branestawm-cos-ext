@@ -15,6 +15,8 @@ class BuildSystem {
         this.jsFiles = [
             'security-utils.js',
             'logger.js',
+            'performance-tracker.js',
+            'analytics-tracker.js',
             'task-extractor.js',
             'task-templates.js',
             'task-storage.js',
