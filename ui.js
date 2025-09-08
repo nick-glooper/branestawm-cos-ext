@@ -243,7 +243,6 @@ if (typeof window !== 'undefined') {
     window.showModal = showModal;
     window.closeModal = closeModal;
     window.showMessage = showMessage;
-    window.hideMessage = hideMessage;
     window.showTooltip = showTooltip;
     window.hideTooltip = hideTooltip;
     window.autoResizeTextarea = autoResizeTextarea;

@@ -261,6 +261,20 @@ class DataManager {
     }
     
     /**
+     * Get settings object
+     */
+    getSettings() {
+        return this.state.settings;
+    }
+    
+    /**
+     * Get folios object
+     */
+    getFolios() {
+        return this.state.folios;
+    }
+    
+    /**
      * Update state with validation and change tracking
      */
     async updateState(path, value, options = {}) {

@@ -73,6 +73,7 @@ class PerformanceMonitor {
             // System Resource Metrics
             system: {
                 memoryUsage: { values: [], unit: 'MB', target: 100 },
+                memoryGrowth: { values: [], unit: '%', target: 5 },
                 cpuUsage: { values: [], unit: '%', target: 70 },
                 storageUsage: { values: [], unit: 'MB', target: 500 },
                 networkLatency: { values: [], unit: 'ms', target: 1000 }
@@ -154,6 +155,7 @@ class PerformanceMonitor {
             'cache.hitRate': 50, // Below 50%
             'ui.interactionLatency': 500, // 500ms
             'system.memoryUsage': 200, // 200MB
+            'system.memoryGrowth': 10, // 10%
             'system.cpuUsage': 90 // 90%
         };
         

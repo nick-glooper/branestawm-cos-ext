@@ -3,16 +3,16 @@
 
 class Logger {
     constructor() {
-        this.logLevel = this.getLogLevel();
-        this.isProduction = this.isProductionEnvironment();
-        
-        // Log levels (higher numbers = more verbose)
+        // Log levels (higher numbers = more verbose) - define first
         this.levels = {
             error: 0,
             warn: 1,
             info: 2,
             debug: 3
         };
+        
+        this.logLevel = this.getLogLevel();
+        this.isProduction = this.isProductionEnvironment();
         
         // Only show performance logs in development
         this.enablePerformanceLogs = !this.isProduction;
