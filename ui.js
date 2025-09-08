@@ -237,3 +237,15 @@ function scrollToBottom() {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
     }
 }
+
+// Export functions globally for use in other modules
+if (typeof window !== 'undefined') {
+    window.showModal = showModal;
+    window.closeModal = closeModal;
+    window.showMessage = showMessage;
+    window.hideMessage = hideMessage;
+    window.showTooltip = showTooltip;
+    window.hideTooltip = hideTooltip;
+    window.autoResizeTextarea = autoResizeTextarea;
+    window.scrollToBottom = scrollToBottom;
+}
