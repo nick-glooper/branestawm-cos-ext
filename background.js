@@ -386,12 +386,10 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             // Create offscreen document for WebGPU access
             await createOffscreenDocument();
             
-            // Initialize the model
-            const response = await chrome.runtime.sendMessage({
-                type: 'INIT_LOCAL_AI'
-            });
+            // Wait for offscreen document to be ready and send initialization
+            await waitForOffscreenAndSend('INIT_LOCAL_AI');
             
-            sendResponse({ success: true, ready: response?.ready || false });
+            sendResponse({ success: true });
             
         } catch (error) {
             console.error('❌ Background: Failed to initialize Local AI:', error);
@@ -403,16 +401,11 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     
     if (message.type === 'CHECK_LOCAL_AI_STATUS') {
         try {
-            // Check if offscreen document exists and model is ready
+            // Check if offscreen document exists
             const hasOffscreen = await checkOffscreenDocument();
             
             if (hasOffscreen) {
-                // Forward status check to offscreen document
-                const response = await chrome.runtime.sendMessage({
-                    type: 'CHECK_STATUS'
-                });
-                
-                sendResponse(response);
+                sendResponse({ ready: false, loading: true, hasModel: false });
             } else {
                 sendResponse({ ready: false, loading: false, hasModel: false });
             }
@@ -433,6 +426,11 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     
     if (message.type === 'LOCAL_AI_ERROR') {
         console.error('🧠 Local AI Error:', message.error);
+        return false;
+    }
+    
+    if (message.type === 'OFFSCREEN_READY') {
+        console.log('🧠 Offscreen document is ready');
         return false;
     }
 });
@@ -468,6 +466,46 @@ async function checkOffscreenDocument() {
     } catch (error) {
         return false;
     }
+}
+
+async function waitForOffscreenAndSend(messageType, messageData = {}) {
+    // Wait for offscreen document to load and be ready
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (attempts < maxAttempts) {
+        try {
+            // Check if offscreen document exists
+            const contexts = await chrome.runtime.getContexts({
+                contextTypes: ['OFFSCREEN_DOCUMENT']
+            });
+            
+            if (contexts.length > 0) {
+                // Try to ping the offscreen document
+                try {
+                    await chrome.runtime.sendMessage({
+                        type: messageType,
+                        ...messageData
+                    });
+                    return true;
+                } catch (error) {
+                    // Document not ready yet, wait and retry
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    attempts++;
+                }
+            } else {
+                throw new Error('Offscreen document not found');
+            }
+        } catch (error) {
+            attempts++;
+            if (attempts >= maxAttempts) {
+                throw error;
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+    }
+    
+    throw new Error('Timeout waiting for offscreen document');
 }
 
 // Web search functions (run in background with full permissions)

@@ -197,4 +197,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Initialize status
 updateStatus('Ready to load model', 0, 'Click "Setup Local AI" to begin');
 
+// Notify background script that offscreen document is ready
+chrome.runtime.sendMessage({
+    type: 'OFFSCREEN_READY'
+}).catch(() => {
+    // Ignore errors during startup
+    console.log('Background script not ready yet');
+});
+
 console.log('Branestawm offscreen document loaded');
