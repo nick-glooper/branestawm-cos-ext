@@ -305,6 +305,29 @@ function setupEventListeners() {
         testApiBtn.addEventListener('click', testAdvancedApiConnection);
     }
     
+    // Create New Profile button
+    const expandProfileSetupBtn = document.getElementById('expandProfileSetup');
+    const profileSetupAdvanced = document.getElementById('profileSetupAdvanced');
+    if (expandProfileSetupBtn && profileSetupAdvanced) {
+        expandProfileSetupBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isExpanded = profileSetupAdvanced.style.display !== 'none';
+            profileSetupAdvanced.style.display = isExpanded ? 'none' : 'block';
+            expandProfileSetupBtn.textContent = isExpanded ? 
+                'Create New Profile' : 
+                'Cancel';
+        });
+    }
+    
+    // Profile creation button
+    const createProfileBtn = document.getElementById('createProfile');
+    if (createProfileBtn) {
+        createProfileBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await createCustomProfile();
+        });
+    }
+    
     // AI Provider Exclusive Toggle System - declare all toggles first
     const googleGeminiToggle = document.getElementById('googleGeminiToggle');
     const customAIToggle = document.getElementById('customAIToggle');
@@ -1339,6 +1362,80 @@ function monitorLocalAiInitialization() {
     
     // Start monitoring
     checkStatus();
+}
+
+// ========== CUSTOM PROFILE MANAGEMENT ==========
+
+async function createCustomProfile() {
+    const nameInput = document.getElementById('profileName');
+    const urlInput = document.getElementById('profileUrl');
+    const modelInput = document.getElementById('profileModel');
+    const apiKeyInput = document.getElementById('profileApiKey');
+    
+    if (!nameInput || !urlInput || !modelInput || !apiKeyInput) {
+        showToast('Profile form elements not found', 'error');
+        return;
+    }
+    
+    const name = nameInput.value.trim();
+    const url = urlInput.value.trim();
+    const model = modelInput.value.trim();
+    const apiKey = apiKeyInput.value.trim();
+    
+    if (!name || !url || !model || !apiKey) {
+        showToast('Please fill in all fields', 'error');
+        return;
+    }
+    
+    try {
+        // Initialize custom endpoints if not exists
+        if (!settings.customEndpoints) {
+            settings.customEndpoints = {};
+        }
+        
+        // Generate unique ID
+        const profileId = `custom_${Date.now()}`;
+        
+        // Create profile
+        settings.customEndpoints[profileId] = {
+            id: profileId,
+            name: name,
+            endpoint: url,
+            model: model,
+            apiKey: apiKey,
+            createdAt: new Date().toISOString()
+        };
+        
+        // Save settings
+        await saveSettings();
+        
+        // Clear form
+        nameInput.value = '';
+        urlInput.value = '';
+        modelInput.value = '';
+        apiKeyInput.value = '';
+        
+        // Hide form
+        const profileSetupAdvanced = document.getElementById('profileSetupAdvanced');
+        if (profileSetupAdvanced) {
+            profileSetupAdvanced.style.display = 'none';
+        }
+        
+        // Reset button text
+        const expandProfileSetupBtn = document.getElementById('expandProfileSetup');
+        if (expandProfileSetupBtn) {
+            expandProfileSetupBtn.textContent = 'Create New Profile';
+        }
+        
+        showToast('Profile created successfully!', 'success');
+        
+        // Update UI
+        updateUI();
+        
+    } catch (error) {
+        console.error('Error creating profile:', error);
+        showToast('Failed to create profile: ' + error.message, 'error');
+    }
 }
 
 // ========== OLD CLOUD LLM SYSTEM FUNCTIONS - REMOVED ==========
