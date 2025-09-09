@@ -399,7 +399,9 @@ function setupEventListeners() {
     }
     
     if (customAIToggle) {
+        console.log('DEBUG: Adding event listener to customAIToggle');
         customAIToggle.addEventListener('change', (e) => {
+            console.log('DEBUG: Custom AI toggle changed to:', e.target.checked);
             if (e.target.checked) {
                 // Turn off other toggles
                 if (googleGeminiToggle) googleGeminiToggle.checked = false;
@@ -407,6 +409,7 @@ function setupEventListeners() {
                 
                 settings.activeLlm = 'custom';
                 settings.airplaneMode = false;
+                console.log('DEBUG: Settings after Custom toggle:', { activeLlm: settings.activeLlm, airplaneMode: settings.airplaneMode });
                 updateAirplaneModeUI();
                 debouncedSave();
             } else {
@@ -417,6 +420,8 @@ function setupEventListeners() {
                 }
             }
         });
+    } else {
+        console.log('DEBUG: customAIToggle not found!');
     }
     
     // Update airplaneMode toggle to also handle exclusivity - need to replace the existing handler
@@ -1313,9 +1318,12 @@ async function initializeLocalAi() {
     
     try {
         // Send message to background script to initialize offscreen document
+        console.log('DEBUG: Sending INIT_LOCAL_AI message to background');
         const response = await chrome.runtime.sendMessage({
             type: 'INIT_LOCAL_AI'
         });
+        
+        console.log('DEBUG: Received response from background:', response);
         
         if (response && response.success) {
             showToast('Local AI initialization started!', 'info');
@@ -1328,26 +1336,21 @@ async function initializeLocalAi() {
                 if (progressText) progressText.textContent = 'Setting up offscreen document...';
             }
             
-            // Wait a bit longer, then try to initialize the model via direct message
+            // Wait for offscreen document to load, then try to initialize the model
             setTimeout(async () => {
                 try {
-                    console.log('🧠 Sending INIT_LOCAL_AI message to offscreen document');
-                    const initResponse = await chrome.runtime.sendMessage({
-                        type: 'INIT_LOCAL_AI'
-                    });
-                    console.log('🧠 Offscreen initialization response:', initResponse);
-                    
-                    if (progressText) progressText.textContent = 'Model downloading (~400MB)...';
+                    console.log('🧠 Waiting for offscreen document to be ready...');
+                    if (progressText) progressText.textContent = 'Initializing EmbeddingGemma...';
                     
                     // Start monitoring status
                     monitorLocalAiInitialization();
                 } catch (error) {
-                    console.error('Failed to initialize model in offscreen:', error);
+                    console.error('Failed to start monitoring:', error);
                     if (progressText) progressText.textContent = 'Initialization failed';
                     if (statusIndicator) statusIndicator.style.background = '#ef4444';
                     if (statusText) statusText.textContent = 'Failed to load model';
                 }
-            }, 3000);
+            }, 1000);
             
         } else {
             throw new Error(response?.error || 'Failed to initialize Local AI');

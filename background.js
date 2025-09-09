@@ -386,11 +386,8 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
             // Create offscreen document for WebGPU access
             await createOffscreenDocument();
             
-            // Give offscreen document time to load, then respond
-            setTimeout(() => {
-                console.log('🧠 Offscreen document should be ready, responding to options page');
-                sendResponse({ success: true });
-            }, 2000);
+            console.log('🧠 Offscreen document created, responding immediately to options page');
+            sendResponse({ success: true });
             
         } catch (error) {
             console.error('❌ Background: Failed to initialize Local AI:', error);
