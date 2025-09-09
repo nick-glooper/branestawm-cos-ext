@@ -270,23 +270,7 @@ function setupEventListeners() {
     
     // ========== NEW THREE-TIER AI SETUP SYSTEM ==========
     
-    // Primary Setup: Google Gemini OAuth
-    const googleSetupBtn = document.getElementById('googleSetupBtn');
-    if (googleSetupBtn) {
-        googleSetupBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            authenticateWithGoogleGemini();
-        });
-    }
-    
-    // Google Gemini Sign-Out button
-    const googleSignOutBtn = document.getElementById('googleSignOutBtn');
-    if (googleSignOutBtn) {
-        googleSignOutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            signOutFromGoogleGemini();
-        });
-    }
+    // Primary Setup: Google Gemini OAuth - now handled dynamically by updateGoogleGeminiStatus
     
     // Advanced Setup: Custom API Keys - Expand/Collapse
     const expandApiSetupBtn = document.getElementById('expandApiSetup');
@@ -410,22 +394,22 @@ async function signOutFromGoogleGemini() {
 }
 
 function updateGoogleGeminiStatus(connected) {
-    const statusElement = document.getElementById('googleGeminiStatus');
-    const statusText = document.getElementById('googleGeminiStatusText');
     const setupBtn = document.getElementById('googleSetupBtn');
-    const signOutBtn = document.getElementById('googleSignOutBtn');
+    const buttonText = document.getElementById('googleButtonText');
     
-    if (statusElement && statusText) {
+    if (setupBtn && buttonText) {
         if (connected) {
-            statusElement.className = 'status-indicator connected';
-            statusText.textContent = 'Connected to Google Gemini';
-            if (setupBtn) setupBtn.style.display = 'none';
-            if (signOutBtn) signOutBtn.style.display = 'inline-flex';
+            buttonText.textContent = 'Sign Out';
+            setupBtn.onclick = (e) => {
+                e.preventDefault();
+                signOutFromGoogleGemini();
+            };
         } else {
-            statusElement.className = 'status-indicator disconnected';
-            statusText.textContent = 'Not connected';
-            if (setupBtn) setupBtn.style.display = 'inline-flex';
-            if (signOutBtn) signOutBtn.style.display = 'none';
+            buttonText.textContent = 'Sign In';
+            setupBtn.onclick = (e) => {
+                e.preventDefault();
+                authenticateWithGoogleGemini();
+            };
         }
     }
 }
