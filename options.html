@@ -1100,14 +1100,10 @@
             </button>
             
             <section class="settings-section">
-                <div class="modal-title-with-info">
-                    <h3>
-                        AI Connections
-                    </h3>
-                    <p class="section-description">
-                        Choose your AI Assistant from the following options
-                    </p>
-                </div>
+                <h3>AI Connections</h3>
+                <p class="section-description">
+                    Choose your AI Assistant from the following options
+                </p>
                 
                 <!-- Google Gemini Card -->
                 <div class="ai-connection-card recommended">
@@ -1115,10 +1111,6 @@
                         <div class="card-title">
                             <h4>Google Gemini</h4>
                             <span class="badge primary" style="background-color: #22c55e; color: white;">Recommended for Non-Technical Users</span>
-                        </div>
-                        <div class="status-indicator" id="googleGeminiStatus">
-                            <span class="status-dot"></span>
-                            <span id="googleGeminiStatusText">Not connected</span>
                         </div>
                     </div>
                     <p class="card-description">
@@ -1132,61 +1124,72 @@
                                 <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                                 <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                             </svg>
-                            Connect with Google
+                            <span id="googleButtonText">Sign In</span>
                         </button>
-                        <button class="btn secondary" id="googleSignOutBtn" style="display: none;">Sign Out</button>
                     </div>
                 </div>
 
-                <!-- Custom AI Card -->
+                <!-- Custom AI Profiles -->
                 <div class="ai-connection-card">
                     <div class="card-header">
                         <div class="card-title">
-                            <h4>⚙️ Custom AI</h4>
+                            <h4>⚙️ Custom AI Profiles</h4>
                             <span class="badge secondary">Advanced</span>
-                        </div>
-                        <div class="status-indicator" id="advancedApiStatus">
-                            <span class="status-dot"></span>
-                            <span id="advancedApiStatusText">Not configured</span>
                         </div>
                     </div>
                     <p class="card-description">
-                        Use your own API keys from providers like OpenAI, Anthropic, or others. 
-                        Requires technical setup but gives you full control.
+                        Create and manage custom AI profiles with your own API endpoints. 
+                        Supports OpenAI, Anthropic, OpenRouter, Cerebras and other providers.
                     </p>
+                    
+                    <!-- Active Profile Selection -->
+                    <div class="form-group">
+                        <label for="activeProfileSelect">Active Profile</label>
+                        <select id="activeProfileSelect" class="input">
+                            <option value="">Select a profile...</option>
+                        </select>
+                    </div>
+                    
                     <div class="expand-section">
-                        <button class="expand-btn" id="expandApiSetup">
-                            🔽 Show Advanced API Setup
+                        <button class="expand-btn" id="expandProfileSetup">
+                            🔽 Create New Profile
                         </button>
-                        <div class="expandable-content" id="apiSetupAdvanced" style="display: none;">
-                            <!-- Provider Selection -->
-                            <div class="provider-selection">
-                                <h5>Select Provider</h5>
-                                <div class="provider-grid">
-                                    <div class="provider-option" data-provider="cerebras">
-                                        <div class="provider-name">Cerebras</div>
-                                        <div class="provider-note">Free tier available</div>
-                                    </div>
-                                    <div class="provider-option" data-provider="openai">
-                                        <div class="provider-name">OpenAI</div>
-                                        <div class="provider-note">GPT models</div>
-                                    </div>
-                                    <div class="provider-option" data-provider="openrouter">
-                                        <div class="provider-name">OpenRouter</div>
-                                        <div class="provider-note">Many models</div>
-                                    </div>
-                                </div>
+                        <div class="expandable-content" id="profileSetupAdvanced" style="display: none;">
+                            <div class="form-group">
+                                <label for="profileName">Profile Name</label>
+                                <input type="text" id="profileName" class="input" placeholder="e.g., My OpenAI Profile">
                             </div>
                             
-                            <!-- API Key Input -->
                             <div class="form-group">
-                                <label for="advancedApiKey">API Key</label>
-                                <input type="password" id="advancedApiKey" class="input" placeholder="Enter your API key">
+                                <label for="profileUrl">API URL</label>
+                                <input type="url" id="profileUrl" class="input" placeholder="https://api.openai.com/v1/chat/completions">
+                                <small class="form-help">Full URL to the chat completions endpoint</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="profileModel">Model</label>
+                                <input type="text" id="profileModel" class="input" placeholder="gpt-4o-mini">
+                                <small class="form-help">Model identifier (e.g., gpt-4o-mini, claude-3-sonnet, llama-3.1-8b)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="profileApiKey">API Key</label>
+                                <input type="password" id="profileApiKey" class="input" placeholder="Enter your API key">
+                                <small class="form-help">Keep this secure - it will be encrypted when stored</small>
                             </div>
                             
                             <div class="card-actions">
-                                <button class="btn primary" id="testAdvancedApi">Test Connection</button>
+                                <button class="btn primary" id="createProfile">Create Profile</button>
+                                <button class="btn secondary" id="testProfileConnection">Test Connection</button>
                             </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Existing Profiles List -->
+                    <div id="profilesList" style="display: none;">
+                        <h5>Saved Profiles</h5>
+                        <div id="profilesContainer">
+                            <!-- Profile items will be dynamically inserted here -->
                         </div>
                     </div>
                 </div>
