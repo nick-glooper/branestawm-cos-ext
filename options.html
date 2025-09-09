@@ -1158,7 +1158,7 @@
                         </select>
                     </div>
                     
-                    <div class="card-actions" style="padding: 0 20px;">
+                    <div class="card-actions" style="padding: 0 20px; margin-bottom: 16px;">
                         <button class="btn primary" id="expandProfileSetup">
                             Create New Profile
                         </button>
@@ -1217,23 +1217,14 @@
                     </div>
                     <p class="card-description">
                         <strong>Privacy-first option:</strong> Run AI completely locally on your device. 
-                        No internet required after setup, but slower and more complex to configure.
+                        No internet required after setup, but slower and more complex to configure. Requires technical knowledge and is only recommended for advanced users who need offline AI.
                     </p>
-                    <div class="card-warning">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z"/>
-                        </svg>
-                        <span>Requires technical knowledge. Only recommended for advanced users who need offline AI.</span>
-                    </div>
-                    <div class="status-indicator" id="ollamaStatus">
-                        <span class="status-dot"></span>
-                        <span id="ollamaStatusText">Airplane Mode Disabled</span>
-                    </div>
                     
-                    <div class="expand-section">
-                        <button class="expand-btn" id="expandOllamaSetup">
-                            🔽 Show Airplane Mode Setup
+                    <div class="card-actions" style="padding: 0 20px; margin-bottom: 16px;">
+                        <button class="btn primary" id="expandOllamaSetup">
+                            Setup Local AI
                         </button>
+                    </div>
                         <div class="expandable-content" id="ollamaAdvanced" style="display: none;">
                             <div class="setup-warning">
                                 <h5>⚠️ Important Notes</h5>

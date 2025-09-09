@@ -321,8 +321,15 @@ function setupEventListeners() {
                 if (customAIToggle) customAIToggle.checked = false;
                 
                 settings.activeLlm = 'local';
+                settings.airplaneMode = true;
+            } else {
+                // Don't allow unchecking if no other AI is selected - keep at least one active
+                if (!googleGeminiToggle?.checked && !customAIToggle?.checked) {
+                    e.target.checked = true;
+                    return;
+                }
+                settings.airplaneMode = false;
             }
-            settings.airplaneMode = e.target.checked;
             updateAirplaneModeUI();
             debouncedSave();
         });
@@ -339,6 +346,12 @@ function setupEventListeners() {
                 settings.airplaneMode = false;
                 updateAirplaneModeUI();
                 debouncedSave();
+            } else {
+                // Don't allow unchecking if no other AI is selected - keep at least one active
+                if (!customAIToggle?.checked && !airplaneModeToggle?.checked) {
+                    e.target.checked = true;
+                    return;
+                }
             }
         });
     }
@@ -354,6 +367,12 @@ function setupEventListeners() {
                 settings.airplaneMode = false;
                 updateAirplaneModeUI();
                 debouncedSave();
+            } else {
+                // Don't allow unchecking if no other AI is selected - keep at least one active
+                if (!googleGeminiToggle?.checked && !airplaneModeToggle?.checked) {
+                    e.target.checked = true;
+                    return;
+                }
             }
         });
     }
