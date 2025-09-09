@@ -305,18 +305,61 @@ function setupEventListeners() {
         testApiBtn.addEventListener('click', testAdvancedApiConnection);
     }
     
-    // Airplane Mode Toggle and Expand
+    // AI Provider Exclusive Toggle System - declare all toggles first
+    const googleGeminiToggle = document.getElementById('googleGeminiToggle');
+    const customAIToggle = document.getElementById('customAIToggle');
     const airplaneModeToggle = document.getElementById('airplaneModeToggle');
     const expandOllamaBtn = document.getElementById('expandOllamaSetup');
     const ollamaAdvanced = document.getElementById('ollamaAdvanced');
     
+    // Airplane Mode Toggle with exclusivity
     if (airplaneModeToggle) {
         airplaneModeToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                // Turn off other toggles when airplane mode is turned on
+                if (googleGeminiToggle) googleGeminiToggle.checked = false;
+                if (customAIToggle) customAIToggle.checked = false;
+                
+                settings.activeLlm = 'local';
+            }
             settings.airplaneMode = e.target.checked;
             updateAirplaneModeUI();
             debouncedSave();
         });
     }
+    
+    if (googleGeminiToggle) {
+        googleGeminiToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                // Turn off other toggles
+                if (customAIToggle) customAIToggle.checked = false;
+                if (airplaneModeToggle) airplaneModeToggle.checked = false;
+                
+                settings.activeLlm = 'google';
+                settings.airplaneMode = false;
+                updateAirplaneModeUI();
+                debouncedSave();
+            }
+        });
+    }
+    
+    if (customAIToggle) {
+        customAIToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                // Turn off other toggles
+                if (googleGeminiToggle) googleGeminiToggle.checked = false;
+                if (airplaneModeToggle) airplaneModeToggle.checked = false;
+                
+                settings.activeLlm = 'custom';
+                settings.airplaneMode = false;
+                updateAirplaneModeUI();
+                debouncedSave();
+            }
+        });
+    }
+    
+    // Update airplaneMode toggle to also handle exclusivity - need to replace the existing handler
+    // (The original handler is already set up above, this extends it with exclusivity logic)
     
     if (expandOllamaBtn && ollamaAdvanced) {
         expandOllamaBtn.addEventListener('click', (e) => {
@@ -810,6 +853,17 @@ function updateUI() {
     if (airplaneModeToggle) {
         airplaneModeToggle.checked = settings.airplaneMode;
         updateAirplaneModeUI();
+    }
+    
+    // Update AI Provider Toggle states based on activeLlm
+    const googleGeminiToggle = document.getElementById('googleGeminiToggle');
+    const customAIToggle = document.getElementById('customAIToggle');
+    
+    if (googleGeminiToggle) {
+        googleGeminiToggle.checked = settings.activeLlm === 'google';
+    }
+    if (customAIToggle) {
+        customAIToggle.checked = settings.activeLlm === 'custom';
     }
     
     // Apply tooltip visibility

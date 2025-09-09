@@ -1107,10 +1107,14 @@
                 
                 <!-- Google Gemini Card -->
                 <div class="ai-connection-card recommended">
-                    <div class="card-header">
+                    <div class="card-header" style="border-bottom: none;">
                         <div class="card-title">
                             <h4>Google Gemini</h4>
                             <span class="badge primary" style="background-color: #22c55e; color: white; border-radius: 12px; padding: 4px 12px;">Recommended for Non-Technical Users</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="googleGeminiToggle" class="toggle-input">
+                            <span class="toggle-slider"></span>
                         </div>
                     </div>
                     <p class="card-description">
@@ -1131,10 +1135,14 @@
 
                 <!-- Custom AI Profiles -->
                 <div class="ai-connection-card">
-                    <div class="card-header">
+                    <div class="card-header" style="border-bottom: none;">
                         <div class="card-title">
                             <h4>Custom AI Profiles</h4>
                             <span class="badge" style="background-color: #f97316; color: white; border-radius: 12px; padding: 4px 12px;">Advanced</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="customAIToggle" class="toggle-input">
+                            <span class="toggle-slider"></span>
                         </div>
                     </div>
                     <p class="card-description">
@@ -1143,17 +1151,18 @@
                     </p>
                     
                     <!-- Active Profile Selection -->
-                    <div class="form-group" style="padding: 0 16px;">
-                        <label for="activeProfileSelect">Active Profile</label>
+                    <div class="form-group" style="padding: 0 20px;">
+                        <label for="activeProfileSelect" style="margin-bottom: 8px; display: block;">Active Profile</label>
                         <select id="activeProfileSelect" class="input">
                             <option value="">Select a profile...</option>
                         </select>
                     </div>
                     
-                    <div class="expand-section">
-                        <button class="expand-btn" id="expandProfileSetup">
-                            🔽 Create New Profile
+                    <div class="card-actions" style="padding: 0 20px;">
+                        <button class="btn primary" id="expandProfileSetup">
+                            Create New Profile
                         </button>
+                    </div>
                         <div class="expandable-content" id="profileSetupAdvanced" style="display: none;">
                             <div class="form-group">
                                 <label for="profileName">Profile Name</label>
@@ -1196,10 +1205,10 @@
 
                 <!-- Local AI Card -->
                 <div class="ai-connection-card airplane-mode">
-                    <div class="card-header">
+                    <div class="card-header" style="border-bottom: none;">
                         <div class="card-title">
-                            <h4>💻 Local AI</h4>
-                            <span class="badge warning">Expert Level</span>
+                            <h4>Local AI</h4>
+                            <span class="badge" style="background-color: #dc2626; color: white; border-radius: 12px; padding: 4px 12px;">Expert</span>
                         </div>
                         <div class="toggle-switch">
                             <input type="checkbox" id="airplaneModeToggle" class="toggle-input">
