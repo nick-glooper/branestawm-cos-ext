@@ -1208,7 +1208,7 @@
                     <div class="card-header" style="border-bottom: none;">
                         <div class="card-title">
                             <h4>Local AI</h4>
-                            <span class="badge" style="background-color: #dc2626; color: white; border-radius: 12px; padding: 4px 12px;">Expert</span>
+                            <span class="badge" style="background-color: #3b82f6; color: white; border-radius: 12px; padding: 4px 12px;">Privacy-First</span>
                         </div>
                         <div class="toggle-switch">
                             <input type="checkbox" id="airplaneModeToggle" class="toggle-input">
@@ -1216,203 +1216,53 @@
                         </div>
                     </div>
                     <p class="card-description">
-                        <strong>Privacy-first option:</strong> Run AI completely locally on your device. 
-                        No internet required after setup, but slower and more complex to configure. Requires technical knowledge and is only recommended for advanced users who need offline AI.
+                        <strong>Privacy-first option:</strong> Run Google's EmbeddingGemma AI model completely on your device. 
+                        Zero data sharing, works offline, and automatically downloads (~400MB) on first use. Perfect for privacy-conscious users.
                     </p>
                     
                     <div class="card-actions" style="padding: 0 20px; margin-bottom: 16px;">
-                        <button class="btn primary" id="expandOllamaSetup">
-                            Setup Local AI
+                        <button class="btn primary" id="setupLocalAI">
+                            Enable Local AI
                         </button>
+                        <div id="localAIStatus" style="margin-top: 12px; padding: 8px; border-radius: 4px; background: #f3f4f6; display: none;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div id="statusIndicator" style="width: 12px; height: 12px; border-radius: 50%; background: #6b7280;"></div>
+                                <span id="statusText">Ready to setup</span>
+                            </div>
+                            <div id="progressContainer" style="margin-top: 8px; display: none;">
+                                <div style="background: #e5e7eb; border-radius: 4px; overflow: hidden; height: 4px;">
+                                    <div id="progressBar" style="height: 100%; background: #3b82f6; width: 0%; transition: width 0.3s;"></div>
+                                </div>
+                                <small id="progressText" style="color: #6b7280; margin-top: 4px; display: block;">Preparing...</small>
+                            </div>
+                        </div>
                     </div>
-                        <div class="expandable-content" id="ollamaAdvanced" style="display: none;">
-                            <div class="setup-warning">
-                                <h5>⚠️ Important Notes</h5>
-                                <ul>
-                                    <li><strong>Technical Setup Required:</strong> This requires installing and managing Ollama software</li>
-                                    <li><strong>Performance Impact:</strong> Local AI is significantly slower than cloud models</li>
-                                    <li><strong>Model Management:</strong> You'll need to download and manage large AI models (4GB+ each)</li>
-                                    <li><strong>System Requirements:</strong> Requires modern hardware with sufficient RAM (8GB+ recommended)</li>
+                        <div class="expandable-content" id="localAIAdvanced" style="display: none;">
+                            <div class="setup-info" style="padding: 16px; background: #f0f9ff; border-radius: 8px; border: 1px solid #0ea5e9;">
+                                <h5>🧠 EmbeddingGemma Features</h5>
+                                <ul style="margin: 8px 0; padding-left: 20px;">
+                                    <li><strong>Zero Setup:</strong> Downloads automatically on first use</li>
+                                    <li><strong>Privacy-First:</strong> All processing happens on your device</li>
+                                    <li><strong>Lightweight:</strong> Only ~400MB download (vs 4GB+ traditional models)</li>
+                                    <li><strong>Fast:</strong> Optimized for everyday devices like laptops and tablets</li>
+                                    <li><strong>Multilingual:</strong> Supports 100+ languages out of the box</li>
                                 </ul>
                             </div>
 
-                            <div class="setup-guide">
-                                <h5>📋 Setup Instructions (2024)</h5>
-                                <div class="setup-steps">
-                                    <div class="setup-step">
-                                        <div class="step-number">1</div>
-                                        <div class="step-content">
-                                            <h6>Install Ollama</h6>
-                                            <p>Download from <a href="https://ollama.ai" target="_blank" rel="noopener">ollama.ai</a></p>
-                                            <div class="step-note">
-                                                <strong>Windows users:</strong> New installer includes a chat interface
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="setup-step">
-                                        <div class="step-number">2</div>
-                                        <div class="step-content">
-                                            <h6>Download a Model</h6>
-                                            <p>Option A: Use Ollama's built-in chat interface to download a model</p>
-                                            <p>Option B: Run in terminal: <code>ollama pull gemma2</code></p>
-                                            <div class="step-note">
-                                                <strong>Recommended models:</strong> gemma2 (2B), llama3.2 (3B), or qwen2.5 (3B)
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="setup-step">
-                                        <div class="step-number">3</div>
-                                        <div class="step-content">
-                                            <h6>Start Ollama Service</h6>
-                                            <p>Run in terminal: <code>ollama serve</code></p>
-                                            <div class="step-note">
-                                                Keep this terminal open while using Branestawm
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="setup-step">
-                                        <div class="step-number">4</div>
-                                        <div class="step-content">
-                                            <h6>Enable in Branestawm</h6>
-                                            <p>Toggle "Local AI" above, then refresh to detect your models</p>
-                                        </div>
-                                    </div>
+                            <div class="setup-requirements">
+                                <h5>📋 System Requirements</h5>
+                                <ul style="margin: 8px 0; padding-left: 20px;">
+                                    <li><strong>Memory:</strong> 4GB+ RAM available</li>
+                                    <li><strong>Storage:</strong> 500MB free space for model cache</li>
+                                    <li><strong>Browser:</strong> Chrome/Edge with WebGPU support</li>
+                                    <li><strong>Connection:</strong> Internet for initial model download</li>
+                                </ul>
+                                
+                                <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 6px; border: 1px solid #f59e0b;">
+                                    <strong>📱 Note:</strong> After first setup, EmbeddingGemma runs completely offline. Perfect for sensitive documents or limited connectivity environments.
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </section>
-            
-            <!-- Advanced Ollama Configuration (Hidden by default) -->
-            <section class="settings-section advanced-section" id="ollamaAdvancedSection" style="display: none;">
-                <div class="section-header-with-warning">
-                    <h3>
-                        <span class="section-icon">🦙</span>
-                        Advanced: Local AI Configuration
-                    </h3>
-                    <div class="expert-warning">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M13,14H11V10H13M13,18H11V16H13M1,21H23L12,2L1,21Z"/>
-                        </svg>
-                        <span>Expert configuration required</span>
-                    </div>
-                </div>
-                
-                <div class="advanced-warning">
-                    <h4>⚠️ Important Notes</h4>
-                    <ul>
-                        <li><strong>Technical Setup Required:</strong> This requires installing and managing Ollama software</li>
-                        <li><strong>Performance Impact:</strong> Local AI is significantly slower than cloud models</li>
-                        <li><strong>Model Management:</strong> You'll need to download and manage large AI models (4GB+ each)</li>
-                        <li><strong>System Requirements:</strong> Requires modern hardware with sufficient RAM (8GB+ recommended)</li>
-                    </ul>
-                </div>
-
-                <div class="ollama-setup-guide">
-                    <h4>📋 Updated Setup Instructions (2024)</h4>
-                    <div class="setup-steps">
-                        <div class="setup-step">
-                            <div class="step-number">1</div>
-                            <div class="step-content">
-                                <h5>Install Ollama</h5>
-                                <p>Download from <a href="https://ollama.ai" target="_blank" rel="noopener">ollama.ai</a></p>
-                                <div class="step-note">
-                                    <strong>Windows users:</strong> New installer includes a chat interface
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="setup-step">
-                            <div class="step-number">2</div>
-                            <div class="step-content">
-                                <h5>Download a Model</h5>
-                                <p>Option A: Use Ollama's built-in chat interface to download a model</p>
-                                <p>Option B: Run in terminal: <code>ollama pull gemma2</code></p>
-                                <div class="step-note">
-                                    <strong>Recommended models:</strong> gemma2 (2B), llama3.2 (3B), or qwen2.5 (3B)
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="setup-step">
-                            <div class="step-number">3</div>
-                            <div class="step-content">
-                                <h5>Start Ollama Service</h5>
-                                <p>Run in terminal: <code>ollama serve</code></p>
-                                <div class="step-note">
-                                    Keep this terminal open while using Branestawm
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="setup-step">
-                            <div class="step-number">4</div>
-                            <div class="step-content">
-                                <h5>Enable in Branestawm</h5>
-                                <p>Toggle "Airplane Mode" above, then refresh to detect your models</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="ollama-status">
-                    <div class="status-indicator">
-                        <div class="status-dot" id="ollamaStatusDot"></div>
-                        <span id="ollamaStatusText">Not connected</span>
-                    </div>
-                    <button class="btn small secondary" id="refreshOllamaBtn">Check Connection</button>
-                </div>
-                
-                <div id="ollamaConfigSection" style="display: none;">
-                    <div class="form-group">
-                        <label for="ollamaModelSelect" class="label">Available Local Model</label>
-                        <select id="ollamaModelSelect" class="input">
-                            <option value="">No models detected</option>
-                        </select>
-                        <div class="help-text">Detected models from your local Ollama installation</div>
-                    </div>
-                    
-                    <div class="ollama-performance" id="ollamaPerformanceSection" style="display: none;">
-                        <h4>Performance Statistics</h4>
-                        <div class="perf-grid" id="performanceStats">
-                            <div class="perf-stat">
-                                <span class="perf-label">Response Time</span>
-                                <span class="perf-value" id="localResponseTime">--</span>
-                            </div>
-                            <div class="perf-stat">
-                                <span class="perf-label">Requests Handled</span>
-                                <span class="perf-value" id="localRequestCount">--</span>
-                            </div>
-                            <div class="perf-stat">
-                                <span class="perf-label">Success Rate</span>
-                                <span class="perf-value" id="localSuccessRate">--</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="pros-cons">
-                    <div class="pros">
-                        <h5>✅ Benefits</h5>
-                        <ul>
-                            <li>Complete privacy - data never leaves your device</li>
-                            <li>Works offline once set up</li>
-                            <li>No API costs</li>
-                            <li>No rate limits</li>
-                        </ul>
-                    </div>
-                    <div class="cons">
-                        <h5>❌ Drawbacks</h5>
-                        <ul>
-                            <li>Complex technical setup</li>
-                            <li>Significantly slower responses (5-30 seconds)</li>
-                            <li>Lower quality responses than cloud models</li>
-                            <li>Uses significant system resources</li>
-                        </ul>
                     </div>
                 </div>
             </section>

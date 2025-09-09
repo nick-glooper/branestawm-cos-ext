@@ -376,7 +376,99 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         
         return false; // Response sent immediately
     }
+    
+    // ========== LOCAL AI (EmbeddingGemma) MESSAGE HANDLERS ==========
+    
+    if (message.type === 'INIT_LOCAL_AI') {
+        console.log('🧠 Background: Initializing Local AI (EmbeddingGemma)');
+        
+        try {
+            // Create offscreen document for WebGPU access
+            await createOffscreenDocument();
+            
+            // Initialize the model
+            const response = await chrome.runtime.sendMessage({
+                type: 'INIT_LOCAL_AI'
+            });
+            
+            sendResponse({ success: true, ready: response?.ready || false });
+            
+        } catch (error) {
+            console.error('❌ Background: Failed to initialize Local AI:', error);
+            sendResponse({ success: false, error: error.message });
+        }
+        
+        return true; // Will respond asynchronously
+    }
+    
+    if (message.type === 'CHECK_LOCAL_AI_STATUS') {
+        try {
+            // Check if offscreen document exists and model is ready
+            const hasOffscreen = await checkOffscreenDocument();
+            
+            if (hasOffscreen) {
+                // Forward status check to offscreen document
+                const response = await chrome.runtime.sendMessage({
+                    type: 'CHECK_STATUS'
+                });
+                
+                sendResponse(response);
+            } else {
+                sendResponse({ ready: false, loading: false, hasModel: false });
+            }
+            
+        } catch (error) {
+            console.error('Error checking Local AI status:', error);
+            sendResponse({ ready: false, loading: false, hasModel: false, error: error.message });
+        }
+        
+        return true; // Will respond asynchronously
+    }
+    
+    if (message.type === 'LOCAL_AI_STATUS') {
+        // Status update from offscreen document - just log it
+        console.log('🧠 Local AI Status:', message.status, message.progress ? `(${message.progress}%)` : '');
+        return false;
+    }
+    
+    if (message.type === 'LOCAL_AI_ERROR') {
+        console.error('🧠 Local AI Error:', message.error);
+        return false;
+    }
 });
+
+// ========== OFFSCREEN DOCUMENT MANAGEMENT ==========
+
+async function createOffscreenDocument() {
+    // Check if offscreen document already exists
+    const hasOffscreen = await checkOffscreenDocument();
+    if (hasOffscreen) {
+        console.log('🧠 Offscreen document already exists');
+        return;
+    }
+    
+    console.log('🧠 Creating offscreen document for Local AI');
+    
+    // Create offscreen document for WebGPU access
+    await chrome.offscreen.createDocument({
+        url: 'offscreen.html',
+        reasons: ['DOM_SCRAPING'], // Using DOM_SCRAPING as it allows unrestricted access
+        justification: 'Local AI processing with EmbeddingGemma requires WebGPU access and transformers.js execution'
+    });
+    
+    console.log('✅ Offscreen document created successfully');
+}
+
+async function checkOffscreenDocument() {
+    try {
+        const contexts = await chrome.runtime.getContexts({
+            contextTypes: ['OFFSCREEN_DOCUMENT']
+        });
+        return contexts.length > 0;
+    } catch (error) {
+        return false;
+    }
+}
 
 // Web search functions (run in background with full permissions)
 async function performBackgroundWebSearch(query) {

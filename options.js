@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await loadSettings();
     initializeTheme();
     setupEventListeners();
-    initializeOllamaSettings();
+    initializeLocalAiSettings();
     updateUI();
     
     console.log('Settings page loaded successfully');
@@ -569,46 +569,70 @@ async function testAdvancedApiConnection() {
 
 function updateAirplaneModeUI() {
     const checkbox = document.getElementById('airplaneModeToggle');
-    const statusElement = document.getElementById('ollamaStatus');
-    const statusText = document.getElementById('ollamaStatusText');
+    const statusContainer = document.getElementById('localAIStatus');
+    const statusText = document.getElementById('statusText');
+    const statusIndicator = document.getElementById('statusIndicator');
     
     if (checkbox && checkbox.checked) {
         settings.activeLlm = 'local';
-        if (statusElement) statusElement.className = 'status-indicator connected';
-        if (statusText) statusText.textContent = 'Airplane Mode Active - Using Local AI';
         
-        // Check actual Ollama status
-        updateOllamaConnectionStatus();
+        if (statusContainer) statusContainer.style.display = 'block';
+        if (statusIndicator) statusIndicator.style.background = '#10b981';
+        if (statusText) statusText.textContent = 'Local AI Active - Using EmbeddingGemma';
+        
+        // Check actual EmbeddingGemma status
+        updateLocalAiConnectionStatus();
     } else {
-        if (statusElement) statusElement.className = 'status-indicator disconnected';
-        if (statusText) statusText.textContent = 'Airplane Mode Disabled';
+        if (statusContainer) statusContainer.style.display = 'block';
+        if (statusIndicator) statusIndicator.style.background = '#6b7280';
+        if (statusText) statusText.textContent = 'Local AI Disabled';
     }
 }
 
-async function updateOllamaConnectionStatus() {
-    const statusElement = document.getElementById('ollamaStatus');
-    const statusText = document.getElementById('ollamaStatusText');
+async function updateLocalAiConnectionStatus() {
+    const statusContainer = document.getElementById('localAIStatus');
+    const statusText = document.getElementById('statusText');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const setupBtn = document.getElementById('setupLocalAI');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
     
-    if (!statusElement || !statusText) return;
+    if (!statusContainer || !statusText) return;
+    
+    // Show status container
+    statusContainer.style.display = 'block';
     
     try {
-        // Check Ollama connection
-        const response = await fetch('http://localhost:11434/api/tags', {
-            method: 'GET',
-            signal: AbortSignal.timeout(5000)
+        // Check if EmbeddingGemma is available
+        const response = await chrome.runtime.sendMessage({
+            type: 'CHECK_LOCAL_AI_STATUS'
         });
         
-        if (response.ok) {
-            const data = await response.json();
-            const modelCount = data.models?.length || 0;
-            statusElement.className = 'status-indicator connected';
-            statusText.textContent = `Connected to Ollama (${modelCount} models)`;
+        if (response && response.ready) {
+            if (statusIndicator) statusIndicator.style.background = '#10b981';
+            statusText.textContent = 'EmbeddingGemma Ready ✅';
+            if (setupBtn) setupBtn.textContent = 'Local AI Ready';
+            if (progressContainer) progressContainer.style.display = 'none';
+        } else if (response && response.loading) {
+            if (statusIndicator) statusIndicator.style.background = '#f59e0b';
+            statusText.textContent = 'Loading EmbeddingGemma...';
+            if (setupBtn) setupBtn.textContent = 'Setting up...';
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+                if (progressText) progressText.textContent = 'Downloading model (first time only)...';
+            }
         } else {
-            throw new Error('Ollama not responding');
+            if (statusIndicator) statusIndicator.style.background = '#6b7280';
+            statusText.textContent = 'EmbeddingGemma not loaded';
+            if (setupBtn) setupBtn.textContent = 'Enable Local AI';
+            if (progressContainer) progressContainer.style.display = 'none';
         }
     } catch (error) {
-        statusElement.className = 'status-indicator disconnected';
-        statusText.textContent = 'Ollama not found - See setup instructions';
+        if (statusIndicator) statusIndicator.style.background = '#ef4444';
+        statusText.textContent = 'Local AI unavailable';
+        if (setupBtn) setupBtn.textContent = 'Enable Local AI';
+        if (progressContainer) progressContainer.style.display = 'none';
     }
 }
 
@@ -1190,235 +1214,131 @@ function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
 }
 
-// ========== OLLAMA SETTINGS ==========
+// ========== LOCAL AI (EmbeddingGemma) SETTINGS ==========
 
 /**
- * Initialize Ollama settings UI
+ * Initialize Local AI settings UI
  */
-function initializeOllamaSettings() {
-    const refreshBtn = document.getElementById('refreshOllamaBtn');
-    const modelSelect = document.getElementById('ollamaModelSelect');
-    const routingSelect = document.getElementById('routingPreference');
-    const complexitySlider = document.getElementById('complexityThreshold');
-    const complexityValue = document.getElementById('complexityValue');
+function initializeLocalAiSettings() {
+    const setupBtn = document.getElementById('setupLocalAI');
     
     // Set up event listeners
-    if (refreshBtn) {
-        refreshBtn.addEventListener('click', refreshOllamaStatus);
-    }
-    
-    if (modelSelect) {
-        modelSelect.addEventListener('change', (e) => {
-            setOllamaActiveModel(e.target.value);
-        });
-    }
-    
-    if (routingSelect) {
-        routingSelect.addEventListener('change', (e) => {
-            setRoutingPreference(e.target.value);
-        });
-    }
-    
-    if (complexitySlider && complexityValue) {
-        complexitySlider.addEventListener('input', (e) => {
-            const value = parseFloat(e.target.value);
-            complexityValue.textContent = value.toFixed(1);
-            setComplexityThreshold(value);
+    if (setupBtn) {
+        setupBtn.addEventListener('click', async () => {
+            await initializeLocalAi();
         });
     }
     
     // Initial status check
-    updateOllamaStatus();
+    updateLocalAiStatus();
     
-    // Update status every 30 seconds
-    setInterval(updateOllamaStatus, 30000);
+    // Update status every 10 seconds while loading
+    const statusInterval = setInterval(async () => {
+        await updateLocalAiStatus();
+        // Stop checking if model is ready
+        const response = await chrome.runtime.sendMessage({ type: 'CHECK_LOCAL_AI_STATUS' });
+        if (response && response.ready) {
+            clearInterval(statusInterval);
+        }
+    }, 10000);
 }
 
 /**
- * Update Ollama connection status
+ * Update Local AI connection status
  */
-async function updateOllamaStatus() {
-    const statusDot = document.getElementById('ollamaStatusDot');
-    const statusText = document.getElementById('ollamaStatusText');
-    const configSection = document.getElementById('ollamaConfigSection');
-    const setupInstructions = document.getElementById('ollamaSetupInstructions');
+async function updateLocalAiStatus() {
+    await updateLocalAiConnectionStatus();
+}
+
+/**
+ * Initialize Local AI (EmbeddingGemma)
+ */
+async function initializeLocalAi() {
+    const setupBtn = document.getElementById('setupLocalAI');
+    const statusContainer = document.getElementById('localAIStatus');
+    const statusText = document.getElementById('statusText');
+    const statusIndicator = document.getElementById('statusIndicator');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressText = document.getElementById('progressText');
     
-    if (!statusDot || !statusText) return;
+    if (setupBtn) {
+        setupBtn.disabled = true;
+        setupBtn.textContent = 'Initializing...';
+    }
     
-    // Set checking state
-    statusDot.className = 'status-dot checking';
-    statusText.textContent = 'Checking connection...';
+    // Show status container
+    if (statusContainer) statusContainer.style.display = 'block';
     
     try {
-        // Check if the hybrid system is available in the main window
-        if (window.opener && window.opener.refreshOllamaConnection) {
-            const status = await window.opener.refreshOllamaConnection();
+        // Send message to background script to initialize offscreen document
+        const response = await chrome.runtime.sendMessage({
+            type: 'INIT_LOCAL_AI'
+        });
+        
+        if (response && response.success) {
+            showToast('Local AI initialization started!', 'info');
             
-            if (status.connected) {
-                // Connected - show config options
-                statusDot.className = 'status-dot connected';
-                statusText.textContent = `Connected (${status.models?.length || 0} models)`;
-                
-                if (configSection) configSection.style.display = 'block';
-                if (setupInstructions) setupInstructions.style.display = 'none';
-                
-                // Populate model dropdown
-                updateModelDropdown(status.models || []);
-                updatePerformanceStats();
-                
-            } else {
-                // Disconnected - show setup instructions
-                statusDot.className = 'status-dot disconnected';
-                statusText.textContent = 'Ollama not found';
-                
-                if (configSection) configSection.style.display = 'none';
-                if (setupInstructions) setupInstructions.style.display = 'block';
+            // Update UI immediately
+            if (statusIndicator) statusIndicator.style.background = '#f59e0b';
+            if (statusText) statusText.textContent = 'Loading EmbeddingGemma...';
+            if (progressContainer) {
+                progressContainer.style.display = 'block';
+                if (progressText) progressText.textContent = 'Downloading model (first time only)...';
             }
+            
+            // Start monitoring status
+            monitorLocalAiInitialization();
+            
         } else {
-            // No hybrid system available
-            statusDot.className = 'status-dot disconnected';
-            statusText.textContent = 'Hybrid system not initialized';
+            throw new Error(response?.error || 'Failed to initialize Local AI');
+        }
+        
+    } catch (error) {
+        console.error('Error initializing Local AI:', error);
+        showToast('Failed to initialize Local AI: ' + error.message, 'error');
+        
+        if (setupBtn) {
+            setupBtn.disabled = false;
+            setupBtn.textContent = 'Enable Local AI';
+        }
+        
+        if (statusIndicator) statusIndicator.style.background = '#ef4444';
+        if (statusText) statusText.textContent = 'Failed to initialize';
+        if (progressContainer) progressContainer.style.display = 'none';
+    }
+}
+
+/**
+ * Monitor Local AI initialization progress
+ */
+function monitorLocalAiInitialization() {
+    const checkStatus = async () => {
+        try {
+            const response = await chrome.runtime.sendMessage({
+                type: 'CHECK_LOCAL_AI_STATUS'
+            });
             
-            if (configSection) configSection.style.display = 'none';
-            if (setupInstructions) setupInstructions.style.display = 'block';
-        }
-    } catch (error) {
-        console.error('Error checking Ollama status:', error);
-        statusDot.className = 'status-dot disconnected';
-        statusText.textContent = 'Connection error';
-        
-        if (configSection) configSection.style.display = 'none';
-        if (setupInstructions) setupInstructions.style.display = 'block';
-    }
-}
-
-/**
- * Refresh Ollama status manually
- */
-async function refreshOllamaStatus() {
-    const refreshBtn = document.getElementById('refreshOllamaBtn');
-    if (refreshBtn) {
-        refreshBtn.disabled = true;
-        refreshBtn.textContent = 'Checking...';
-    }
-    
-    await updateOllamaStatus();
-    
-    if (refreshBtn) {
-        refreshBtn.disabled = false;
-        refreshBtn.textContent = 'Refresh';
-    }
-}
-
-/**
- * Update model dropdown with available models
- */
-function updateModelDropdown(models) {
-    const modelSelect = document.getElementById('ollamaModelSelect');
-    if (!modelSelect) return;
-    
-    // Clear existing options
-    modelSelect.innerHTML = '';
-    
-    if (models.length === 0) {
-        modelSelect.innerHTML = '<option value="">No models available</option>';
-        return;
-    }
-    
-    // Add model options
-    models.forEach(model => {
-        const option = document.createElement('option');
-        option.value = model.name;
-        option.textContent = model.displayName || model.name;
-        
-        if (model.isActive) {
-            option.selected = true;
-        }
-        
-        modelSelect.appendChild(option);
-    });
-}
-
-/**
- * Set active Ollama model
- */
-async function setOllamaActiveModel(modelName) {
-    if (!modelName) return;
-    
-    try {
-        if (window.opener && window.opener.modelManager) {
-            await window.opener.modelManager.setActiveModel(modelName);
-            showToast(`Active model set to ${modelName}`, 'success');
-        }
-    } catch (error) {
-        console.error('Error setting active model:', error);
-        showToast(`Error setting active model: ${error.message}`, 'error');
-    }
-}
-
-/**
- * Set routing preference
- */
-function setRoutingPreference(preference) {
-    try {
-        if (window.opener && window.opener.llmRouter) {
-            window.opener.llmRouter.setRoutingPreference(preference);
-            showToast(`Routing preference set to ${preference}`, 'success');
-        }
-    } catch (error) {
-        console.error('Error setting routing preference:', error);
-        showToast(`Error setting routing preference: ${error.message}`, 'error');
-    }
-}
-
-/**
- * Set complexity threshold
- */
-function setComplexityThreshold(threshold) {
-    try {
-        if (window.opener && window.opener.llmRouter) {
-            window.opener.llmRouter.setComplexityThreshold(threshold);
-        }
-    } catch (error) {
-        console.error('Error setting complexity threshold:', error);
-    }
-}
-
-/**
- * Update performance statistics
- */
-function updatePerformanceStats() {
-    const perfGrid = document.getElementById('performanceStats');
-    if (!perfGrid) return;
-    
-    try {
-        if (window.opener && window.opener.getRoutingStatistics) {
-            const stats = window.opener.getRoutingStatistics();
-            
-            if (stats) {
-                perfGrid.innerHTML = `
-                    <div class="perf-stat">
-                        <div class="perf-stat-value">${stats.local.requests}</div>
-                        <div class="perf-stat-label">Local Requests</div>
-                    </div>
-                    <div class="perf-stat">
-                        <div class="perf-stat-value">${stats.cloud.requests}</div>
-                        <div class="perf-stat-label">Cloud Requests</div>
-                    </div>
-                    <div class="perf-stat">
-                        <div class="perf-stat-value">${Math.round(stats.local.avgResponseTime)}ms</div>
-                        <div class="perf-stat-label">Avg Local Time</div>
-                    </div>
-                    <div class="perf-stat">
-                        <div class="perf-stat-value">${Math.round(stats.local.successRate * 100)}%</div>
-                        <div class="perf-stat-label">Local Success</div>
-                    </div>
-                `;
+            if (response && response.ready) {
+                // Model is ready!
+                updateLocalAiConnectionStatus();
+                showToast('EmbeddingGemma loaded successfully! ✅', 'success');
+                return; // Stop monitoring
+            } else if (response && response.loading) {
+                // Still loading, continue monitoring
+                setTimeout(checkStatus, 2000);
+            } else {
+                // Something went wrong
+                updateLocalAiConnectionStatus();
+                setTimeout(checkStatus, 5000);
             }
+        } catch (error) {
+            console.error('Error checking Local AI status:', error);
+            setTimeout(checkStatus, 5000);
         }
-    } catch (error) {
-        console.error('Error updating performance stats:', error);
-    }
+    };
+    
+    // Start monitoring
+    checkStatus();
 }
 
 // ========== OLD CLOUD LLM SYSTEM FUNCTIONS - REMOVED ==========
