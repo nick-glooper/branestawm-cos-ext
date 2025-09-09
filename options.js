@@ -50,8 +50,10 @@ let settings = {
 // Debounced save function to avoid excessive saves
 let saveTimeout;
 function debouncedSave() {
+    console.log('DEBUG: debouncedSave called');
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
+        console.log('DEBUG: Executing saveSettings after debounce');
         saveSettings();
     }, 1000); // Save 1 second after last change
 }
@@ -332,12 +334,21 @@ function setupEventListeners() {
     const googleGeminiToggle = document.getElementById('googleGeminiToggle');
     const customAIToggle = document.getElementById('customAIToggle');
     const airplaneModeToggle = document.getElementById('airplaneModeToggle');
+    
+    console.log('DEBUG: Toggle elements found:', {
+        googleGeminiToggle: !!googleGeminiToggle,
+        customAIToggle: !!customAIToggle,
+        airplaneModeToggle: !!airplaneModeToggle
+    });
+    
     const expandOllamaBtn = document.getElementById('expandOllamaSetup');
     const ollamaAdvanced = document.getElementById('ollamaAdvanced');
     
     // Airplane Mode Toggle with exclusivity
     if (airplaneModeToggle) {
+        console.log('DEBUG: Adding event listener to airplaneModeToggle');
         airplaneModeToggle.addEventListener('change', (e) => {
+            console.log('DEBUG: Airplane Mode toggle changed to:', e.target.checked);
             if (e.target.checked) {
                 // Turn off other toggles when airplane mode is turned on
                 if (googleGeminiToggle) googleGeminiToggle.checked = false;
@@ -353,13 +364,18 @@ function setupEventListeners() {
                 }
                 settings.airplaneMode = false;
             }
+            console.log('DEBUG: Settings after toggle:', { activeLlm: settings.activeLlm, airplaneMode: settings.airplaneMode });
             updateAirplaneModeUI();
             debouncedSave();
         });
+    } else {
+        console.log('DEBUG: airplaneModeToggle not found!');
     }
     
     if (googleGeminiToggle) {
+        console.log('DEBUG: Adding event listener to googleGeminiToggle');
         googleGeminiToggle.addEventListener('change', (e) => {
+            console.log('DEBUG: Google Gemini toggle changed to:', e.target.checked);
             if (e.target.checked) {
                 // Turn off other toggles
                 if (customAIToggle) customAIToggle.checked = false;
@@ -367,6 +383,7 @@ function setupEventListeners() {
                 
                 settings.activeLlm = 'google';
                 settings.airplaneMode = false;
+                console.log('DEBUG: Settings after Google toggle:', { activeLlm: settings.activeLlm, airplaneMode: settings.airplaneMode });
                 updateAirplaneModeUI();
                 debouncedSave();
             } else {
@@ -377,6 +394,8 @@ function setupEventListeners() {
                 }
             }
         });
+    } else {
+        console.log('DEBUG: googleGeminiToggle not found!');
     }
     
     if (customAIToggle) {
@@ -1306,11 +1325,29 @@ async function initializeLocalAi() {
             if (statusText) statusText.textContent = 'Loading EmbeddingGemma...';
             if (progressContainer) {
                 progressContainer.style.display = 'block';
-                if (progressText) progressText.textContent = 'Downloading model (first time only)...';
+                if (progressText) progressText.textContent = 'Setting up offscreen document...';
             }
             
-            // Start monitoring status
-            monitorLocalAiInitialization();
+            // Wait a bit longer, then try to initialize the model via direct message
+            setTimeout(async () => {
+                try {
+                    console.log('🧠 Sending INIT_LOCAL_AI message to offscreen document');
+                    const initResponse = await chrome.runtime.sendMessage({
+                        type: 'INIT_LOCAL_AI'
+                    });
+                    console.log('🧠 Offscreen initialization response:', initResponse);
+                    
+                    if (progressText) progressText.textContent = 'Model downloading (~400MB)...';
+                    
+                    // Start monitoring status
+                    monitorLocalAiInitialization();
+                } catch (error) {
+                    console.error('Failed to initialize model in offscreen:', error);
+                    if (progressText) progressText.textContent = 'Initialization failed';
+                    if (statusIndicator) statusIndicator.style.background = '#ef4444';
+                    if (statusText) statusText.textContent = 'Failed to load model';
+                }
+            }, 3000);
             
         } else {
             throw new Error(response?.error || 'Failed to initialize Local AI');
