@@ -19,25 +19,25 @@
   "content_scripts": [
     {
       "matches": ["https://www.google.com/search*"],
-      "js": ["build/content-google.js"],
+      "js": ["content-google.js"],
       "run_at": "document_idle"
     },
     {
       "matches": ["https://www.perplexity.ai/*"],
-      "js": ["build/content-perplexity.js"],
+      "js": ["content-perplexity.js"],
       "run_at": "document_idle"
     }
   ],
   
   "background": {
-    "service_worker": "build/background.js"
+    "service_worker": "background.js"
   },
   
   "action": {
     "default_title": "Open Branestawm"
   },
   
-  "options_page": "build/options.html",
+  "options_page": "options.html",
   
   "icons": {
     "16": "icons/icon16.png",
