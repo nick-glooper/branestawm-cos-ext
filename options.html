@@ -442,9 +442,6 @@
             background: linear-gradient(135deg, var(--primary-50) 0%, var(--surface-primary) 100%);
         }
         
-        .ai-connection-card.airplane-mode {
-            border-color: var(--warning-400);
-        }
         
         .card-header {
             display: flex;
@@ -1203,12 +1200,13 @@
                     </div>
                 </div>
 
+
                 <!-- Local AI Card -->
-                <div class="ai-connection-card airplane-mode">
+                <div class="ai-connection-card">
                     <div class="card-header" style="border-bottom: none;">
                         <div class="card-title">
                             <h4>Local AI</h4>
-                            <span class="badge" style="background-color: #dc2626; color: white; border-radius: 12px; padding: 4px 12px;">Expert</span>
+                            <span class="badge" style="background-color: #6366f1; color: white; border-radius: 12px; padding: 4px 12px;">Privacy-First</span>
                         </div>
                         <div class="toggle-switch">
                             <input type="checkbox" id="airplaneModeToggle" class="toggle-input">
@@ -1216,7 +1214,7 @@
                         </div>
                     </div>
                     <p class="card-description">
-                        <strong>Privacy-first option:</strong> Run Google's EmbeddingGemma AI model completely on your device. 
+                        Run Google's EmbeddingGemma AI model completely on your device. 
                         Zero data sharing, works offline, and automatically downloads (~400MB) on first use. Perfect for privacy-conscious users.
                     </p>
                     
@@ -1237,30 +1235,29 @@
                             </div>
                         </div>
                     </div>
-                        <div class="expandable-content" id="localAIAdvanced" style="display: none;">
-                            <div class="setup-info" style="padding: 16px; background: #f0f9ff; border-radius: 8px; border: 1px solid #0ea5e9;">
-                                <h5>🧠 EmbeddingGemma Features</h5>
-                                <ul style="margin: 8px 0; padding-left: 20px;">
-                                    <li><strong>Zero Setup:</strong> Downloads automatically on first use</li>
-                                    <li><strong>Privacy-First:</strong> All processing happens on your device</li>
-                                    <li><strong>Lightweight:</strong> Only ~400MB download (vs 4GB+ traditional models)</li>
-                                    <li><strong>Fast:</strong> Optimized for everyday devices like laptops and tablets</li>
-                                    <li><strong>Multilingual:</strong> Supports 100+ languages out of the box</li>
-                                </ul>
-                            </div>
+                    <div class="expandable-content" id="localAIAdvanced" style="display: none;">
+                        <div class="setup-info" style="padding: 16px; background: #f0f9ff; border-radius: 8px; border: 1px solid #0ea5e9;">
+                            <h5>🧠 EmbeddingGemma Features</h5>
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li><strong>Zero Setup:</strong> Downloads automatically on first use</li>
+                                <li><strong>Privacy-First:</strong> All processing happens on your device</li>
+                                <li><strong>Lightweight:</strong> Only ~400MB download (vs 4GB+ traditional models)</li>
+                                <li><strong>Fast:</strong> Optimized for everyday devices like laptops and tablets</li>
+                                <li><strong>Multilingual:</strong> Supports 100+ languages out of the box</li>
+                            </ul>
+                        </div>
 
-                            <div class="setup-requirements">
-                                <h5>📋 System Requirements</h5>
-                                <ul style="margin: 8px 0; padding-left: 20px;">
-                                    <li><strong>Memory:</strong> 4GB+ RAM available</li>
-                                    <li><strong>Storage:</strong> 500MB free space for model cache</li>
-                                    <li><strong>Browser:</strong> Chrome/Edge with WebGPU support</li>
-                                    <li><strong>Connection:</strong> Internet for initial model download</li>
-                                </ul>
-                                
-                                <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 6px; border: 1px solid #f59e0b;">
-                                    <strong>📱 Note:</strong> After first setup, EmbeddingGemma runs completely offline. Perfect for sensitive documents or limited connectivity environments.
-                                </div>
+                        <div class="setup-requirements">
+                            <h5>📋 System Requirements</h5>
+                            <ul style="margin: 8px 0; padding-left: 20px;">
+                                <li><strong>Memory:</strong> 4GB+ RAM available</li>
+                                <li><strong>Storage:</strong> 500MB free space for model cache</li>
+                                <li><strong>Browser:</strong> Chrome/Edge with WebGPU support</li>
+                                <li><strong>Connection:</strong> Internet for initial model download</li>
+                            </ul>
+                            
+                            <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 6px; border: 1px solid #f59e0b;">
+                                <strong>📱 Note:</strong> After first setup, EmbeddingGemma runs completely offline. Perfect for sensitive documents or limited connectivity environments.
                             </div>
                         </div>
                     </div>
