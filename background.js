@@ -285,17 +285,19 @@ chrome.runtime.onConnect.addListener((port) => {
 });
 
 // Handle messages from main tab
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('📨 Background: Received message:', message.type, 'from:', sender.tab?.url || 'unknown');
     
     if (message.type === 'SYNC_REQUEST') {
         // Handle sync requests from main tab
-        try {
-            await performAutoSync();
-            sendResponse({ success: true });
-        } catch (error) {
-            sendResponse({ success: false, error: error.message });
-        }
+        (async () => {
+            try {
+                await performAutoSync();
+                sendResponse({ success: true });
+            } catch (error) {
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
         return true; // Will respond asynchronously
     }
     
