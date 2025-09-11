@@ -453,7 +453,45 @@ function setupEventListeners() {
     
     // Old LLM management system removed - now using three-tier setup
     
+    // DEBUGGING: Add click listeners to all toggle-related elements
+    addToggleDebugging();
+    
     console.log('DEBUG: setupEventListeners completed successfully');
+}
+
+// DEBUGGING: Add click listeners to diagnose toggle click issues
+function addToggleDebugging() {
+    console.log('DEBUG: Adding comprehensive toggle debugging...');
+    
+    // Test clicks on the actual input elements
+    ['googleGeminiToggle', 'customAIToggle', 'airplaneModeToggle'].forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('click', (e) => {
+                console.log(`DEBUG: Direct click on INPUT ${id}:`, e.target.checked);
+            });
+            
+            // Also test the parent toggle-switch container
+            const container = input.closest('.toggle-switch');
+            if (container) {
+                container.addEventListener('click', (e) => {
+                    console.log(`DEBUG: Click on CONTAINER for ${id}:`, e.target.className);
+                });
+            }
+            
+            // Test the slider element
+            const slider = container?.querySelector('.toggle-slider');
+            if (slider) {
+                slider.addEventListener('click', (e) => {
+                    console.log(`DEBUG: Click on SLIDER for ${id}:`, e.target.className);
+                });
+            }
+        } else {
+            console.error(`DEBUG: Could not find input element: ${id}`);
+        }
+    });
+    
+    console.log('DEBUG: Toggle debugging added');
 }
 
 // Old auth method selection removed - now handled by three-tier system
