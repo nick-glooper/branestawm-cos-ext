@@ -3,13 +3,31 @@
 
 console.log('🔍 OFFSCREEN DEBUG: Script loading started...');
 
-import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js';
+// Test if basic offscreen loading works first
+console.log('🔍 OFFSCREEN DEBUG: Basic script execution working');
 
-console.log('🔍 OFFSCREEN DEBUG: Transformers.js imported successfully');
+// Global variables for transformers.js
+let pipeline, env;
 
-// Configure transformers.js for Chrome extension
-env.allowRemoteModels = true;
-env.allowLocalModels = false;
+// Load transformers.js asynchronously
+(async () => {
+    try {
+        console.log('🔍 OFFSCREEN DEBUG: Attempting to import transformers.js...');
+        const transformersModule = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
+        pipeline = transformersModule.pipeline;
+        env = transformersModule.env;
+        console.log('🔍 OFFSCREEN DEBUG: Transformers.js imported successfully');
+        
+        // Configure transformers.js for Chrome extension
+        if (env) {
+            env.allowRemoteModels = true;
+            env.allowLocalModels = false;
+            console.log('🔍 OFFSCREEN DEBUG: Transformers.js configured successfully');
+        }
+    } catch (error) {
+        console.error('🔍 OFFSCREEN DEBUG: Failed to import transformers.js:', error);
+    }
+})();
 
 // Global model instance
 let embedder = null;
@@ -43,6 +61,25 @@ async function initializeModel() {
     if (isLoading || isReady) {
         console.log('🔍 OFFSCREEN DEBUG: Model already loading or ready, returning early');
         return;
+    }
+    
+    // Check if transformers.js is loaded
+    if (!pipeline) {
+        console.log('🔍 OFFSCREEN DEBUG: Transformers.js not loaded yet, waiting...');
+        updateStatus('Waiting for transformers.js...', 5, 'Loading dependencies');
+        
+        // Wait for transformers.js to load (up to 10 seconds)
+        for (let i = 0; i < 20; i++) {
+            if (pipeline) {
+                console.log('🔍 OFFSCREEN DEBUG: Transformers.js now available, proceeding');
+                break;
+            }
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
+        if (!pipeline) {
+            throw new Error('Transformers.js failed to load after 10 seconds');
+        }
     }
     
     isLoading = true;
