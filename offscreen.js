@@ -1,7 +1,11 @@
 // Branestawm - EmbeddingGemma Integration
 // Offscreen document for running local AI models with WebGPU access
 
+console.log('🔍 OFFSCREEN DEBUG: Script loading started...');
+
 import { pipeline, env } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js';
+
+console.log('🔍 OFFSCREEN DEBUG: Transformers.js imported successfully');
 
 // Configure transformers.js for Chrome extension
 env.allowRemoteModels = true;
@@ -34,12 +38,20 @@ function updateStatus(message, progress = null, details = null) {
 
 // Initialize EmbeddingGemma model
 async function initializeModel() {
-    if (isLoading || isReady) return;
+    console.log('🔍 OFFSCREEN DEBUG: initializeModel called, isLoading:', isLoading, 'isReady:', isReady);
+    
+    if (isLoading || isReady) {
+        console.log('🔍 OFFSCREEN DEBUG: Model already loading or ready, returning early');
+        return;
+    }
     
     isLoading = true;
+    console.log('🔍 OFFSCREEN DEBUG: Starting model download...');
     
     try {
         updateStatus('Loading EmbeddingGemma...', 10, 'Downloading model files (first time only)');
+        
+        console.log('🔍 OFFSCREEN DEBUG: Calling pipeline for google/embeddinggemma-300m...');
         
         // Load the embedding model
         embedder = await pipeline(
@@ -47,19 +59,25 @@ async function initializeModel() {
             'google/embeddinggemma-300m',
             {
                 progress_callback: (data) => {
+                    console.log('🔍 OFFSCREEN DEBUG: Pipeline progress:', data);
+                    
                     if (data.status === 'downloading') {
                         const progress = Math.round((data.loaded / data.total) * 100);
+                        console.log(`🔍 OFFSCREEN DEBUG: Download progress: ${progress}% - ${data.name}`);
                         updateStatus(
                             `Loading model: ${data.name}`, 
                             10 + (progress * 0.7), 
                             `Downloaded ${Math.round(data.loaded / 1024 / 1024)}MB / ${Math.round(data.total / 1024 / 1024)}MB`
                         );
                     } else if (data.status === 'loading') {
+                        console.log('🔍 OFFSCREEN DEBUG: Model loading phase started');
                         updateStatus('Initializing model...', 85, 'Setting up EmbeddingGemma for inference');
                     }
                 }
             }
         );
+        
+        console.log('🔍 OFFSCREEN DEBUG: Pipeline completed successfully!');
         
         updateStatus('Model Ready! ✅', 100, 'EmbeddingGemma loaded successfully');
         isReady = true;
@@ -154,11 +172,20 @@ function cosineSimilarity(a, b) {
 
 // Listen for messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    console.log('🔍 OFFSCREEN DEBUG: Received message:', message.type, message);
+    
     switch (message.type) {
         case 'INIT_LOCAL_AI':
+            console.log('🔍 OFFSCREEN DEBUG: Starting model initialization...');
             initializeModel()
-                .then(() => sendResponse({ success: true, ready: isReady }))
-                .catch(error => sendResponse({ success: false, error: error.message }));
+                .then(() => {
+                    console.log('🔍 OFFSCREEN DEBUG: Model initialization completed, isReady:', isReady);
+                    sendResponse({ success: true, ready: isReady });
+                })
+                .catch(error => {
+                    console.log('🔍 OFFSCREEN DEBUG: Model initialization failed:', error.message);
+                    sendResponse({ success: false, error: error.message });
+                });
             return true; // Keep message channel open for async response
             
         case 'GENERATE_EMBEDDING':
@@ -197,12 +224,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Initialize status
 updateStatus('Ready to load model', 0, 'Click "Setup Local AI" to begin');
 
+console.log('🔍 OFFSCREEN DEBUG: Document ready, sending OFFSCREEN_READY message...');
+
 // Notify background script that offscreen document is ready
 chrome.runtime.sendMessage({
     type: 'OFFSCREEN_READY'
-}).catch(() => {
-    // Ignore errors during startup
-    console.log('Background script not ready yet');
+}).then(() => {
+    console.log('🔍 OFFSCREEN DEBUG: OFFSCREEN_READY message sent successfully');
+}).catch((error) => {
+    console.log('🔍 OFFSCREEN DEBUG: Failed to send OFFSCREEN_READY:', error);
 });
 
-console.log('Branestawm offscreen document loaded');
+console.log('🔍 OFFSCREEN DEBUG: Branestawm offscreen document loaded and ready for messages');
