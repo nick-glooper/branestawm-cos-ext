@@ -236,3 +236,12 @@ chrome.runtime.sendMessage({
 });
 
 console.log('🔍 OFFSCREEN DEBUG: Branestawm offscreen document loaded and ready for messages');
+
+// Auto-start model initialization when offscreen document is created for Local AI
+console.log('🔍 OFFSCREEN DEBUG: Auto-starting model initialization...');
+setTimeout(() => {
+    console.log('🔍 OFFSCREEN DEBUG: Starting automatic model initialization');
+    initializeModel().catch(error => {
+        console.error('🔍 OFFSCREEN DEBUG: Auto-initialization failed:', error);
+    });
+}, 1000); // Give the document time to fully initialize

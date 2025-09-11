@@ -390,21 +390,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 // Create offscreen document for WebGPU access
                 await createOffscreenDocument();
                 
-                console.log('🧠 Offscreen document created, now sending INIT_LOCAL_AI message to offscreen');
-                
-                // Send initialization message to offscreen document
-                setTimeout(async () => {
-                    try {
-                        console.log('🧠 Sending INIT_LOCAL_AI message to offscreen document...');
-                        await chrome.runtime.sendMessage({
-                            type: 'INIT_LOCAL_AI'
-                        });
-                        console.log('🧠 INIT_LOCAL_AI message sent to offscreen document');
-                    } catch (error) {
-                        console.error('❌ Failed to send INIT_LOCAL_AI to offscreen:', error);
-                    }
-                }, 500); // Small delay to ensure offscreen is ready
-                
+                console.log('🧠 Offscreen document created - model will auto-initialize');
                 console.log('🧠 Responding to options page');
                 sendResponse({ success: true });
                 
