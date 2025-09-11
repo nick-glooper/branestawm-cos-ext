@@ -382,36 +382,42 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.type === 'INIT_LOCAL_AI') {
         console.log('🧠 Background: Initializing Local AI (EmbeddingGemma)');
         
-        try {
-            // Create offscreen document for WebGPU access
-            await createOffscreenDocument();
-            
-            console.log('🧠 Offscreen document created, responding immediately to options page');
-            sendResponse({ success: true });
-            
-        } catch (error) {
-            console.error('❌ Background: Failed to initialize Local AI:', error);
-            sendResponse({ success: false, error: error.message });
-        }
+        // Handle async operation properly
+        (async () => {
+            try {
+                // Create offscreen document for WebGPU access
+                await createOffscreenDocument();
+                
+                console.log('🧠 Offscreen document created, responding immediately to options page');
+                sendResponse({ success: true });
+                
+            } catch (error) {
+                console.error('❌ Background: Failed to initialize Local AI:', error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
         
         return true; // Will respond asynchronously
     }
     
     if (message.type === 'CHECK_LOCAL_AI_STATUS') {
-        try {
-            // Check if offscreen document exists
-            const hasOffscreen = await checkOffscreenDocument();
-            
-            if (hasOffscreen) {
-                sendResponse({ ready: false, loading: true, hasModel: false });
-            } else {
-                sendResponse({ ready: false, loading: false, hasModel: false });
+        // Handle async operation properly
+        (async () => {
+            try {
+                // Check if offscreen document exists
+                const hasOffscreen = await checkOffscreenDocument();
+                
+                if (hasOffscreen) {
+                    sendResponse({ ready: false, loading: true, hasModel: false });
+                } else {
+                    sendResponse({ ready: false, loading: false, hasModel: false });
+                }
+                
+            } catch (error) {
+                console.error('Error checking Local AI status:', error);
+                sendResponse({ ready: false, loading: false, hasModel: false, error: error.message });
             }
-            
-        } catch (error) {
-            console.error('Error checking Local AI status:', error);
-            sendResponse({ ready: false, loading: false, hasModel: false, error: error.message });
-        }
+        })();
         
         return true; // Will respond asynchronously
     }
