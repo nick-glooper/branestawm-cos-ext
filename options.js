@@ -4,7 +4,7 @@
 let settings = {
     // New LLM selection system
     activeLlm: 'local', // 'local', 'google', 'custom-[id]'
-    airplaneMode: false,
+    airplaneMode: true, // Keep in sync with activeLlm: 'local'
     
     // Legacy settings (for backward compatibility)
     authMethod: null,
@@ -114,9 +114,22 @@ async function loadSettings() {
         if (data.settings) {
             settings = { ...settings, ...data.settings };
         }
+        
+        // Ensure consistency between activeLlm and airplaneMode
+        ensureToggleConsistency();
+        
         console.log('Settings loaded:', settings);
     } catch (error) {
         console.error('Error loading settings:', error);
+    }
+}
+
+// Ensure activeLlm and airplaneMode are always in sync
+function ensureToggleConsistency() {
+    if (settings.activeLlm === 'local') {
+        settings.airplaneMode = true;
+    } else {
+        settings.airplaneMode = false;
     }
 }
 
@@ -355,7 +368,7 @@ function setupEventListeners() {
                 if (customAIToggle) customAIToggle.checked = false;
                 
                 settings.activeLlm = 'local';
-                settings.airplaneMode = true;
+                ensureToggleConsistency();
             } else {
                 // Don't allow unchecking if no other AI is selected - keep at least one active
                 if (!googleGeminiToggle?.checked && !customAIToggle?.checked) {
@@ -382,7 +395,7 @@ function setupEventListeners() {
                 if (airplaneModeToggle) airplaneModeToggle.checked = false;
                 
                 settings.activeLlm = 'google';
-                settings.airplaneMode = false;
+                ensureToggleConsistency();
                 console.log('DEBUG: Settings after Google toggle:', { activeLlm: settings.activeLlm, airplaneMode: settings.airplaneMode });
                 updateAirplaneModeUI();
                 debouncedSave();
@@ -408,7 +421,7 @@ function setupEventListeners() {
                 if (airplaneModeToggle) airplaneModeToggle.checked = false;
                 
                 settings.activeLlm = 'custom';
-                settings.airplaneMode = false;
+                ensureToggleConsistency();
                 console.log('DEBUG: Settings after Custom toggle:', { activeLlm: settings.activeLlm, airplaneMode: settings.airplaneMode });
                 updateAirplaneModeUI();
                 debouncedSave();
@@ -938,22 +951,22 @@ function updateUI() {
         }
     }
     
-    // Update Airplane Mode status
-    const airplaneModeToggle = document.getElementById('airplaneModeToggle');
-    if (airplaneModeToggle) {
-        airplaneModeToggle.checked = settings.airplaneMode;
-        updateAirplaneModeUI();
-    }
-    
-    // Update AI Provider Toggle states based on activeLlm
+    // Update AI Provider Toggle states based on activeLlm (consistent system)
     const googleGeminiToggle = document.getElementById('googleGeminiToggle');
     const customAIToggle = document.getElementById('customAIToggle');
+    const airplaneModeToggle = document.getElementById('airplaneModeToggle');
     
     if (googleGeminiToggle) {
         googleGeminiToggle.checked = settings.activeLlm === 'google';
     }
     if (customAIToggle) {
         customAIToggle.checked = settings.activeLlm === 'custom';
+    }
+    if (airplaneModeToggle) {
+        airplaneModeToggle.checked = settings.activeLlm === 'local';
+        // Keep airplaneMode in sync with activeLlm
+        settings.airplaneMode = settings.activeLlm === 'local';
+        updateAirplaneModeUI();
     }
     
     // Apply tooltip visibility
