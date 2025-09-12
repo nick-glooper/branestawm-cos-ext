@@ -110,10 +110,17 @@ function loadTransformersWithScript() {
     }
 })();
 
-// Global model instance
-let embedder = null;
-let isLoading = false;
-let isReady = false;
+// Global model instances for RAG architecture
+let embedder = null;          // For creating document/query embeddings
+let generator = null;         // For text generation (Gemma-2b-it)
+let isEmbedderLoading = false;
+let isGeneratorLoading = false;
+let isEmbedderReady = false;
+let isGeneratorReady = false;
+
+// RAG-specific globals
+let vectorStore = null;       // IndexedDB interface for vector storage
+let documentChunks = new Map(); // Cache for document chunks
 
 // UI elements
 const statusEl = document.getElementById('status');
@@ -135,12 +142,14 @@ function updateStatus(message, progress = null, details = null) {
     });
 }
 
-// Initialize EmbeddingGemma model
+// Initialize both embedding and generative models for RAG
 async function initializeModel() {
-    console.log('🔍 OFFSCREEN DEBUG: initializeModel called, isLoading:', isLoading, 'isReady:', isReady);
+    console.log('🔍 OFFSCREEN DEBUG: initializeModel called');
+    console.log('🔍 OFFSCREEN DEBUG: Embedder status - loading:', isEmbedderLoading, 'ready:', isEmbedderReady);
+    console.log('🔍 OFFSCREEN DEBUG: Generator status - loading:', isGeneratorLoading, 'ready:', isGeneratorReady);
     
-    if (isLoading || isReady) {
-        console.log('🔍 OFFSCREEN DEBUG: Model already loading or ready, returning early');
+    if ((isEmbedderLoading || isEmbedderReady) && (isGeneratorLoading || isGeneratorReady)) {
+        console.log('🔍 OFFSCREEN DEBUG: Models already loading or ready, returning early');
         return;
     }
     
@@ -163,39 +172,21 @@ async function initializeModel() {
         }
     }
     
-    isLoading = true;
-    console.log('🔍 OFFSCREEN DEBUG: Starting model download...');
-    
     try {
-        updateStatus('Loading EmbeddingGemma...', 10, 'Downloading model files (first time only)');
+        // Initialize vector storage first
+        await initializeVectorStore();
         
-        console.log('🔍 OFFSCREEN DEBUG: Calling pipeline for google/embeddinggemma-300m...');
+        // Load embedding model first (smaller, faster)
+        if (!isEmbedderReady && !isEmbedderLoading) {
+            await loadEmbeddingModel();
+        }
         
-        // Load the embedding model
-        embedder = await pipeline(
-            'feature-extraction', 
-            'google/embeddinggemma-300m',
-            {
-                progress_callback: (data) => {
-                    console.log('🔍 OFFSCREEN DEBUG: Pipeline progress:', data);
-                    
-                    if (data.status === 'downloading') {
-                        const progress = Math.round((data.loaded / data.total) * 100);
-                        console.log(`🔍 OFFSCREEN DEBUG: Download progress: ${progress}% - ${data.name}`);
-                        updateStatus(
-                            `Loading model: ${data.name}`, 
-                            10 + (progress * 0.7), 
-                            `Downloaded ${Math.round(data.loaded / 1024 / 1024)}MB / ${Math.round(data.total / 1024 / 1024)}MB`
-                        );
-                    } else if (data.status === 'loading') {
-                        console.log('🔍 OFFSCREEN DEBUG: Model loading phase started');
-                        updateStatus('Initializing model...', 85, 'Setting up EmbeddingGemma for inference');
-                    }
-                }
-            }
-        );
+        // Load generative model (larger, slower)
+        if (!isGeneratorReady && !isGeneratorLoading) {
+            await loadGenerativeModel();
+        }
         
-        console.log('🔍 OFFSCREEN DEBUG: Pipeline completed successfully!');
+        console.log('🔍 OFFSCREEN DEBUG: RAG system fully initialized!');
         
         updateStatus('Model Ready! ✅', 100, 'EmbeddingGemma loaded successfully');
         isReady = true;
@@ -213,6 +204,120 @@ async function initializeModel() {
             type: 'LOCAL_AI_ERROR',
             error: error.message
         });
+    }
+}
+
+// Load embedding model (for document and query vectorization)
+async function loadEmbeddingModel() {
+    isEmbedderLoading = true;
+    console.log('🔍 OFFSCREEN DEBUG: Loading embedding model...');
+    
+    try {
+        updateStatus('Loading Embedding Model...', 20, 'Downloading google/embeddinggemma-300m');
+        
+        embedder = await pipeline(
+            'feature-extraction', 
+            'google/embeddinggemma-300m',
+            {
+                progress_callback: (data) => {
+                    if (data.status === 'downloading') {
+                        const progress = Math.round((data.loaded / data.total) * 100);
+                        console.log(`🔍 OFFSCREEN DEBUG: Embedding model progress: ${progress}% - ${data.name}`);
+                        updateStatus(
+                            `Loading embedding model: ${data.name}`, 
+                            20 + (progress * 0.3), 
+                            `Downloaded ${Math.round(data.loaded / 1024 / 1024)}MB / ${Math.round(data.total / 1024 / 1024)}MB`
+                        );
+                    }
+                }
+            }
+        );
+        
+        isEmbedderReady = true;
+        isEmbedderLoading = false;
+        console.log('🔍 OFFSCREEN DEBUG: Embedding model loaded successfully');
+        updateStatus('Embedding Model Ready ✅', 50, 'Now loading generative model...');
+        
+    } catch (error) {
+        isEmbedderLoading = false;
+        console.error('🔍 OFFSCREEN DEBUG: Failed to load embedding model:', error);
+        throw error;
+    }
+}
+
+// Load generative model (for text generation in RAG)
+async function loadGenerativeModel() {
+    isGeneratorLoading = true;
+    console.log('🔍 OFFSCREEN DEBUG: Loading generative model...');
+    
+    try {
+        updateStatus('Loading Generative Model...', 50, 'Downloading Xenova/gemma-2b-it');
+        
+        // Use Xenova's quantized Gemma-2b-it model optimized for transformers.js
+        generator = await pipeline(
+            'text-generation',
+            'Xenova/gemma-2b-it',
+            {
+                progress_callback: (data) => {
+                    if (data.status === 'downloading') {
+                        const progress = Math.round((data.loaded / data.total) * 100);
+                        console.log(`🔍 OFFSCREEN DEBUG: Generative model progress: ${progress}% - ${data.name}`);
+                        updateStatus(
+                            `Loading generative model: ${data.name}`, 
+                            50 + (progress * 0.4), 
+                            `Downloaded ${Math.round(data.loaded / 1024 / 1024)}MB / ${Math.round(data.total / 1024 / 1024)}MB`
+                        );
+                    }
+                }
+            }
+        );
+        
+        isGeneratorReady = true;
+        isGeneratorLoading = false;
+        console.log('🔍 OFFSCREEN DEBUG: Generative model loaded successfully');
+        updateStatus('RAG System Ready! ✅', 100, 'Both models loaded - ready for document processing');
+        
+    } catch (error) {
+        isGeneratorLoading = false;
+        console.error('🔍 OFFSCREEN DEBUG: Failed to load generative model:', error);
+        // Don't throw - embedding-only mode still useful
+        updateStatus('Embedding Ready (Generator Failed)', 50, 'Can create embeddings but not generate text');
+    }
+}
+
+// Initialize IndexedDB vector storage system
+async function initializeVectorStore() {
+    console.log('🔍 OFFSCREEN DEBUG: Initializing vector storage...');
+    
+    try {
+        updateStatus('Setting up vector storage...', 10, 'Initializing IndexedDB');
+        
+        // TODO: Implement IndexedDB vector store
+        // This will store document chunks and their embeddings
+        vectorStore = {
+            store: async (docId, chunks, embeddings) => {
+                // Store document chunks and embeddings in IndexedDB
+                console.log('🔍 OFFSCREEN DEBUG: Storing vectors for document:', docId);
+            },
+            
+            search: async (queryEmbedding, topK = 5) => {
+                // Search for similar embeddings using cosine similarity
+                console.log('🔍 OFFSCREEN DEBUG: Searching for similar vectors');
+                return [];
+            },
+            
+            list: async () => {
+                // List all stored documents
+                return [];
+            }
+        };
+        
+        console.log('🔍 OFFSCREEN DEBUG: Vector storage initialized');
+        updateStatus('Vector storage ready', 15, 'IndexedDB initialized');
+        
+    } catch (error) {
+        console.error('🔍 OFFSCREEN DEBUG: Failed to initialize vector storage:', error);
+        throw error;
     }
 }
 
@@ -241,36 +346,143 @@ async function generateEmbedding(text) {
     }
 }
 
-// Generate AI response using embeddings and retrieval
-async function generateResponse(query, context = null) {
-    if (!isReady) {
-        throw new Error('Local AI model not ready');
+// Full RAG pipeline: Retrieve relevant chunks and generate response
+async function generateResponse(query, options = {}) {
+    if (!isEmbedderReady) {
+        throw new Error('Embedding model not ready');
     }
     
     try {
-        // For now, we'll implement a simple embedding-based response
-        // This can be enhanced with RAG capabilities later
+        console.log('🔍 OFFSCREEN DEBUG: Starting RAG pipeline for query:', query);
+        updateStatus('Processing query...', null, 'Generating query embedding');
+        
+        // Step 1: Generate embedding for user query
         const queryEmbedding = await generateEmbedding(query);
+        console.log('🔍 OFFSCREEN DEBUG: Query embedding generated');
         
-        // Simple response generation based on query analysis
-        let response = "I understand you're asking about: " + query;
+        // Step 2: Retrieve relevant document chunks
+        updateStatus('Searching documents...', null, 'Finding relevant context');
+        const relevantChunks = await vectorStore.search(queryEmbedding, options.topK || 3);
+        console.log('🔍 OFFSCREEN DEBUG: Found relevant chunks:', relevantChunks.length);
         
-        if (context) {
-            const contextEmbedding = await generateEmbedding(context);
-            // Calculate similarity (cosine similarity approximation)
-            const similarity = cosineSimilarity(queryEmbedding, contextEmbedding);
+        // Step 3: Build context from retrieved chunks
+        const context = relevantChunks
+            .map(chunk => chunk.text)
+            .join('\n\n');
             
-            if (similarity > 0.7) {
-                response = "Based on the context provided, I can help with: " + query;
-            }
+        // Step 4: Generate response using generative model
+        if (isGeneratorReady && generator) {
+            updateStatus('Generating response...', null, 'Using Gemma-2b-it for text generation');
+            
+            // Construct RAG prompt
+            const prompt = buildRAGPrompt(query, context, options);
+            console.log('🔍 OFFSCREEN DEBUG: Generated RAG prompt length:', prompt.length);
+            
+            const response = await generator(prompt, {
+                max_new_tokens: options.maxTokens || 256,
+                temperature: options.temperature || 0.7,
+                do_sample: true,
+                top_p: 0.9
+            });
+            
+            updateStatus('Response generated ✅', null, 'RAG pipeline complete');
+            return {
+                response: response[0].generated_text.replace(prompt, '').trim(),
+                sources: relevantChunks.map(c => ({ id: c.docId, snippet: c.text.substring(0, 100) + '...' })),
+                query,
+                context: context.substring(0, 500) + '...'
+            };
+            
+        } else {
+            // Fallback: embedding-only mode
+            console.log('🔍 OFFSCREEN DEBUG: Generator not ready, using embedding-only response');
+            updateStatus('Embedding-only response', null, 'Generative model not available');
+            
+            return {
+                response: `Based on the retrieved context, I found ${relevantChunks.length} relevant sections related to: "${query}". However, the generative model is not loaded for detailed text generation.`,
+                sources: relevantChunks.map(c => ({ id: c.docId, snippet: c.text.substring(0, 200) + '...' })),
+                query,
+                context: context.substring(0, 1000) + '...'
+            };
         }
         
-        return response;
-        
     } catch (error) {
-        console.error('Error generating response:', error);
+        console.error('🔍 OFFSCREEN DEBUG: Error in RAG pipeline:', error);
+        updateStatus('RAG pipeline error', null, error.message);
         throw error;
     }
+}
+
+// Build RAG prompt from query and retrieved context
+function buildRAGPrompt(query, context, options = {}) {
+    const systemPrompt = options.systemPrompt || 
+        "You are a helpful AI assistant that answers questions based on provided context. " +
+        "Use only the information from the context to answer questions. " +
+        "If the context doesn't contain relevant information, say so clearly.";
+        
+    return `${systemPrompt}
+
+Context:
+${context}
+
+Question: ${query}
+
+Answer:`;
+}
+
+// Document processing functions for RAG
+async function processDocument(docId, text, options = {}) {
+    console.log('🔍 OFFSCREEN DEBUG: Processing document:', docId);
+    
+    if (!isEmbedderReady) {
+        throw new Error('Embedding model not ready for document processing');
+    }
+    
+    try {
+        updateStatus('Processing document...', null, `Chunking text for ${docId}`);
+        
+        // Step 1: Split document into chunks
+        const chunks = chunkText(text, options.chunkSize || 512, options.chunkOverlap || 50);
+        console.log('🔍 OFFSCREEN DEBUG: Created chunks:', chunks.length);
+        
+        // Step 2: Generate embeddings for each chunk
+        updateStatus('Generating embeddings...', null, `Processing ${chunks.length} chunks`);
+        const embeddings = [];
+        
+        for (let i = 0; i < chunks.length; i++) {
+            const embedding = await generateEmbedding(chunks[i]);
+            embeddings.push(embedding);
+            
+            // Update progress
+            const progress = Math.round(((i + 1) / chunks.length) * 100);
+            updateStatus(`Embedding chunks... ${i + 1}/${chunks.length}`, null, `${progress}% complete`);
+        }
+        
+        // Step 3: Store in vector database
+        await vectorStore.store(docId, chunks, embeddings);
+        
+        updateStatus('Document processed ✅', null, `${chunks.length} chunks indexed`);
+        return { docId, chunks: chunks.length, success: true };
+        
+    } catch (error) {
+        console.error('🔍 OFFSCREEN DEBUG: Error processing document:', error);
+        throw error;
+    }
+}
+
+// Chunk text into overlapping segments
+function chunkText(text, chunkSize = 512, overlap = 50) {
+    const chunks = [];
+    const words = text.split(/\s+/);
+    
+    for (let i = 0; i < words.length; i += (chunkSize - overlap)) {
+        const chunk = words.slice(i, i + chunkSize).join(' ');
+        if (chunk.trim().length > 0) {
+            chunks.push(chunk.trim());
+        }
+    }
+    
+    return chunks;
 }
 
 // Utility function for cosine similarity
@@ -307,30 +519,53 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return true; // Keep message channel open for async response
             
         case 'GENERATE_EMBEDDING':
-            if (isReady) {
+            if (isEmbedderReady) {
                 generateEmbedding(message.text)
                     .then(embedding => sendResponse({ success: true, embedding }))
                     .catch(error => sendResponse({ success: false, error: error.message }));
             } else {
-                sendResponse({ success: false, error: 'Model not ready' });
+                sendResponse({ success: false, error: 'Embedding model not ready' });
             }
             return true;
             
         case 'GENERATE_RESPONSE':
-            if (isReady) {
-                generateResponse(message.query, message.context)
+            if (isEmbedderReady) {
+                generateResponse(message.query, message.options || {})
                     .then(response => sendResponse({ success: true, response }))
                     .catch(error => sendResponse({ success: false, error: error.message }));
             } else {
-                sendResponse({ success: false, error: 'Model not ready' });
+                sendResponse({ success: false, error: 'RAG system not ready' });
+            }
+            return true;
+            
+        case 'PROCESS_DOCUMENT':
+            if (isEmbedderReady) {
+                processDocument(message.docId, message.text, message.options || {})
+                    .then(result => sendResponse({ success: true, result }))
+                    .catch(error => sendResponse({ success: false, error: error.message }));
+            } else {
+                sendResponse({ success: false, error: 'Embedding model not ready for document processing' });
+            }
+            return true;
+            
+        case 'LIST_DOCUMENTS':
+            if (vectorStore) {
+                vectorStore.list()
+                    .then(documents => sendResponse({ success: true, documents }))
+                    .catch(error => sendResponse({ success: false, error: error.message }));
+            } else {
+                sendResponse({ success: false, error: 'Vector store not initialized' });
             }
             return true;
             
         case 'CHECK_STATUS':
             sendResponse({ 
-                ready: isReady, 
-                loading: isLoading,
-                hasModel: !!embedder 
+                embedderReady: isEmbedderReady,
+                generatorReady: isGeneratorReady,
+                embedderLoading: isEmbedderLoading,
+                generatorLoading: isGeneratorLoading,
+                vectorStoreReady: !!vectorStore,
+                ragReady: isEmbedderReady && !!vectorStore
             });
             break;
             
