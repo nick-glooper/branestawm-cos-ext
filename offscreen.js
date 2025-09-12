@@ -37,8 +37,63 @@ try {
     console.log('🔍 OFFSCREEN DEBUG: Failed to send setup status:', error);
 }
 
-// Direct import approach (CSP-compliant)
-console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP issues');
+// Multiple loading strategies for transformers.js
+console.log('🔍 OFFSCREEN DEBUG: Trying multiple transformers.js loading strategies');
+
+// Load transformers.js via script tag (for UMD builds)
+function loadViaScriptTag(url, globalVarName, timeout = 20000) {
+    return new Promise((resolve, reject) => {
+        console.log(`🔍 OFFSCREEN DEBUG: Creating script tag for ${url}`);
+        
+        const script = document.createElement('script');
+        script.src = url;
+        script.type = 'text/javascript'; // Regular script, not module
+        
+        // Add timeout
+        const timeoutId = setTimeout(() => {
+            console.error(`🔍 OFFSCREEN DEBUG: Script loading timeout for ${url}`);
+            reject(new Error(`Script loading timeout after ${timeout}ms`));
+        }, timeout);
+        
+        script.onload = () => {
+            clearTimeout(timeoutId);
+            console.log(`🔍 OFFSCREEN DEBUG: Script loaded, checking for global: ${globalVarName}`);
+            
+            // Give the script a moment to initialize
+            setTimeout(() => {
+                // Check if the global variable exists
+                if (window[globalVarName]) {
+                    console.log(`🔍 OFFSCREEN DEBUG: Found global ${globalVarName}:`, typeof window[globalVarName]);
+                    resolve(window[globalVarName]);
+                } else {
+                    console.log(`🔍 OFFSCREEN DEBUG: Global ${globalVarName} not found. Available globals:`, Object.keys(window).filter(key => key.toLowerCase().includes('transform')));
+                    
+                    // Try common transformer.js global names
+                    const possibleNames = ['Transformers', 'transformers', 'TransformersJS', 'HuggingFace', 'XenovaTransformers'];
+                    for (const name of possibleNames) {
+                        if (window[name]) {
+                            console.log(`🔍 OFFSCREEN DEBUG: Found alternative global: ${name}`);
+                            resolve(window[name]);
+                            return;
+                        }
+                    }
+                    
+                    reject(new Error(`Global variable ${globalVarName} not found after script load`));
+                }
+            }, 100); // Small delay for initialization
+        };
+        
+        script.onerror = (error) => {
+            clearTimeout(timeoutId);
+            console.error(`🔍 OFFSCREEN DEBUG: Script tag loading failed:`, error);
+            reject(new Error(`Script tag loading failed`));
+        };
+        
+        // Append script to start loading
+        document.head.appendChild(script);
+        console.log(`🔍 OFFSCREEN DEBUG: Script tag appended for ${url}`);
+    });
+}
 
 // Start loading transformers.js directly (avoid inline scripts due to CSP)
 (async () => {
@@ -61,8 +116,20 @@ console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP iss
         
         let transformersModule;
         
-        // Try multiple approaches and versions for browser compatibility
+        // Try multiple loading approaches - prioritize UMD builds for browser compatibility
         const loadingStrategies = [
+            {
+                name: 'UMD Browser Build',
+                url: 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js',
+                type: 'script',
+                globalVar: 'Transformers'
+            },
+            {
+                name: 'UMD from UNPKG',  
+                url: 'https://unpkg.com/@xenova/transformers@2.17.1/dist/transformers.min.js',
+                type: 'script',
+                globalVar: 'Transformers'
+            },
             {
                 name: 'ESM Latest',
                 url: 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js',
@@ -72,11 +139,6 @@ console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP iss
                 name: 'ESM Older',
                 url: 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0/dist/transformers.min.js',
                 type: 'esm'  
-            },
-            {
-                name: 'UNPKG ESM',
-                url: 'https://unpkg.com/@xenova/transformers/dist/transformers.min.js',
-                type: 'esm'
             }
         ];
         
@@ -97,14 +159,22 @@ console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP iss
                     console.log('🔍 OFFSCREEN DEBUG: Failed to send strategy attempt status:', e);
                 }
                 
-                // Try with a timeout to detect network issues
-                const importPromise = import(strategy.url);
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error(`${strategy.name} timeout after 15s`)), 15000)
-                );
-                
-                transformersModule = await Promise.race([importPromise, timeoutPromise]);
-                console.log(`🔍 OFFSCREEN DEBUG: ${strategy.name} successful!`);
+                if (strategy.type === 'script') {
+                    // Script tag loading for UMD builds
+                    console.log(`🔍 OFFSCREEN DEBUG: Loading ${strategy.name} via script tag...`);
+                    transformersModule = await loadViaScriptTag(strategy.url, strategy.globalVar);
+                    console.log(`🔍 OFFSCREEN DEBUG: Script tag loading successful for ${strategy.name}`);
+                } else {
+                    // ES6 import loading
+                    console.log(`🔍 OFFSCREEN DEBUG: Loading ${strategy.name} via ES6 import...`);
+                    const importPromise = import(strategy.url);
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error(`${strategy.name} timeout after 15s`)), 15000)
+                    );
+                    
+                    transformersModule = await Promise.race([importPromise, timeoutPromise]);
+                    console.log(`🔍 OFFSCREEN DEBUG: ES6 import successful for ${strategy.name}`);
+                }
                 
                 // Send success status for this strategy
                 try {
