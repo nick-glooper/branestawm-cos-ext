@@ -1,9 +1,22 @@
-// Branestawm - EmbeddingGemma Integration
+// Branestawm - RAG Architecture Integration
 // Offscreen document for running local AI models with WebGPU access
 
-console.log('🔍 OFFSCREEN DEBUG: Script loading started...');
+console.log('🔍 OFFSCREEN DEBUG: RAG SCRIPT LOADING STARTED...');
+console.log('🔍 OFFSCREEN DEBUG: Date:', new Date().toISOString());
 
-// Test if basic offscreen loading works first
+// Immediate status update to confirm script execution
+try {
+    chrome.runtime.sendMessage({
+        type: 'LOCAL_AI_STATUS',
+        status: 'Offscreen script loading...',
+        progress: 1,
+        ready: false
+    });
+    console.log('🔍 OFFSCREEN DEBUG: Initial status message sent');
+} catch (error) {
+    console.log('🔍 OFFSCREEN DEBUG: Failed to send initial status:', error);
+}
+
 console.log('🔍 OFFSCREEN DEBUG: Basic script execution working');
 
 // Global variables for transformers.js
@@ -11,6 +24,18 @@ let pipeline, env;
 let transformersLoaded = false;
 
 console.log('🔍 OFFSCREEN DEBUG: Setting up transformers.js loading...');
+
+// Send immediate status update
+try {
+    chrome.runtime.sendMessage({
+        type: 'LOCAL_AI_STATUS',
+        status: 'Setting up transformers.js...',
+        progress: 2,
+        ready: false
+    });
+} catch (error) {
+    console.log('🔍 OFFSCREEN DEBUG: Failed to send setup status:', error);
+}
 
 // Try loading transformers.js using script tag approach (more reliable in extensions)
 function loadTransformersWithScript() {
