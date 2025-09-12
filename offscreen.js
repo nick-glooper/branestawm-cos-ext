@@ -61,70 +61,85 @@ console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP iss
         
         let transformersModule;
         
-        // Try multiple CDN URLs in case one is blocked
-        const cdnUrls = [
-            'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js',
-            'https://unpkg.com/@xenova/transformers@2.17.1/dist/transformers.min.js'
+        // Try multiple approaches and versions for browser compatibility
+        const loadingStrategies = [
+            {
+                name: 'ESM Latest',
+                url: 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js',
+                type: 'esm'
+            },
+            {
+                name: 'ESM Older',
+                url: 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.6.0/dist/transformers.min.js',
+                type: 'esm'  
+            },
+            {
+                name: 'UNPKG ESM',
+                url: 'https://unpkg.com/@xenova/transformers/dist/transformers.min.js',
+                type: 'esm'
+            }
         ];
         
-        for (let i = 0; i < cdnUrls.length; i++) {
+        for (let i = 0; i < loadingStrategies.length; i++) {
             try {
-                console.log(`🔍 OFFSCREEN DEBUG: Trying CDN ${i + 1}:`, cdnUrls[i]);
+                const strategy = loadingStrategies[i];
+                console.log(`🔍 OFFSCREEN DEBUG: Trying ${strategy.name}:`, strategy.url);
                 
-                // Send progress update for CDN attempt
+                // Send progress update for strategy attempt
                 try {
                     chrome.runtime.sendMessage({
                         type: 'LOCAL_AI_STATUS',
-                        status: `Trying CDN ${i + 1}...`,
+                        status: `Trying ${strategy.name}...`,
                         progress: 4 + i,
                         ready: false
                     });
                 } catch (e) {
-                    console.log('🔍 OFFSCREEN DEBUG: Failed to send CDN attempt status:', e);
+                    console.log('🔍 OFFSCREEN DEBUG: Failed to send strategy attempt status:', e);
                 }
                 
                 // Try with a timeout to detect network issues
-                const importPromise = import(cdnUrls[i]);
+                const importPromise = import(strategy.url);
                 const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error(`CDN ${i + 1} timeout after 15s`)), 15000)
+                    setTimeout(() => reject(new Error(`${strategy.name} timeout after 15s`)), 15000)
                 );
                 
                 transformersModule = await Promise.race([importPromise, timeoutPromise]);
-                console.log(`🔍 OFFSCREEN DEBUG: CDN ${i + 1} successful!`);
+                console.log(`🔍 OFFSCREEN DEBUG: ${strategy.name} successful!`);
                 
-                // Send success status for this CDN
+                // Send success status for this strategy
                 try {
                     chrome.runtime.sendMessage({
                         type: 'LOCAL_AI_STATUS',
-                        status: `CDN ${i + 1} loaded!`,
+                        status: `${strategy.name} loaded!`,
                         progress: 10,
                         ready: false
                     });
                 } catch (e) {
-                    console.log('🔍 OFFSCREEN DEBUG: Failed to send CDN success status:', e);
+                    console.log('🔍 OFFSCREEN DEBUG: Failed to send strategy success status:', e);
                 }
                 
                 break;
                 
             } catch (error) {
-                console.log(`🔍 OFFSCREEN DEBUG: CDN ${i + 1} failed:`, error.name, error.message);
+                const strategy = loadingStrategies[i];
+                console.log(`🔍 OFFSCREEN DEBUG: ${strategy.name} failed:`, error.name, error.message);
                 
-                // Send intermediate status for CDN failure
+                // Send intermediate status for strategy failure
                 try {
                     chrome.runtime.sendMessage({
                         type: 'LOCAL_AI_STATUS',
-                        status: `CDN ${i + 1} failed: ${error.name}`,
+                        status: `${strategy.name} failed: ${error.name}`,
                         progress: 3,
                         ready: false
                     });
                 } catch (e) {
-                    console.log('🔍 OFFSCREEN DEBUG: Failed to send CDN error status:', e);
+                    console.log('🔍 OFFSCREEN DEBUG: Failed to send strategy error status:', e);
                 }
                 
-                if (i === cdnUrls.length - 1) {
-                    throw new Error(`All CDNs failed. Last: ${error.name} - ${error.message}`);
+                if (i === loadingStrategies.length - 1) {
+                    throw new Error(`All strategies failed. Last: ${error.name} - ${error.message}`);
                 }
-                // Continue to next CDN
+                // Continue to next strategy
             }
         }
         
