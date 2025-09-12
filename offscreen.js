@@ -8,54 +8,101 @@ console.log('🔍 OFFSCREEN DEBUG: Basic script execution working');
 
 // Global variables for transformers.js
 let pipeline, env;
+let transformersLoaded = false;
 
-// Load transformers.js asynchronously
+console.log('🔍 OFFSCREEN DEBUG: Setting up transformers.js loading...');
+
+// Try loading transformers.js using script tag approach (more reliable in extensions)
+function loadTransformersWithScript() {
+    return new Promise((resolve, reject) => {
+        console.log('🔍 OFFSCREEN DEBUG: Attempting to load transformers.js via script tag...');
+        
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.textContent = `
+            console.log('🔍 SCRIPT DEBUG: Inside script module...');
+            try {
+                const { pipeline: pipelineFunc, env: envObj } = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
+                console.log('🔍 SCRIPT DEBUG: Import successful');
+                
+                // Make available globally
+                window.transformersPipeline = pipelineFunc;
+                window.transformersEnv = envObj;
+                
+                // Configure
+                if (envObj) {
+                    envObj.allowRemoteModels = true;
+                    envObj.allowLocalModels = false;
+                    console.log('🔍 SCRIPT DEBUG: Configured transformers.js');
+                }
+                
+                // Signal success
+                window.dispatchEvent(new CustomEvent('transformersReady'));
+                
+            } catch (error) {
+                console.error('🔍 SCRIPT DEBUG: Import failed:', error);
+                window.dispatchEvent(new CustomEvent('transformersError', { detail: error.message }));
+            }
+        `;
+        
+        script.onerror = (error) => {
+            console.error('🔍 OFFSCREEN DEBUG: Script tag failed:', error);
+            reject(new Error('Script tag loading failed'));
+        };
+        
+        document.head.appendChild(script);
+        
+        // Listen for success/error events
+        const handleSuccess = () => {
+            console.log('🔍 OFFSCREEN DEBUG: Transformers.js loaded successfully via script');
+            pipeline = window.transformersPipeline;
+            env = window.transformersEnv;
+            transformersLoaded = true;
+            
+            window.removeEventListener('transformersReady', handleSuccess);
+            window.removeEventListener('transformersError', handleError);
+            resolve();
+        };
+        
+        const handleError = (event) => {
+            console.error('🔍 OFFSCREEN DEBUG: Transformers.js failed to load:', event.detail);
+            window.removeEventListener('transformersReady', handleSuccess);
+            window.removeEventListener('transformersError', handleError);
+            reject(new Error(event.detail));
+        };
+        
+        window.addEventListener('transformersReady', handleSuccess);
+        window.addEventListener('transformersError', handleError);
+        
+        // Timeout after 30 seconds
+        setTimeout(() => {
+            if (!transformersLoaded) {
+                window.removeEventListener('transformersReady', handleSuccess);
+                window.removeEventListener('transformersError', handleError);
+                reject(new Error('Transformers.js loading timeout after 30 seconds'));
+            }
+        }, 30000);
+    });
+}
+
+// Start loading transformers.js
 (async () => {
     try {
-        console.log('🔍 OFFSCREEN DEBUG: Attempting to import transformers.js...');
-        console.log('🔍 OFFSCREEN DEBUG: Import URL: https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
+        console.log('🔍 OFFSCREEN DEBUG: Starting transformers.js loading process...');
+        await loadTransformersWithScript();
         
-        // Try with a timeout to detect hanging imports
-        const importPromise = import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
-        const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Import timeout after 30 seconds')), 30000)
-        );
-        
-        console.log('🔍 OFFSCREEN DEBUG: Starting import with 30s timeout...');
-        const transformersModule = await Promise.race([importPromise, timeoutPromise]);
-        
-        console.log('🔍 OFFSCREEN DEBUG: Import completed, extracting pipeline and env...');
-        pipeline = transformersModule.pipeline;
-        env = transformersModule.env;
-        
-        console.log('🔍 OFFSCREEN DEBUG: Pipeline available:', typeof pipeline);
-        console.log('🔍 OFFSCREEN DEBUG: Env available:', typeof env);
-        
-        if (!pipeline) {
-            throw new Error('Pipeline function not found in transformers module');
-        }
-        
-        console.log('🔍 OFFSCREEN DEBUG: Transformers.js imported successfully');
-        
-        // Configure transformers.js for Chrome extension
-        if (env) {
-            env.allowRemoteModels = true;
-            env.allowLocalModels = false;
-            console.log('🔍 OFFSCREEN DEBUG: Transformers.js configured successfully');
-        } else {
-            console.warn('🔍 OFFSCREEN DEBUG: env not available for configuration');
-        }
-        
-        // Trigger model initialization now that transformers.js is ready
         console.log('🔍 OFFSCREEN DEBUG: Transformers.js ready, starting auto-initialization...');
+        updateStatus('Transformers.js loaded', 15, 'Starting model download...');
+        
         setTimeout(() => {
             initializeModel().catch(error => {
                 console.error('🔍 OFFSCREEN DEBUG: Auto-initialization failed:', error);
+                updateStatus('❌ Model initialization failed', 0, `Error: ${error.message}`);
             });
         }, 1000);
         
     } catch (error) {
-        console.error('🔍 OFFSCREEN DEBUG: Failed to import transformers.js:', error);
+        console.error('🔍 OFFSCREEN DEBUG: Failed to load transformers.js:', error);
         console.error('🔍 OFFSCREEN DEBUG: Error details:', error.message, error.stack);
         
         // Send error status
