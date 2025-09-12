@@ -37,129 +37,63 @@ try {
     console.log('🔍 OFFSCREEN DEBUG: Failed to send setup status:', error);
 }
 
-// Try loading transformers.js using script tag approach (more reliable in extensions)
-function loadTransformersWithScript() {
-    return new Promise((resolve, reject) => {
-        console.log('🔍 OFFSCREEN DEBUG: Attempting to load transformers.js via script tag...');
+// Direct import approach (CSP-compliant)
+console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP issues');
+
+// Start loading transformers.js directly (avoid inline scripts due to CSP)
+(async () => {
+    try {
+        console.log('🔍 OFFSCREEN DEBUG: Starting direct transformers.js loading...');
         
         // Send status update
         try {
             chrome.runtime.sendMessage({
                 type: 'LOCAL_AI_STATUS',
-                status: 'Creating script element...',
+                status: 'Starting direct import...',
                 progress: 3,
                 ready: false
             });
         } catch (error) {
-            console.log('🔍 OFFSCREEN DEBUG: Failed to send script creation status:', error);
+            console.log('🔍 OFFSCREEN DEBUG: Failed to send direct import status:', error);
         }
         
-        const script = document.createElement('script');
-        script.type = 'module';
+        console.log('🔍 OFFSCREEN DEBUG: Attempting direct dynamic import...');
+        const transformersModule = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
         
-        console.log('🔍 OFFSCREEN DEBUG: Script element created, setting content...');
+        console.log('🔍 OFFSCREEN DEBUG: Direct import completed!');
+        console.log('🔍 OFFSCREEN DEBUG: Available exports:', Object.keys(transformersModule));
         
-        script.textContent = `
-            console.log('🔍 SCRIPT DEBUG: Inside script module - execution started');
-            
-            // Send status from inside script
-            try {
-                chrome.runtime.sendMessage({
-                    type: 'LOCAL_AI_STATUS',
-                    status: 'Script module executing...',
-                    progress: 4,
-                    ready: false
-                });
-            } catch (error) {
-                console.log('🔍 SCRIPT DEBUG: Failed to send execution status:', error);
-            }
-            
-            try {
-                console.log('🔍 SCRIPT DEBUG: Starting import...');
-                const importResult = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
-                console.log('🔍 SCRIPT DEBUG: Import completed, result:', Object.keys(importResult));
-                
-                const { pipeline: pipelineFunc, env: envObj } = importResult;
-                console.log('🔍 SCRIPT DEBUG: Extracted pipeline:', typeof pipelineFunc, 'env:', typeof envObj);
-                
-                // Make available globally
-                window.transformersPipeline = pipelineFunc;
-                window.transformersEnv = envObj;
-                
-                // Configure
-                if (envObj) {
-                    envObj.allowRemoteModels = true;
-                    envObj.allowLocalModels = false;
-                    console.log('🔍 SCRIPT DEBUG: Configured transformers.js');
-                }
-                
-                console.log('🔍 SCRIPT DEBUG: Dispatching success event');
-                window.dispatchEvent(new CustomEvent('transformersReady'));
-                
-            } catch (error) {
-                console.error('🔍 SCRIPT DEBUG: Import failed:', error);
-                console.error('🔍 SCRIPT DEBUG: Error details:', error.name, error.message, error.stack);
-                window.dispatchEvent(new CustomEvent('transformersError', { detail: error.message }));
-            }
-        `;
+        // Extract pipeline and env
+        pipeline = transformersModule.pipeline;
+        env = transformersModule.env;
         
-        script.onerror = (error) => {
-            console.error('🔍 OFFSCREEN DEBUG: Script tag failed:', error);
-            try {
-                chrome.runtime.sendMessage({
-                    type: 'LOCAL_AI_STATUS',
-                    status: 'Script tag error',
-                    progress: 0,
-                    ready: false
-                });
-            } catch (e) {
-                console.log('🔍 OFFSCREEN DEBUG: Failed to send error status:', e);
-            }
-            reject(new Error('Script tag loading failed'));
-        };
+        console.log('🔍 OFFSCREEN DEBUG: Pipeline type:', typeof pipeline);
+        console.log('🔍 OFFSCREEN DEBUG: Env type:', typeof env);
         
-        console.log('🔍 OFFSCREEN DEBUG: Appending script to document head...');
-        document.head.appendChild(script);
-        console.log('🔍 OFFSCREEN DEBUG: Script appended, waiting for execution...');
+        if (!pipeline) {
+            throw new Error('Pipeline not found in transformers module');
+        }
         
-        // Listen for success/error events
-        const handleSuccess = () => {
-            console.log('🔍 OFFSCREEN DEBUG: Transformers.js loaded successfully via script');
-            pipeline = window.transformersPipeline;
-            env = window.transformersEnv;
-            transformersLoaded = true;
-            
-            window.removeEventListener('transformersReady', handleSuccess);
-            window.removeEventListener('transformersError', handleError);
-            resolve();
-        };
+        // Configure transformers.js
+        if (env) {
+            env.allowRemoteModels = true;
+            env.allowLocalModels = false;
+            console.log('🔍 OFFSCREEN DEBUG: Transformers.js configured');
+        }
         
-        const handleError = (event) => {
-            console.error('🔍 OFFSCREEN DEBUG: Transformers.js failed to load:', event.detail);
-            window.removeEventListener('transformersReady', handleSuccess);
-            window.removeEventListener('transformersError', handleError);
-            reject(new Error(event.detail));
-        };
+        transformersLoaded = true;
         
-        window.addEventListener('transformersReady', handleSuccess);
-        window.addEventListener('transformersError', handleError);
-        
-        // Timeout after 30 seconds
-        setTimeout(() => {
-            if (!transformersLoaded) {
-                window.removeEventListener('transformersReady', handleSuccess);
-                window.removeEventListener('transformersError', handleError);
-                reject(new Error('Transformers.js loading timeout after 30 seconds'));
-            }
-        }, 30000);
-    });
-}
-
-// Start loading transformers.js
-(async () => {
-    try {
-        console.log('🔍 OFFSCREEN DEBUG: Starting transformers.js loading process...');
-        await loadTransformersWithScript();
+        // Send success status
+        try {
+            chrome.runtime.sendMessage({
+                type: 'LOCAL_AI_STATUS',
+                status: 'Transformers.js loaded!',
+                progress: 15,
+                ready: false
+            });
+        } catch (error) {
+            console.log('🔍 OFFSCREEN DEBUG: Failed to send success status:', error);
+        }
         
         console.log('🔍 OFFSCREEN DEBUG: Transformers.js ready, starting auto-initialization...');
         updateStatus('Transformers.js loaded', 15, 'Starting model download...');
@@ -172,10 +106,23 @@ function loadTransformersWithScript() {
         }, 1000);
         
     } catch (error) {
-        console.error('🔍 OFFSCREEN DEBUG: Failed to load transformers.js:', error);
-        console.error('🔍 OFFSCREEN DEBUG: Error details:', error.message, error.stack);
+        console.error('🔍 OFFSCREEN DEBUG: Direct import failed:', error);
+        console.error('🔍 OFFSCREEN DEBUG: Error name:', error.name);
+        console.error('🔍 OFFSCREEN DEBUG: Error message:', error.message);
+        console.error('🔍 OFFSCREEN DEBUG: Error stack:', error.stack);
         
         // Send error status
+        try {
+            chrome.runtime.sendMessage({
+                type: 'LOCAL_AI_STATUS',
+                status: '❌ Import failed',
+                progress: 0,
+                ready: false
+            });
+        } catch (e) {
+            console.log('🔍 OFFSCREEN DEBUG: Failed to send error status:', e);
+        }
+        
         updateStatus('❌ Failed to load transformers.js', 0, `Error: ${error.message}`);
     }
 })();
