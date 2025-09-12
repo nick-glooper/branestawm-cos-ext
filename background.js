@@ -3,6 +3,9 @@
 let branestawmTabId = null;
 let keepAliveInterval = null;
 
+// Global vector database instance
+let vectorDB = null;
+
 // Extension installation and updates
 chrome.runtime.onInstalled.addListener(async (details) => {
     if (details.reason === 'install') {
@@ -43,6 +46,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
             currentProject: 'default'
         });
         
+        // Initialize vector database for new installation
+        await initializeVectorDatabase();
+        
         // Open Branestawm tab on first install
         await openBranestawmTab();
         
@@ -51,6 +57,9 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         
         // Handle any migration tasks here if needed
         await migrateDataIfNeeded();
+        
+        // Initialize vector database for updates too
+        await initializeVectorDatabase();
     }
     
     // Set up context menus
@@ -194,6 +203,196 @@ async function performAutoSync() {
 }
 
 // Context menu setup function
+// Vector Database Management
+async function initializeVectorDatabase() {
+    console.log('🧠 Background: Initializing vector database...');
+    
+    try {
+        // Import vector database class
+        if (!vectorDB) {
+            // Create vector database instance
+            const { default: BranestawmVectorDB } = await import('./vector-database.js');
+            vectorDB = new BranestawmVectorDB();
+        }
+        
+        // Initialize the database
+        await vectorDB.initialize();
+        
+        console.log('🧠 Background: Vector database initialized successfully');
+        
+        // Process any existing data that needs to be embedded
+        await processExistingDataForEmbedding();
+        
+    } catch (error) {
+        console.error('🧠 Background: Failed to initialize vector database:', error);
+        // Don't throw - extension should still work without vector DB
+    }
+}
+
+// Process existing JSON files and conversations for embedding
+async function processExistingDataForEmbedding() {
+    if (!vectorDB || !vectorDB.ready) return;
+    
+    console.log('🧠 Background: Processing existing data for embedding...');
+    
+    try {
+        // Get existing conversations and artifacts
+        const result = await chrome.storage.local.get(['conversations', 'artifacts', 'projects']);
+        
+        // Process conversations
+        if (result.conversations) {
+            for (const [convId, conversation] of Object.entries(result.conversations)) {
+                await embedConversation(convId, conversation);
+            }
+        }
+        
+        // Process artifacts  
+        if (result.artifacts) {
+            for (const [artifactId, artifact] of Object.entries(result.artifacts)) {
+                await embedArtifact(artifactId, artifact);
+            }
+        }
+        
+        // Process project data
+        if (result.projects) {
+            for (const [projectId, project] of Object.entries(result.projects)) {
+                await embedProject(projectId, project);
+            }
+        }
+        
+        console.log('🧠 Background: Existing data processing complete');
+        
+    } catch (error) {
+        console.error('🧠 Background: Error processing existing data:', error);
+    }
+}
+
+// Embed conversation data
+async function embedConversation(convId, conversation) {
+    if (!vectorDB || !vectorDB.ready) return;
+    
+    try {
+        // Combine conversation messages into searchable content
+        const content = conversation.messages?.map(msg => `${msg.role}: ${msg.content}`).join('\n') || '';
+        
+        if (content.trim()) {
+            await vectorDB.storeDocument(`conv-${convId}`, content, {
+                type: 'conversation',
+                source: 'branestawm',
+                title: conversation.title || `Conversation ${convId}`,
+                projectId: conversation.projectId,
+                createdAt: conversation.createdAt
+            });
+            
+            // Create simple embedding for immediate use
+            const chunks = vectorDB.chunkText(content);
+            for (let i = 0; i < chunks.length; i++) {
+                const embedding = vectorDB.createSimpleEmbedding(chunks[i]);
+                await vectorDB.storeEmbedding(`conv-${convId}`, i, embedding, 'simple');
+            }
+        }
+    } catch (error) {
+        console.error(`🧠 Background: Error embedding conversation ${convId}:`, error);
+    }
+}
+
+// Embed artifact data
+async function embedArtifact(artifactId, artifact) {
+    if (!vectorDB || !vectorDB.ready) return;
+    
+    try {
+        const content = `${artifact.title || ''}\n${artifact.content || ''}`.trim();
+        
+        if (content) {
+            await vectorDB.storeDocument(`artifact-${artifactId}`, content, {
+                type: 'artifact',
+                source: 'branestawm',
+                title: artifact.title || `Artifact ${artifactId}`,
+                artifactType: artifact.type,
+                projectId: artifact.projectId
+            });
+            
+            // Create simple embedding
+            const chunks = vectorDB.chunkText(content);
+            for (let i = 0; i < chunks.length; i++) {
+                const embedding = vectorDB.createSimpleEmbedding(chunks[i]);
+                await vectorDB.storeEmbedding(`artifact-${artifactId}`, i, embedding, 'simple');
+            }
+        }
+    } catch (error) {
+        console.error(`🧠 Background: Error embedding artifact ${artifactId}:`, error);
+    }
+}
+
+// Embed project data
+async function embedProject(projectId, project) {
+    if (!vectorDB || !vectorDB.ready) return;
+    
+    try {
+        const content = `${project.name || ''}\n${project.description || ''}`.trim();
+        
+        if (content) {
+            await vectorDB.storeDocument(`project-${projectId}`, content, {
+                type: 'project',
+                source: 'branestawm',
+                title: project.name || `Project ${projectId}`,
+                createdAt: project.createdAt
+            });
+            
+            // Create simple embedding
+            const chunks = vectorDB.chunkText(content);
+            for (let i = 0; i < chunks.length; i++) {
+                const embedding = vectorDB.createSimpleEmbedding(chunks[i]);
+                await vectorDB.storeEmbedding(`project-${projectId}`, i, embedding, 'simple');
+            }
+        }
+    } catch (error) {
+        console.error(`🧠 Background: Error embedding project ${projectId}:`, error);
+    }
+}
+
+// Public API for other parts of extension to use vector database
+async function addToVectorDatabase(id, content, metadata = {}) {
+    if (!vectorDB || !vectorDB.ready) {
+        console.log('🧠 Background: Vector database not ready, queuing for later');
+        return;
+    }
+    
+    try {
+        await vectorDB.storeDocument(id, content, metadata);
+        
+        // Create simple embedding for immediate use
+        const chunks = vectorDB.chunkText(content);
+        for (let i = 0; i < chunks.length; i++) {
+            const embedding = vectorDB.createSimpleEmbedding(chunks[i]);
+            await vectorDB.storeEmbedding(id, i, embedding, 'simple');
+        }
+        
+        console.log(`🧠 Background: Added document ${id} to vector database`);
+    } catch (error) {
+        console.error(`🧠 Background: Error adding ${id} to vector database:`, error);
+    }
+}
+
+// Search vector database
+async function searchVectorDatabase(query, options = {}) {
+    if (!vectorDB || !vectorDB.ready) {
+        console.log('🧠 Background: Vector database not ready');
+        return [];
+    }
+    
+    try {
+        const queryEmbedding = vectorDB.createSimpleEmbedding(query);
+        const results = await vectorDB.searchSimilar(queryEmbedding, options.topK || 5, options.threshold || 0.1);
+        
+        console.log(`🧠 Background: Vector search returned ${results.length} results`);
+        return results;
+    } catch (error) {
+        console.error('🧠 Background: Error searching vector database:', error);
+        return [];
+    }
+}
+
 function setupContextMenus() {
     if (!chrome.contextMenus) {
         console.log('Context menus API not available');
@@ -439,6 +638,50 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'OFFSCREEN_READY') {
         console.log('🧠 Offscreen document is ready');
         return false;
+    }
+    
+    // Vector Database Message Handlers
+    if (message.type === 'ADD_TO_VECTOR_DB') {
+        (async () => {
+            try {
+                await addToVectorDatabase(message.id, message.content, message.metadata || {});
+                sendResponse({ success: true });
+            } catch (error) {
+                console.error('🧠 Background: Error adding to vector database:', error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
+        return true; // Will respond asynchronously
+    }
+    
+    if (message.type === 'SEARCH_VECTOR_DB') {
+        (async () => {
+            try {
+                const results = await searchVectorDatabase(message.query, message.options || {});
+                sendResponse({ success: true, results: results });
+            } catch (error) {
+                console.error('🧠 Background: Error searching vector database:', error);
+                sendResponse({ success: false, error: error.message, results: [] });
+            }
+        })();
+        return true; // Will respond asynchronously
+    }
+    
+    if (message.type === 'GET_VECTOR_DB_STATS') {
+        (async () => {
+            try {
+                if (vectorDB && vectorDB.ready) {
+                    const stats = await vectorDB.getStatistics();
+                    sendResponse({ success: true, stats: stats });
+                } else {
+                    sendResponse({ success: true, stats: { documentCount: 0, embeddingCount: 0, ready: false } });
+                }
+            } catch (error) {
+                console.error('🧠 Background: Error getting vector database stats:', error);
+                sendResponse({ success: false, error: error.message, stats: null });
+            }
+        })();
+        return true; // Will respond asynchronously
     }
 });
 
@@ -866,6 +1109,16 @@ async function encryptData(data, password) {
         throw error;
     }
 }
+
+// Initialize vector database on service worker startup
+(async () => {
+    try {
+        await initializeVectorDatabase();
+        console.log('🧠 Background: Vector database startup initialization complete');
+    } catch (error) {
+        console.error('🧠 Background: Vector database startup initialization failed:', error);
+    }
+})();
 
 console.log('Branestawm service worker loaded');
 console.log('Version:', chrome.runtime.getManifest().version);
