@@ -71,6 +71,18 @@ console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP iss
             try {
                 console.log(`🔍 OFFSCREEN DEBUG: Trying CDN ${i + 1}:`, cdnUrls[i]);
                 
+                // Send progress update for CDN attempt
+                try {
+                    chrome.runtime.sendMessage({
+                        type: 'LOCAL_AI_STATUS',
+                        status: `Trying CDN ${i + 1}...`,
+                        progress: 4 + i,
+                        ready: false
+                    });
+                } catch (e) {
+                    console.log('🔍 OFFSCREEN DEBUG: Failed to send CDN attempt status:', e);
+                }
+                
                 // Try with a timeout to detect network issues
                 const importPromise = import(cdnUrls[i]);
                 const timeoutPromise = new Promise((_, reject) => 
@@ -79,12 +91,38 @@ console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP iss
                 
                 transformersModule = await Promise.race([importPromise, timeoutPromise]);
                 console.log(`🔍 OFFSCREEN DEBUG: CDN ${i + 1} successful!`);
+                
+                // Send success status for this CDN
+                try {
+                    chrome.runtime.sendMessage({
+                        type: 'LOCAL_AI_STATUS',
+                        status: `CDN ${i + 1} loaded!`,
+                        progress: 10,
+                        ready: false
+                    });
+                } catch (e) {
+                    console.log('🔍 OFFSCREEN DEBUG: Failed to send CDN success status:', e);
+                }
+                
                 break;
                 
             } catch (error) {
-                console.log(`🔍 OFFSCREEN DEBUG: CDN ${i + 1} failed:`, error.message);
+                console.log(`🔍 OFFSCREEN DEBUG: CDN ${i + 1} failed:`, error.name, error.message);
+                
+                // Send intermediate status for CDN failure
+                try {
+                    chrome.runtime.sendMessage({
+                        type: 'LOCAL_AI_STATUS',
+                        status: `CDN ${i + 1} failed: ${error.name}`,
+                        progress: 3,
+                        ready: false
+                    });
+                } catch (e) {
+                    console.log('🔍 OFFSCREEN DEBUG: Failed to send CDN error status:', e);
+                }
+                
                 if (i === cdnUrls.length - 1) {
-                    throw new Error(`All CDNs failed. Last error: ${error.message}`);
+                    throw new Error(`All CDNs failed. Last: ${error.name} - ${error.message}`);
                 }
                 // Continue to next CDN
             }
