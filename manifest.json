@@ -55,7 +55,7 @@
   
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'",
-    "offscreen_documents": "script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'self'"
+    "offscreen_documents": "script-src 'self' https://cdn.jsdelivr.net https://unpkg.com 'wasm-unsafe-eval' 'unsafe-inline'; script-src-elem 'self' https://cdn.jsdelivr.net https://unpkg.com; object-src 'self'"
   },
   
   "web_accessible_resources": [

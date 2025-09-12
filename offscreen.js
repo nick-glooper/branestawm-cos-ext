@@ -24,7 +24,82 @@ let pipeline, env;
 let transformersLoaded = false;
 let isReady = false;
 
-console.log('🔍 OFFSCREEN DEBUG: Setting up transformers.js loading...');
+console.log('🔍 OFFSCREEN DEBUG: Setting up Web Worker for transformers.js...');
+
+// Web Worker approach for transformers.js loading
+let transformersWorker = null;
+let workerReady = false;
+
+// Initialize Web Worker
+function initializeTransformersWorker() {
+    console.log('🔍 OFFSCREEN DEBUG: Creating transformers.js Web Worker...');
+    
+    try {
+        transformersWorker = new Worker('transformers-worker.js');
+        
+        // Handle worker messages
+        transformersWorker.onmessage = function(e) {
+            const { type, data } = e.data;
+            
+            switch (type) {
+                case 'status':
+                    updateStatus(data.message, data.progress);
+                    break;
+                    
+                case 'transformers_loaded':
+                    console.log('🔍 OFFSCREEN DEBUG: Transformers.js loaded in worker');
+                    // Initialize models
+                    transformersWorker.postMessage({ type: 'init_models' });
+                    break;
+                    
+                case 'models_ready':
+                    console.log('🔍 OFFSCREEN DEBUG: All models ready in worker');
+                    workerReady = true;
+                    isReady = true;
+                    updateStatus('Transformers.js models ready! ✅', 100);
+                    break;
+                    
+                case 'error':
+                    console.error('🔍 OFFSCREEN DEBUG: Worker error:', data.error);
+                    handleTransformersFailure(new Error(data.error));
+                    break;
+                    
+                case 'embedding_result':
+                    // Handle embedding results
+                    handleEmbeddingResult(data.id, data.embedding);
+                    break;
+                    
+                case 'text_result':
+                    // Handle text generation results
+                    handleTextResult(data.id, data.text);
+                    break;
+                    
+                default:
+                    console.log('🔍 OFFSCREEN DEBUG: Unknown worker message:', type);
+            }
+        };
+        
+        transformersWorker.onerror = function(error) {
+            console.error('🔍 OFFSCREEN DEBUG: Worker error:', error);
+            handleTransformersFailure(error);
+        };
+        
+        // Start loading transformers.js in the worker
+        updateStatus('Loading transformers.js in Web Worker...', 5);
+        transformersWorker.postMessage({ type: 'load_transformers' });
+        
+    } catch (error) {
+        console.error('🔍 OFFSCREEN DEBUG: Failed to create Web Worker:', error);
+        handleTransformersFailure(error);
+    }
+}
+
+// Handle transformers loading failure
+function handleTransformersFailure(error) {
+    console.log('🔍 OFFSCREEN DEBUG: Transformers.js Web Worker failed, falling back to browser-native approach...');
+    updateStatus('Transformers.js incompatible, using browser-native approach...', 10);
+    initializeBrowserNativeRAG();
+}
 
 // Send immediate status update
 try {
@@ -37,9 +112,6 @@ try {
 } catch (error) {
     console.log('🔍 OFFSCREEN DEBUG: Failed to send setup status:', error);
 }
-
-// Multiple loading strategies for transformers.js
-console.log('🔍 OFFSCREEN DEBUG: Trying multiple transformers.js loading strategies');
 
 // Load transformers.js via script tag (for UMD builds)
 function loadViaScriptTag(url, globalVarName, timeout = 20000) {
@@ -96,26 +168,23 @@ function loadViaScriptTag(url, globalVarName, timeout = 20000) {
     });
 }
 
-// Start loading transformers.js directly (avoid inline scripts due to CSP)
-(async () => {
-    try {
-        console.log('🔍 OFFSCREEN DEBUG: Starting direct transformers.js loading...');
-        
-        // Send status update
-        try {
-            chrome.runtime.sendMessage({
-                type: 'LOCAL_AI_STATUS',
-                status: 'Starting direct import...',
-                progress: 3,
-                ready: false
-            });
-        } catch (error) {
-            console.log('🔍 OFFSCREEN DEBUG: Failed to send direct import status:', error);
-        }
-        
-        console.log('🔍 OFFSCREEN DEBUG: Attempting direct dynamic import...');
-        
-        let transformersModule;
+// Initialize transformers.js via Web Worker approach
+console.log('🔍 OFFSCREEN DEBUG: Starting Web Worker transformers.js loading...');
+
+// Send status update
+try {
+    chrome.runtime.sendMessage({
+        type: 'LOCAL_AI_STATUS',
+        status: 'Starting Web Worker approach...',
+        progress: 3,
+        ready: false
+    });
+} catch (error) {
+    console.log('🔍 OFFSCREEN DEBUG: Failed to send Web Worker status:', error);
+}
+
+// Start Web Worker initialization
+initializeTransformersWorker();
         
         // Try multiple loading approaches - prioritize UMD builds for browser compatibility
         const loadingStrategies = [
