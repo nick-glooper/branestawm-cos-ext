@@ -13,9 +13,28 @@ let pipeline, env;
 (async () => {
     try {
         console.log('🔍 OFFSCREEN DEBUG: Attempting to import transformers.js...');
-        const transformersModule = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
+        console.log('🔍 OFFSCREEN DEBUG: Import URL: https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
+        
+        // Try with a timeout to detect hanging imports
+        const importPromise = import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Import timeout after 30 seconds')), 30000)
+        );
+        
+        console.log('🔍 OFFSCREEN DEBUG: Starting import with 30s timeout...');
+        const transformersModule = await Promise.race([importPromise, timeoutPromise]);
+        
+        console.log('🔍 OFFSCREEN DEBUG: Import completed, extracting pipeline and env...');
         pipeline = transformersModule.pipeline;
         env = transformersModule.env;
+        
+        console.log('🔍 OFFSCREEN DEBUG: Pipeline available:', typeof pipeline);
+        console.log('🔍 OFFSCREEN DEBUG: Env available:', typeof env);
+        
+        if (!pipeline) {
+            throw new Error('Pipeline function not found in transformers module');
+        }
+        
         console.log('🔍 OFFSCREEN DEBUG: Transformers.js imported successfully');
         
         // Configure transformers.js for Chrome extension
@@ -23,9 +42,24 @@ let pipeline, env;
             env.allowRemoteModels = true;
             env.allowLocalModels = false;
             console.log('🔍 OFFSCREEN DEBUG: Transformers.js configured successfully');
+        } else {
+            console.warn('🔍 OFFSCREEN DEBUG: env not available for configuration');
         }
+        
+        // Trigger model initialization now that transformers.js is ready
+        console.log('🔍 OFFSCREEN DEBUG: Transformers.js ready, starting auto-initialization...');
+        setTimeout(() => {
+            initializeModel().catch(error => {
+                console.error('🔍 OFFSCREEN DEBUG: Auto-initialization failed:', error);
+            });
+        }, 1000);
+        
     } catch (error) {
         console.error('🔍 OFFSCREEN DEBUG: Failed to import transformers.js:', error);
+        console.error('🔍 OFFSCREEN DEBUG: Error details:', error.message, error.stack);
+        
+        // Send error status
+        updateStatus('❌ Failed to load transformers.js', 0, `Error: ${error.message}`);
     }
 })();
 
@@ -273,12 +307,4 @@ chrome.runtime.sendMessage({
 });
 
 console.log('🔍 OFFSCREEN DEBUG: Branestawm offscreen document loaded and ready for messages');
-
-// Auto-start model initialization when offscreen document is created for Local AI
-console.log('🔍 OFFSCREEN DEBUG: Auto-starting model initialization...');
-setTimeout(() => {
-    console.log('🔍 OFFSCREEN DEBUG: Starting automatic model initialization');
-    initializeModel().catch(error => {
-        console.error('🔍 OFFSCREEN DEBUG: Auto-initialization failed:', error);
-    });
-}, 1000); // Give the document time to fully initialize
+console.log('🔍 OFFSCREEN DEBUG: Auto-initialization will trigger after transformers.js loads');
