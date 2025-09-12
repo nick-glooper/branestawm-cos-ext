@@ -58,7 +58,37 @@ console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP iss
         }
         
         console.log('🔍 OFFSCREEN DEBUG: Attempting direct dynamic import...');
-        const transformersModule = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js');
+        
+        let transformersModule;
+        
+        // Try multiple CDN URLs in case one is blocked
+        const cdnUrls = [
+            'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.1/dist/transformers.min.js',
+            'https://unpkg.com/@xenova/transformers@2.17.1/dist/transformers.min.js'
+        ];
+        
+        for (let i = 0; i < cdnUrls.length; i++) {
+            try {
+                console.log(`🔍 OFFSCREEN DEBUG: Trying CDN ${i + 1}:`, cdnUrls[i]);
+                
+                // Try with a timeout to detect network issues
+                const importPromise = import(cdnUrls[i]);
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error(`CDN ${i + 1} timeout after 15s`)), 15000)
+                );
+                
+                transformersModule = await Promise.race([importPromise, timeoutPromise]);
+                console.log(`🔍 OFFSCREEN DEBUG: CDN ${i + 1} successful!`);
+                break;
+                
+            } catch (error) {
+                console.log(`🔍 OFFSCREEN DEBUG: CDN ${i + 1} failed:`, error.message);
+                if (i === cdnUrls.length - 1) {
+                    throw new Error(`All CDNs failed. Last error: ${error.message}`);
+                }
+                // Continue to next CDN
+            }
+        }
         
         console.log('🔍 OFFSCREEN DEBUG: Direct import completed!');
         console.log('🔍 OFFSCREEN DEBUG: Available exports:', Object.keys(transformersModule));
@@ -111,11 +141,11 @@ console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP iss
         console.error('🔍 OFFSCREEN DEBUG: Error message:', error.message);
         console.error('🔍 OFFSCREEN DEBUG: Error stack:', error.stack);
         
-        // Send error status
+        // Send detailed error status
         try {
             chrome.runtime.sendMessage({
                 type: 'LOCAL_AI_STATUS',
-                status: '❌ Import failed',
+                status: `❌ Import failed: ${error.name}`,
                 progress: 0,
                 ready: false
             });
@@ -123,7 +153,7 @@ console.log('🔍 OFFSCREEN DEBUG: Using direct import approach to avoid CSP iss
             console.log('🔍 OFFSCREEN DEBUG: Failed to send error status:', e);
         }
         
-        updateStatus('❌ Failed to load transformers.js', 0, `Error: ${error.message}`);
+        updateStatus('❌ Failed to load transformers.js', 0, `${error.name}: ${error.message}`);
     }
 })();
 
