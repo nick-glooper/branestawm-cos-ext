@@ -22,6 +22,7 @@ console.log('🔍 OFFSCREEN DEBUG: Basic script execution working');
 // Global variables for transformers.js
 let pipeline, env;
 let transformersLoaded = false;
+let isReady = false;
 
 console.log('🔍 OFFSCREEN DEBUG: Setting up transformers.js loading...');
 
@@ -956,6 +957,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 generatorLoading: isGeneratorLoading,
                 vectorStoreReady: !!vectorStore,
                 ragReady: isEmbedderReady && !!vectorStore
+            });
+            break;
+            
+        case 'CHECK_LOCAL_AI_STATUS':
+            sendResponse({ 
+                ready: isReady,
+                embedderReady: isEmbedderReady,
+                generatorReady: isGeneratorReady,
+                transformersLoaded: transformersLoaded,
+                status: isReady ? 'Ready' : 'Not ready'
             });
             break;
             
