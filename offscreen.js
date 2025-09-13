@@ -72,11 +72,12 @@ function initializeTransformersWorker() {
         
         // Handle worker messages
         transformersWorker.onmessage = function(e) {
-            const { type, data } = e.data;
+            const message = e.data;
+            const { type } = message;
             
             switch (type) {
                 case 'status':
-                    updateStatus(data.message, data.progress);
+                    updateStatus(message.message, message.progress);
                     break;
                     
                 case 'transformers_loaded':
@@ -93,18 +94,18 @@ function initializeTransformersWorker() {
                     break;
                     
                 case 'error':
-                    console.error('🔍 OFFSCREEN DEBUG: Worker error:', data.error);
-                    handleTransformersFailure(new Error(data.error));
+                    console.error('🔍 OFFSCREEN DEBUG: Worker error:', message.error);
+                    handleTransformersFailure(new Error(message.error || 'Unknown worker error'));
                     break;
                     
                 case 'embedding_result':
                     // Handle embedding results
-                    handleEmbeddingResult(data.id, data.embedding);
+                    handleEmbeddingResult(message.id, message.embedding);
                     break;
                     
                 case 'text_result':
                     // Handle text generation results
-                    handleTextResult(data.id, data.text);
+                    handleTextResult(message.id, message.text);
                     break;
                     
                 default:
@@ -132,6 +133,18 @@ function handleTransformersFailure(error) {
     console.log('🔍 OFFSCREEN DEBUG: Transformers.js Web Worker failed, falling back to browser-native approach...');
     updateStatus('Transformers.js incompatible, using browser-native approach...', 10);
     initializeBrowserNativeRAG();
+}
+
+// Handle embedding results from worker
+function handleEmbeddingResult(id, embedding) {
+    console.log('🔍 OFFSCREEN DEBUG: Received embedding result for ID:', id);
+    // Handle embedding result - this would be used for async embedding requests
+}
+
+// Handle text generation results from worker
+function handleTextResult(id, text) {
+    console.log('🔍 OFFSCREEN DEBUG: Received text result for ID:', id);
+    // Handle text generation result - this would be used for async text generation requests
 }
 
 // Send immediate status update
@@ -241,6 +254,7 @@ async function initializeBrowserNativeRAG() {
         // Mark as ready
         transformersLoaded = true;
         isEmbedderReady = true;
+        isReady = true;
         
         console.log('🔍 OFFSCREEN DEBUG: Browser-native RAG system ready');
         

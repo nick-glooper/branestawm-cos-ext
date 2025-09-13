@@ -60,7 +60,7 @@
   
   "web_accessible_resources": [
     {
-      "resources": ["offscreen.html"],
+      "resources": ["offscreen.html", "transformers-worker.js"],
       "matches": ["<all_urls>"]
     }
   ]
