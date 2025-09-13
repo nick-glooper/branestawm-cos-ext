@@ -19,12 +19,45 @@ try {
 
 console.log('🔍 OFFSCREEN DEBUG: Basic script execution working');
 
+// Send HTML loaded status
+try {
+    chrome.runtime.sendMessage({
+        type: 'LOCAL_AI_STATUS',
+        status: 'Offscreen HTML loaded!',
+        progress: 0.5,
+        ready: false
+    });
+    console.log('🔍 OFFSCREEN DEBUG: HTML status message sent');
+} catch (error) {
+    console.log('🔍 OFFSCREEN DEBUG: Failed to send HTML status:', error);
+}
+
 // Global variables for transformers.js
 let pipeline, env;
 let transformersLoaded = false;
 let isReady = false;
 
 console.log('🔍 OFFSCREEN DEBUG: Setting up Web Worker for transformers.js...');
+
+// UI elements
+const statusEl = document.getElementById('status');
+const progressBar = document.getElementById('progressBar');
+const detailsEl = document.getElementById('details');
+
+// Update UI status
+function updateStatus(message, progress = null, details = null) {
+    if (statusEl) statusEl.textContent = message;
+    if (progress !== null && progressBar) progressBar.style.width = `${progress}%`;
+    if (details && detailsEl) detailsEl.textContent = details;
+    
+    // Send status to background script
+    chrome.runtime.sendMessage({
+        type: 'LOCAL_AI_STATUS',
+        status: message,
+        progress,
+        ready: isReady
+    });
+}
 
 // Web Worker approach for transformers.js loading
 let transformersWorker = null;
@@ -183,8 +216,13 @@ try {
     console.log('🔍 OFFSCREEN DEBUG: Failed to send Web Worker status:', error);
 }
 
-// Start Web Worker initialization
-initializeTransformersWorker();
+// Start Web Worker initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeTransformersWorker);
+} else {
+    // DOM is already ready
+    initializeTransformersWorker();
+}
 
 // Browser-native RAG implementation (no external libraries)
 async function initializeBrowserNativeRAG() {
@@ -398,26 +436,6 @@ let isGeneratorReady = false;
 // RAG-specific globals
 let vectorStore = null;       // IndexedDB interface for vector storage
 let documentChunks = new Map(); // Cache for document chunks
-
-// UI elements
-const statusEl = document.getElementById('status');
-const progressBar = document.getElementById('progressBar');
-const detailsEl = document.getElementById('details');
-
-// Update UI status
-function updateStatus(message, progress = null, details = null) {
-    if (statusEl) statusEl.textContent = message;
-    if (progress !== null && progressBar) progressBar.style.width = `${progress}%`;
-    if (details && detailsEl) detailsEl.textContent = details;
-    
-    // Send status to background script
-    chrome.runtime.sendMessage({
-        type: 'LOCAL_AI_STATUS',
-        status: message,
-        progress,
-        ready: isReady
-    });
-}
 
 // Initialize both embedding and generative models for RAG
 async function initializeModel() {

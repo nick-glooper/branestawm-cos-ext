@@ -46,21 +46,6 @@
         <p id="details">Setting up EmbeddingGemma for local AI processing</p>
     </div>
 
-    <script>
-        // Immediate test script to verify offscreen loading
-        console.log('🔍 INLINE DEBUG: Offscreen HTML loaded!');
-        try {
-            chrome.runtime.sendMessage({
-                type: 'LOCAL_AI_STATUS',
-                status: 'Offscreen HTML loaded!',
-                progress: 0.5,
-                ready: false
-            });
-            console.log('🔍 INLINE DEBUG: HTML status message sent');
-        } catch (error) {
-            console.log('🔍 INLINE DEBUG: Failed to send HTML status:', error);
-        }
-    </script>
     <script type="module" src="offscreen.js"></script>
 </body>
 </html>
