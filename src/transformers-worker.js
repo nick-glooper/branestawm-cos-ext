@@ -100,7 +100,7 @@ self.addEventListener('message', async (event) => {
         
         // The Synthesizer (LLM) - Text generation  
         console.log('🔍 WORKER: Loading generator (The Synthesizer)...');
-        generator = await Transformers.pipeline('text-generation', 'Xenova/gemma-2b-it', {
+        generator = await Transformers.pipeline('text-generation', 'Xenova/Gemma-2-2B-it', {
           session_options: {
             executionProviders: ['wasm']
           }
