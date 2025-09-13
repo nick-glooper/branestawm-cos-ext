@@ -8,17 +8,19 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   build: {
+    outDir: '.', // Output directly to root directory
+    emptyOutDir: false, // Don't delete everything, just overwrite what we build
     rollupOptions: {
       input: {
-        // Define all your script entry points
-        background: resolve(__dirname, 'src/background.js'),
-        offscreen: resolve(__dirname, 'src/offscreen.html'),
+        // Build JavaScript entry points only
+        'background': resolve(__dirname, 'src/background.js'),
+        'offscreen': resolve(__dirname, 'src/offscreen.js'), 
         'transformers-worker': resolve(__dirname, 'src/transformers-worker.js'),
       },
       output: {
-        entryFileNames: '[name].js', // Keep original filenames
+        entryFileNames: '[name].js',
         chunkFileNames: 'assets/[name].js',
-        assetFileNames: 'assets/[name].[ext]',
+        assetFileNames: '[name].[ext]',
       }
     }
   },
@@ -35,30 +37,14 @@ export default defineConfig({
           src: 'node_modules/@xenova/transformers/dist/*.wasm',
           dest: '.'
         },
-        // Copy the manifest.json
+        // Copy the updated manifest.json to replace the old one
         {
           src: 'src/manifest.json',
           dest: '.'
         },
-        // Copy other static assets
+        // Copy the offscreen HTML file
         {
-          src: 'icons/*',
-          dest: 'icons'
-        },
-        {
-          src: 'options.html',
-          dest: '.'
-        },
-        {
-          src: 'options.js',
-          dest: '.'
-        },
-        {
-          src: 'content-google.js',
-          dest: '.'
-        },
-        {
-          src: 'content-perplexity.js',
+          src: 'src/offscreen.html',
           dest: '.'
         }
       ]

@@ -5,12 +5,12 @@
   "main": "main.js",
   "type": "module",
   "scripts": {
-    "build": "node build.js",
-    "build:prod": "NODE_ENV=production node build.js",
+    "build": "vite build",
+    "build:prod": "NODE_ENV=production vite build",
     "test": "node test-runner.js",
     "test:watch": "node test-runner.js --watch",
     "lint": "node linter.js",
-    "dev": "node build.js && echo 'Build completed. Load unpacked extension from ./build directory'",
+    "dev": "vite build && echo 'Build completed. Extension files updated in root directory'",
     "clean": "rm -rf build dist",
     "validate": "npm run lint && npm run test && npm run build"
   },
