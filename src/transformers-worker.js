@@ -10,17 +10,7 @@ let nerExtractor = null;
 let generator = null;
 
 // 1. Load the bundled library (local file, not CDN)
-try {
-  console.log('🔍 WORKER: Loading local transformers.js...');
-  importScripts('./transformers.min.js');
-  console.log('🔍 WORKER: Local transformers.js loaded successfully!');
-} catch (e) {
-  console.error('🔍 WORKER: Failed to load local transformers.js:', e);
-  postMessage({ 
-    type: 'error', 
-    error: 'Failed to load transformers.js: ' + e.message 
-  });
-}
+// Note: transformers.js will be loaded after receiving the init message with extension URL
 
 // 2. Set up event listener for messages from the offscreen document
 self.addEventListener('message', async (event) => {
@@ -35,6 +25,21 @@ self.addEventListener('message', async (event) => {
       // Get the base URL for local model access
       const extensionBaseURL = data.extensionBaseURL;
       console.log('🔍 WORKER: Extension base URL:', extensionBaseURL);
+
+      // Load transformers.js using the extension URL
+      try {
+        console.log('🔍 WORKER: Loading local transformers.js...');
+        importScripts(extensionBaseURL + 'transformers.min.js');
+        console.log('🔍 WORKER: Local transformers.js loaded successfully!');
+      } catch (e) {
+        console.error('🔍 WORKER: Failed to load local transformers.js:', e);
+        postMessage({ 
+          type: 'init-complete', 
+          success: false,
+          error: 'Failed to load transformers.js: ' + e.message 
+        });
+        return;
+      }
 
       // **CRITICAL:** Configure WASM paths for local loading
       if (typeof Transformers !== 'undefined' && Transformers.env) {
