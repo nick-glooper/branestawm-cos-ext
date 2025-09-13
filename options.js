@@ -50,10 +50,8 @@ let settings = {
 // Debounced save function to avoid excessive saves
 let saveTimeout;
 function debouncedSave() {
-    console.log('DEBUG: debouncedSave called');
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
-        console.log('DEBUG: Executing saveSettings after debounce');
         saveSettings();
     }, 1000); // Save 1 second after last change
 }
@@ -147,7 +145,6 @@ async function saveSettings() {
 // ========== EVENT LISTENERS ==========
 
 function setupEventListeners() {
-    console.log('DEBUG: Setting up event listeners...');
     
     // Note: Old auth method selection and API configuration elements moved to modal
     // These elements no longer exist in the main settings page
@@ -348,20 +345,13 @@ function setupEventListeners() {
     const customAIToggle = document.getElementById('customAIToggle');
     const airplaneModeToggle = document.getElementById('airplaneModeToggle');
     
-    console.log('DEBUG: Toggle elements found:', {
-        googleGeminiToggle: !!googleGeminiToggle,
-        customAIToggle: !!customAIToggle,
-        airplaneModeToggle: !!airplaneModeToggle
-    });
     
     const expandOllamaBtn = document.getElementById('expandOllamaSetup');
     const ollamaAdvanced = document.getElementById('ollamaAdvanced');
     
     // Airplane Mode Toggle with exclusivity
     if (airplaneModeToggle) {
-        console.log('DEBUG: Adding event listener to airplaneModeToggle');
         airplaneModeToggle.addEventListener('change', (e) => {
-            console.log('DEBUG: Airplane Mode toggle changed to:', e.target.checked);
             if (e.target.checked) {
                 // Turn off other toggles when airplane mode is turned on
                 if (googleGeminiToggle) googleGeminiToggle.checked = false;
@@ -377,18 +367,13 @@ function setupEventListeners() {
                 }
                 settings.airplaneMode = false;
             }
-            console.log('DEBUG: Settings after toggle:', { activeLlm: settings.activeLlm, airplaneMode: settings.airplaneMode });
             updateAirplaneModeUI();
             debouncedSave();
         });
-    } else {
-        console.log('DEBUG: airplaneModeToggle not found!');
     }
     
     if (googleGeminiToggle) {
-        console.log('DEBUG: Adding event listener to googleGeminiToggle');
         googleGeminiToggle.addEventListener('change', (e) => {
-            console.log('DEBUG: Google Gemini toggle changed to:', e.target.checked);
             if (e.target.checked) {
                 // Turn off other toggles
                 if (customAIToggle) customAIToggle.checked = false;
@@ -396,7 +381,6 @@ function setupEventListeners() {
                 
                 settings.activeLlm = 'google';
                 ensureToggleConsistency();
-                console.log('DEBUG: Settings after Google toggle:', { activeLlm: settings.activeLlm, airplaneMode: settings.airplaneMode });
                 updateAirplaneModeUI();
                 debouncedSave();
             } else {
@@ -407,14 +391,10 @@ function setupEventListeners() {
                 }
             }
         });
-    } else {
-        console.log('DEBUG: googleGeminiToggle not found!');
     }
     
     if (customAIToggle) {
-        console.log('DEBUG: Adding event listener to customAIToggle');
         customAIToggle.addEventListener('change', (e) => {
-            console.log('DEBUG: Custom AI toggle changed to:', e.target.checked);
             if (e.target.checked) {
                 // Turn off other toggles
                 if (googleGeminiToggle) googleGeminiToggle.checked = false;
@@ -422,7 +402,6 @@ function setupEventListeners() {
                 
                 settings.activeLlm = 'custom';
                 ensureToggleConsistency();
-                console.log('DEBUG: Settings after Custom toggle:', { activeLlm: settings.activeLlm, airplaneMode: settings.airplaneMode });
                 updateAirplaneModeUI();
                 debouncedSave();
             } else {
@@ -433,8 +412,6 @@ function setupEventListeners() {
                 }
             }
         });
-    } else {
-        console.log('DEBUG: customAIToggle not found!');
     }
     
     // Update airplaneMode toggle to also handle exclusivity - need to replace the existing handler
@@ -453,78 +430,9 @@ function setupEventListeners() {
     
     // Old LLM management system removed - now using three-tier setup
     
-    // DEBUGGING: Add click listeners to all toggle-related elements
-    addToggleDebugging();
     
-    console.log('DEBUG: setupEventListeners completed successfully');
 }
 
-// DEBUGGING: Add click listeners to diagnose toggle click issues
-function addToggleDebugging() {
-    console.log('DEBUG: Adding comprehensive toggle debugging...');
-    
-    // Test clicks on the actual input elements
-    ['googleGeminiToggle', 'customAIToggle', 'airplaneModeToggle'].forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            const container = input.closest('.toggle-switch');
-            const slider = container?.querySelector('.toggle-slider');
-            
-            // Log element positions and styles
-            const inputRect = input.getBoundingClientRect();
-            const containerRect = container?.getBoundingClientRect();
-            const sliderRect = slider?.getBoundingClientRect();
-            
-            console.log(`DEBUG: Element info for ${id}:`);
-            console.log(`  Input: ${inputRect.width}x${inputRect.height} at (${inputRect.left}, ${inputRect.top})`);
-            console.log(`  Container: ${containerRect.width}x${containerRect.height} at (${containerRect.left}, ${containerRect.top})`);
-            console.log(`  Slider: ${sliderRect.width}x${sliderRect.height} at (${sliderRect.left}, ${sliderRect.top})`);
-            
-            // Check computed styles
-            const inputStyles = window.getComputedStyle(input);
-            console.log(`  Input styles: visibility=${inputStyles.visibility}, display=${inputStyles.display}, pointerEvents=${inputStyles.pointerEvents}, zIndex=${inputStyles.zIndex}`);
-            
-            // Add click listeners with more detailed logging
-            input.addEventListener('click', (e) => {
-                console.log(`DEBUG: Direct click on INPUT ${id}:`, e.target.checked);
-                e.stopPropagation();
-            });
-            
-            if (container) {
-                container.addEventListener('click', (e) => {
-                    console.log(`DEBUG: Click on CONTAINER for ${id}:`, e.target.className);
-                    // Manually trigger the input
-                    input.click();
-                });
-            }
-            
-            if (slider) {
-                slider.addEventListener('click', (e) => {
-                    console.log(`DEBUG: Click on SLIDER for ${id}:`, e.target.className);
-                    // Manually trigger the input
-                    input.click();
-                });
-            }
-            
-            // Test what element is actually at the toggle position
-            const elementAtPoint = document.elementFromPoint(
-                containerRect.left + containerRect.width/2, 
-                containerRect.top + containerRect.height/2
-            );
-            console.log(`DEBUG: Element at toggle center for ${id}:`, elementAtPoint?.className, elementAtPoint?.tagName);
-            
-        } else {
-            console.error(`DEBUG: Could not find input element: ${id}`);
-        }
-    });
-    
-    // Add global click listener to see if ANY clicks are being detected
-    document.addEventListener('click', (e) => {
-        console.log('DEBUG: Global click detected on:', e.target.className, e.target.tagName, e.target.id);
-    });
-    
-    console.log('DEBUG: Toggle debugging added');
-}
 
 // Old auth method selection removed - now handled by three-tier system
 
@@ -1401,12 +1309,9 @@ async function initializeLocalAi() {
     
     try {
         // Send message to background script to initialize offscreen document
-        console.log('DEBUG: Sending INIT_LOCAL_AI message to background');
         const response = await chrome.runtime.sendMessage({
             type: 'INIT_LOCAL_AI'
         });
-        
-        console.log('DEBUG: Received response from background:', response);
         
         if (response && response.success) {
             showToast('Local AI initialization started!', 'info');
