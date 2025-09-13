@@ -50,6 +50,12 @@ function updateStatus(message, progress = null, details = null) {
     if (progress !== null && progressBar) progressBar.style.width = `${progress}%`;
     if (details && detailsEl) detailsEl.textContent = details;
     
+    // Show detailed model progress when AI models start loading
+    if (message && message.includes('Loading') && message.includes('model')) {
+        showModelProgress();
+        updateModelProgress(message, progress);
+    }
+    
     // Send status to background script
     chrome.runtime.sendMessage({
         type: 'LOCAL_AI_STATUS',
@@ -57,6 +63,54 @@ function updateStatus(message, progress = null, details = null) {
         progress,
         ready: isReady
     });
+}
+
+// Show detailed model progress UI
+function showModelProgress() {
+    const modelProgressEl = document.getElementById('modelProgress');
+    const downloadInfoEl = document.getElementById('downloadInfo');
+    
+    if (modelProgressEl && modelProgressEl.style.display === 'none') {
+        modelProgressEl.style.display = 'block';
+        if (downloadInfoEl) downloadInfoEl.style.display = 'block';
+    }
+}
+
+// Update individual model progress
+function updateModelProgress(message, progress) {
+    const modelMap = {
+        'classifier': { element: 'scout', name: 'Scout', emoji: '🔍' },
+        'embedding': { element: 'indexer', name: 'Indexer', emoji: '📊' },
+        'NER': { element: 'extractor', name: 'Extractor', emoji: '🏷️' },
+        'generative': { element: 'synthesizer', name: 'Synthesizer', emoji: '✨' }
+    };
+    
+    // Determine which model is being loaded
+    let currentModel = null;
+    for (const [key, model] of Object.entries(modelMap)) {
+        if (message.toLowerCase().includes(key.toLowerCase())) {
+            currentModel = model;
+            break;
+        }
+    }
+    
+    if (currentModel) {
+        const progressEl = document.getElementById(`${currentModel.element}Progress`);
+        const statusEl = document.getElementById(`${currentModel.element}Status`);
+        
+        if (progressEl && statusEl) {
+            // Show download progress or completion
+            if (message.includes('Loading')) {
+                progressEl.style.width = '50%'; // Downloading
+                statusEl.textContent = 'Downloading...';
+                statusEl.className = 'model-status downloading';
+            } else if (message.includes('loaded')) {
+                progressEl.style.width = '100%'; // Complete
+                statusEl.textContent = 'Ready ✅';
+                statusEl.className = 'model-status complete';
+            }
+        }
+    }
 }
 
 // Web Worker approach for transformers.js loading
