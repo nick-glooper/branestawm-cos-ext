@@ -65,9 +65,9 @@ self.addEventListener('message', async (event) => {
       try {
         postMessage({ type: 'status', message: 'Loading classifier model...', progress: 20 });
         
-        // The Scout (Classifier) - Zero-shot classification
+        // The Scout (Classifier) - Zero-shot classification with DeBERTa v3
         console.log('🔍 WORKER: Loading classifier (The Scout)...');
-        classifier = await Transformers.pipeline('zero-shot-classification', 'Xenova/distilbert-base-uncased-mnli', {
+        classifier = await Transformers.pipeline('zero-shot-classification', 'Xenova/nli-deberta-v3-small', {
           session_options: {
             executionProviders: ['wasm']
           }
@@ -76,9 +76,9 @@ self.addEventListener('message', async (event) => {
 
         postMessage({ type: 'status', message: 'Loading embedding model...', progress: 40 });
         
-        // The Indexer (Embedding) - Text embeddings
+        // The Indexer (Embedding) - EmbeddingGemma for RAG applications
         console.log('🔍 WORKER: Loading embedder (The Indexer)...');
-        embedder = await Transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+        embedder = await Transformers.pipeline('feature-extraction', 'onnx-community/embeddinggemma-300m-ONNX', {
           session_options: {
             executionProviders: ['wasm']
           }
@@ -87,9 +87,9 @@ self.addEventListener('message', async (event) => {
 
         postMessage({ type: 'status', message: 'Loading NER model...', progress: 60 });
         
-        // The Extractor (NER) - Named entity recognition
+        // The Extractor (NER) - BERT-based named entity recognition
         console.log('🔍 WORKER: Loading NER extractor (The Extractor)...');
-        nerExtractor = await Transformers.pipeline('ner', 'Xenova/distilbert-base-multilingual-cased-ner-hrl', {
+        nerExtractor = await Transformers.pipeline('token-classification', 'Xenova/bert-base-NER', {
           session_options: {
             executionProviders: ['wasm']
           }
@@ -98,9 +98,9 @@ self.addEventListener('message', async (event) => {
 
         postMessage({ type: 'status', message: 'Loading generative model...', progress: 80 });
         
-        // The Synthesizer (LLM) - Text generation  
+        // The Synthesizer (LLM) - Gemma 3n multimodal text generation
         console.log('🔍 WORKER: Loading generator (The Synthesizer)...');
-        generator = await Transformers.pipeline('text-generation', 'Xenova/Gemma-2-2B-it', {
+        generator = await Transformers.pipeline('text-generation', 'onnx-community/gemma-3n-E2B-it-ONNX', {
           session_options: {
             executionProviders: ['wasm']
           }
