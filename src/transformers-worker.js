@@ -42,11 +42,24 @@ self.addEventListener('message', async (event) => {
         return;
       }
 
-      // **CRITICAL:** Configure WASM paths for local loading
+      // **CRITICAL:** Configure transformers.js for CSP-compatible operation
       if (typeof Transformers !== 'undefined' && Transformers.env) {
-        // Configure paths to local WASM files
+        // Configure ONNX Runtime to avoid Web Workers (CSP compatibility)
         Transformers.env.backends.onnx.wasm.wasmPaths = extensionBaseURL;
-        console.log('🔍 WORKER: WASM paths configured for local loading');
+        Transformers.env.backends.onnx.wasm.numThreads = 1; // Force single-threaded to avoid workers
+        Transformers.env.backends.onnx.wasm.simd = true; // Enable SIMD if supported
+        
+        // Enable remote models (required for HuggingFace Hub access)
+        Transformers.env.allowRemoteModels = true;
+        Transformers.env.allowLocalModels = false; // Disable local file system access in extensions
+        
+        // Configure remote access to HuggingFace Hub
+        Transformers.env.remoteHost = 'https://huggingface.co/';
+        Transformers.env.remotePathTemplate = '{model}/resolve/main/';
+        
+        console.log('🔍 WORKER: Transformers.js configured for single-threaded CSP-compatible operation');
+        console.log('🔍 WORKER: ONNX threads:', Transformers.env.backends.onnx.wasm.numThreads);
+        console.log('🔍 WORKER: Remote host:', Transformers.env.remoteHost);
       }
 
       try {
@@ -54,28 +67,44 @@ self.addEventListener('message', async (event) => {
         
         // The Scout (Classifier) - Zero-shot classification
         console.log('🔍 WORKER: Loading classifier (The Scout)...');
-        classifier = await Transformers.pipeline('zero-shot-classification', 'Xenova/distilbert-base-uncased-mnli');
+        classifier = await Transformers.pipeline('zero-shot-classification', 'Xenova/distilbert-base-uncased-mnli', {
+          session_options: {
+            executionProviders: ['wasm']
+          }
+        });
         console.log('🔍 WORKER: Classifier loaded');
 
         postMessage({ type: 'status', message: 'Loading embedding model...', progress: 40 });
         
         // The Indexer (Embedding) - Text embeddings
         console.log('🔍 WORKER: Loading embedder (The Indexer)...');
-        embedder = await Transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+        embedder = await Transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+          session_options: {
+            executionProviders: ['wasm']
+          }
+        });
         console.log('🔍 WORKER: Embedder loaded');
 
         postMessage({ type: 'status', message: 'Loading NER model...', progress: 60 });
         
         // The Extractor (NER) - Named entity recognition
         console.log('🔍 WORKER: Loading NER extractor (The Extractor)...');
-        nerExtractor = await Transformers.pipeline('ner', 'Xenova/distilbert-base-multilingual-cased-ner-hrl');
+        nerExtractor = await Transformers.pipeline('ner', 'Xenova/distilbert-base-multilingual-cased-ner-hrl', {
+          session_options: {
+            executionProviders: ['wasm']
+          }
+        });
         console.log('🔍 WORKER: NER extractor loaded');
 
         postMessage({ type: 'status', message: 'Loading generative model...', progress: 80 });
         
         // The Synthesizer (LLM) - Text generation  
         console.log('🔍 WORKER: Loading generator (The Synthesizer)...');
-        generator = await Transformers.pipeline('text-generation', 'Xenova/gemma-2b-it');
+        generator = await Transformers.pipeline('text-generation', 'Xenova/gemma-2b-it', {
+          session_options: {
+            executionProviders: ['wasm']
+          }
+        });
         console.log('🔍 WORKER: Generator loaded');
 
         postMessage({ type: 'init-complete', success: true, progress: 100 });
