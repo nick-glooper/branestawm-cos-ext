@@ -29,7 +29,7 @@ self.addEventListener('message', async (event) => {
       // Load transformers.js using the extension URL
       try {
         console.log('🔍 WORKER: Loading local transformers.js...');
-        importScripts(extensionBaseURL + 'transformers.min.js');
+        importScripts(extensionBaseURL + 'transformers.js');
         console.log('🔍 WORKER: Local transformers.js loaded successfully!');
       } catch (e) {
         console.error('🔍 WORKER: Failed to load local transformers.js:', e);

@@ -27,9 +27,9 @@ export default defineConfig({
   plugins: [
     viteStaticCopy({
       targets: [
-        // Copy the transformers.js library files
+        // Copy the transformers.js library files (use non-minified for Web Worker compatibility)
         {
-          src: 'node_modules/@xenova/transformers/dist/transformers.min.js',
+          src: 'node_modules/@xenova/transformers/dist/transformers.js',
           dest: '.'
         },
         // Copy the WASM files for ONNX runtime
