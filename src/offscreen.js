@@ -122,7 +122,7 @@ function initializeTransformersWorker() {
     console.log('🔍 OFFSCREEN DEBUG: Creating transformers.js Web Worker (local build)...');
     
     try {
-        transformersWorker = new Worker(chrome.runtime.getURL('transformers-worker.js'));
+        transformersWorker = new Worker(chrome.runtime.getURL('transformers-worker.js'), { type: 'module' });
         
         // Handle worker messages
         transformersWorker.onmessage = function(e) {
