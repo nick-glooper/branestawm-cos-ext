@@ -860,10 +860,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return false; // Response sent immediately
     }
     
-    // ========== LOCAL AI (EmbeddingGemma) MESSAGE HANDLERS ==========
+    // ========== LOCAL AI (4-Model Architecture) MESSAGE HANDLERS ==========
     
     if (message.type === 'INIT_LOCAL_AI') {
-        console.log('🧠 Background: Initializing Local AI (EmbeddingGemma)');
+        console.log('🧠 Background: Initializing Local AI (4-Model Architecture)');
         
         // Handle async operation properly
         (async () => {
@@ -983,7 +983,7 @@ async function createOffscreenDocument() {
     await chrome.offscreen.createDocument({
         url: 'offscreen.html',
         reasons: ['DOM_SCRAPING'], // Using DOM_SCRAPING as it allows unrestricted access
-        justification: 'Local AI processing with EmbeddingGemma requires WebGPU access and transformers.js execution'
+        justification: 'Local AI processing with 4-model architecture requires WebGPU access and transformers.js execution'
     });
     
     console.log('✅ Offscreen document created successfully');

@@ -16,6 +16,7 @@ export default defineConfig({
         'background': resolve(__dirname, 'src/background.js'),
         'offscreen': resolve(__dirname, 'src/offscreen.js'), 
         'transformers-worker': resolve(__dirname, 'src/transformers-worker.js'),
+        'webllm-worker': resolve(__dirname, 'src/webllm-worker.js'),
       },
       output: {
         entryFileNames: '[name].js',

@@ -63,7 +63,7 @@ self.addEventListener('message', async (event) => {
       }
 
       try {
-        postMessage({ type: 'status', message: 'Loading classifier model...', progress: 20 });
+        postMessage({ type: 'status', message: '🔍 Loading The Scout (Classifier)...', progress: 20 });
         
         // The Scout (Classifier) - Zero-shot classification with DeBERTa v3
         console.log('🔍 WORKER: Loading classifier (The Scout)...');
@@ -74,18 +74,18 @@ self.addEventListener('message', async (event) => {
         });
         console.log('🔍 WORKER: Classifier loaded');
 
-        postMessage({ type: 'status', message: 'Loading embedding model...', progress: 40 });
+        postMessage({ type: 'status', message: '📚 Loading The Indexer (Embeddings)...', progress: 40 });
         
-        // The Indexer (Embedding) - EmbeddingGemma for RAG applications
+        // The Indexer (Embedding) - High-quality embeddings for RAG
         console.log('🔍 WORKER: Loading embedder (The Indexer)...');
-        embedder = await Transformers.pipeline('feature-extraction', 'onnx-community/embeddinggemma-300m-ONNX', {
+        embedder = await Transformers.pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
           session_options: {
             executionProviders: ['wasm']
           }
         });
         console.log('🔍 WORKER: Embedder loaded');
 
-        postMessage({ type: 'status', message: 'Loading NER model...', progress: 60 });
+        postMessage({ type: 'status', message: '🏷️ Loading The Extractor (NER)...', progress: 60 });
         
         // The Extractor (NER) - BERT-based named entity recognition
         console.log('🔍 WORKER: Loading NER extractor (The Extractor)...');
@@ -96,18 +96,18 @@ self.addEventListener('message', async (event) => {
         });
         console.log('🔍 WORKER: NER extractor loaded');
 
-        postMessage({ type: 'status', message: 'Loading generative model...', progress: 80 });
+        postMessage({ type: 'status', message: '✍️ Loading The Synthesizer (Text Gen)...', progress: 80 });
         
-        // The Synthesizer (LLM) - Gemma 3n multimodal text generation
+        // The Synthesizer (LLM) - GPT-2 text generation
         console.log('🔍 WORKER: Loading generator (The Synthesizer)...');
-        generator = await Transformers.pipeline('text-generation', 'onnx-community/gemma-3n-E2B-it-ONNX', {
+        generator = await Transformers.pipeline('text-generation', 'Xenova/gpt2', {
           session_options: {
             executionProviders: ['wasm']
           }
         });
         console.log('🔍 WORKER: Generator loaded');
 
-        postMessage({ type: 'init-complete', success: true, progress: 100 });
+        postMessage({ type: 'init-complete', success: true, progress: 100, message: '✅ All 4 AI models initialized successfully!' });
         console.log('🔍 WORKER: All AI models initialized successfully!');
 
       } catch (modelError) {

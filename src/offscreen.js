@@ -117,7 +117,77 @@ function updateModelProgress(message, progress) {
 let transformersWorker = null;
 let workerReady = false;
 
-// Initialize Web Worker with local-first architecture
+// Initialize Web LLM Worker with latest models
+function initializeWebLLMWorker() {
+    console.log('🚀 OFFSCREEN DEBUG: Creating Web LLM Worker (latest models)...');
+    
+    try {
+        transformersWorker = new Worker(chrome.runtime.getURL('webllm-worker.js'), { type: 'module' });
+        
+        // Handle worker messages
+        transformersWorker.onmessage = function(e) {
+            const message = e.data;
+            const { type } = message;
+            
+            switch (type) {
+                case 'status':
+                    updateStatus(message.message, message.progress);
+                    break;
+                    
+                case 'model-progress':
+                    updateStatus(message.text, message.progress);
+                    break;
+                    
+                case 'init-complete':
+                    if (message.success) {
+                        console.log('🚀 OFFSCREEN DEBUG: All Web LLM models initialized successfully!');
+                        transformersLoaded = true;
+                        isReady = true;
+                        updateStatus('✅ Local AI ready with Web LLM!', 100, message.message);
+                        
+                        chrome.runtime.sendMessage({
+                            type: 'LOCAL_AI_STATUS',
+                            status: '✅ All 4 AI models ready with Web LLM!',
+                            progress: 100,
+                            ready: true
+                        });
+                    } else {
+                        console.error('🚀 OFFSCREEN DEBUG: Web LLM model initialization failed:', message.error);
+                        handleTransformersFailure(new Error(message.error));
+                    }
+                    break;
+                    
+                case 'error':
+                    console.error('🚀 OFFSCREEN DEBUG: Web LLM Worker error:', message.error);
+                    handleTransformersFailure(new Error(message.error));
+                    break;
+                    
+                default:
+                    console.log('🚀 OFFSCREEN DEBUG: Unknown message type from Web LLM Worker:', type);
+            }
+        };
+        
+        transformersWorker.onerror = function(error) {
+            console.error('🚀 OFFSCREEN DEBUG: Web LLM Worker error:', error);
+            handleTransformersFailure(error);
+        };
+        
+        // Initialize the worker
+        const extensionBaseURL = chrome.runtime.getURL('');
+        console.log('🚀 OFFSCREEN DEBUG: Extension base URL:', extensionBaseURL);
+        
+        transformersWorker.postMessage({
+            type: 'init',
+            data: { extensionBaseURL }
+        });
+        
+    } catch (error) {
+        console.error('🚀 OFFSCREEN DEBUG: Failed to create Web LLM Worker:', error);
+        handleTransformersFailure(error);
+    }
+}
+
+// Initialize Web Worker with local-first architecture (Legacy transformers.js)
 function initializeTransformersWorker() {
     console.log('🔍 OFFSCREEN DEBUG: Creating transformers.js Web Worker (local build)...');
     
@@ -310,12 +380,12 @@ try {
     console.log('🔍 OFFSCREEN DEBUG: Failed to send Web Worker status:', error);
 }
 
-// Start Web Worker initialization when DOM is ready
+// Start Web LLM Worker initialization when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeTransformersWorker);
+    document.addEventListener('DOMContentLoaded', initializeWebLLMWorker);
 } else {
     // DOM is already ready
-    initializeTransformersWorker();
+    initializeWebLLMWorker();
 }
 
 // AI processing functions - these delegate to the Web Worker
