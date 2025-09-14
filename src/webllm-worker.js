@@ -19,10 +19,10 @@ let currentModels = {
 // Cross-family analysis selecting fastest models by specialization
 const MODEL_CONFIGS = {
   scout: {
-    name: 'SmolLM-1.7B-Instruct-q4f32_1-MLC', // Best sub-2B classification performance
+    name: 'SmolLM2-1.7B-Instruct-q4f32_1-MLC', // Best sub-2B classification performance
     role: '🔍 The Scout (Classifier)',
     progress: 25,
-    justification: 'SmolLM-1.7B: 64.2% commonsense reasoning, outperforms all <2B models, optimized for zero-shot classification speed'
+    justification: 'SmolLM2-1.7B: Latest SmolLM generation, optimized for zero-shot classification speed'
   },
   indexer: {
     name: 'Llama-3.2-1B-Instruct-q4f32_1-MLC', // Lightweight for semantic understanding
@@ -37,10 +37,10 @@ const MODEL_CONFIGS = {
     justification: 'Llama-3.2-1B: Superior instruction following for structured NER output, multilingual entity recognition'
   },
   synthesizer: {
-    name: 'Phi-3-mini-128k-instruct-q4f32_1-MLC', // Best generation quality at speed
+    name: 'Phi-3-mini-4k-instruct-q4f32_1-MLC', // Best generation quality at speed
     role: '✍️ The Synthesizer (Text Gen)',
     progress: 100,
-    justification: 'Phi-3-mini: High-quality text generation with 128k context, balanced performance and efficiency'
+    justification: 'Phi-3-mini: High-quality text generation with 4k context, balanced performance and efficiency'
   }
 };
 
