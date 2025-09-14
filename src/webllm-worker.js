@@ -15,32 +15,32 @@ let currentModels = {
   synthesizer: null // Text generation model
 };
 
-// Model configurations optimized for cutting-edge performance
-// Research: Web LLM doesn't support EmbeddingGemma yet, using most advanced alternatives
+// Model configurations optimized for cutting-edge performance  
+// Using latest Gemma 3 series models - most advanced available in Web LLM
 const MODEL_CONFIGS = {
   scout: {
-    name: 'gemma-2-2b-it-q4f32_1', // Most advanced Gemma classification model
+    name: 'gemma-3-4b-it-q4f32_1', // Latest Gemma 3 for superior classification
     role: '🔍 The Scout (Classifier)',
     progress: 25,
-    justification: 'Gemma-2-2B-IT: Latest Google instruction-tuned model with superior reasoning capabilities'
+    justification: 'Gemma-3-4B-IT: Latest generation Google model with enhanced reasoning and classification capabilities'
   },
   indexer: {
-    name: 'gemma-2-2b-it-q4f32_1', // Best available for embeddings until EmbeddingGemma support
+    name: 'gemma-3-4b-it-q4f32_1', // Gemma 3 for advanced semantic understanding
     role: '📚 The Indexer (Embeddings)', 
     progress: 50,
-    justification: 'Gemma-2-2B-IT for semantic embeddings: Most advanced model available in Web LLM for text understanding'
+    justification: 'Gemma-3-4B-IT: Cutting-edge semantic understanding with advanced text comprehension'
   },
   extractor: {
-    name: 'gemma-2-9b-it-q4f32_1', // Larger Gemma for complex NER tasks
+    name: 'gemma-3-12b-it-q4f32_1', // Largest Gemma 3 for complex NER
     role: '🏷️ The Extractor (NER)',
     progress: 75,
-    justification: 'Gemma-2-9B-IT: Largest Gemma model for complex entity recognition and understanding'
+    justification: 'Gemma-3-12B-IT: Most capable Gemma 3 model for sophisticated entity recognition'
   },
   synthesizer: {
-    name: 'gemma-2-9b-it-q4f32_1', // Most capable text generation
+    name: 'gemma-3-27b-it-q4f32_1', // Most powerful for text generation
     role: '✍️ The Synthesizer (Text Gen)',
     progress: 100,
-    justification: 'Gemma-2-9B-IT: Most capable model for high-quality text generation and reasoning'
+    justification: 'Gemma-3-27B-IT: Most advanced and capable model for high-quality text synthesis'
   }
 };
 
