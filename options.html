@@ -1219,8 +1219,8 @@
                         </div>
                     </div>
                     <p class="card-description">
-                        Run Google's EmbeddingGemma AI model completely on your device. 
-                        Zero data sharing, works offline, and automatically downloads (~400MB) on first use. Perfect for privacy-conscious users.
+                        Run cutting-edge AI models (SmolLM, Qwen, Phi) completely on your device with Web LLM.
+                        Zero data sharing, works offline, optimized for cloud LLM-like speed. Perfect for privacy-conscious users.
                     </p>
                     
                     <div class="card-actions" style="padding: 0 20px; margin-bottom: 16px;">
@@ -1228,10 +1228,31 @@
                             Enable Local AI
                         </button>
                         <div id="localAIStatus" style="margin-top: 12px; padding: 12px; border-radius: 6px; background: #f9fafb; border: 1px solid #e5e7eb; display: none;">
-                            <div style="display: flex; align-items: center; gap: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
                                 <div id="statusIndicator" style="width: 12px; height: 12px; border-radius: 50%; background: #6b7280;"></div>
                                 <span id="statusText" style="color: #374151; font-weight: 500;">Ready to setup</span>
                             </div>
+                            
+                            <!-- Individual Model Status -->
+                            <div id="modelStatusList" style="display: none;">
+                                <div class="model-status-item" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #e5e7eb;">
+                                    <span style="font-size: 12px; font-weight: 500;">🔍 The Scout</span>
+                                    <span id="scoutStatus" style="font-size: 11px; color: #6b7280;">Waiting...</span>
+                                </div>
+                                <div class="model-status-item" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #e5e7eb;">
+                                    <span style="font-size: 12px; font-weight: 500;">📚 The Indexer</span>
+                                    <span id="indexerStatus" style="font-size: 11px; color: #6b7280;">Waiting...</span>
+                                </div>
+                                <div class="model-status-item" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid #e5e7eb;">
+                                    <span style="font-size: 12px; font-weight: 500;">🏷️ The Extractor</span>
+                                    <span id="extractorStatus" style="font-size: 11px; color: #6b7280;">Waiting...</span>
+                                </div>
+                                <div class="model-status-item" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0;">
+                                    <span style="font-size: 12px; font-weight: 500;">✍️ The Synthesizer</span>
+                                    <span id="synthesizerStatus" style="font-size: 11px; color: #6b7280;">Waiting...</span>
+                                </div>
+                            </div>
+                            
                             <div id="progressContainer" style="margin-top: 8px; display: none;">
                                 <div style="background: #e5e7eb; border-radius: 4px; overflow: hidden; height: 4px;">
                                     <div id="progressBar" style="height: 100%; background: #3b82f6; width: 0%; transition: width 0.3s;"></div>
@@ -1242,27 +1263,28 @@
                     </div>
                     <div class="expandable-content" id="localAIAdvanced" style="display: none;">
                         <div class="setup-info" style="padding: 16px; background: #f0f9ff; border-radius: 8px; border: 1px solid #0ea5e9;">
-                            <h5>🧠 EmbeddingGemma Features</h5>
+                            <h5>🚀 4-Model Architecture Features</h5>
                             <ul style="margin: 8px 0; padding-left: 20px;">
-                                <li><strong>Zero Setup:</strong> Downloads automatically on first use</li>
+                                <li><strong>🔍 The Scout:</strong> SmolLM-1.7B for fast classification tasks</li>
+                                <li><strong>📚 The Indexer:</strong> Qwen1.5-1.8B for semantic understanding</li>
+                                <li><strong>🏷️ The Extractor:</strong> Qwen1.5-1.8B for entity recognition</li>
+                                <li><strong>✍️ The Synthesizer:</strong> Phi-3.5-mini for text generation</li>
                                 <li><strong>Privacy-First:</strong> All processing happens on your device</li>
-                                <li><strong>Lightweight:</strong> Only ~400MB download (vs 4GB+ traditional models)</li>
-                                <li><strong>Fast:</strong> Optimized for everyday devices like laptops and tablets</li>
-                                <li><strong>Multilingual:</strong> Supports 100+ languages out of the box</li>
+                                <li><strong>Optimized Performance:</strong> Cloud LLM-like speed on consumer hardware</li>
                             </ul>
                         </div>
 
                         <div class="setup-requirements">
                             <h5>📋 System Requirements</h5>
                             <ul style="margin: 8px 0; padding-left: 20px;">
-                                <li><strong>Memory:</strong> 4GB+ RAM available</li>
-                                <li><strong>Storage:</strong> 500MB free space for model cache</li>
+                                <li><strong>Memory:</strong> 6GB+ RAM available (4 models)</li>
+                                <li><strong>Storage:</strong> 3GB free space for model cache</li>
                                 <li><strong>Browser:</strong> Chrome/Edge with WebGPU support</li>
                                 <li><strong>Connection:</strong> Internet for initial model download</li>
                             </ul>
                             
                             <div style="margin-top: 16px; padding: 12px; background: #fef3c7; border-radius: 6px; border: 1px solid #f59e0b;">
-                                <strong>📱 Note:</strong> After first setup, EmbeddingGemma runs completely offline. Perfect for sensitive documents or limited connectivity environments.
+                                <strong>📱 Note:</strong> After first setup, all models run completely offline with cloud LLM-like performance. Perfect for sensitive documents or limited connectivity environments.
                             </div>
                         </div>
                     </div>

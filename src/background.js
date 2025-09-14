@@ -49,6 +49,15 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         // Initialize vector database for new installation
         await initializeVectorDatabase();
         
+        // Auto-initialize Local AI (4-Model Architecture) for better user experience
+        console.log('🧠 Background: Auto-initializing Local AI for new installation');
+        try {
+            await createOffscreenDocument();
+            console.log('🧠 Background: Local AI auto-initialization started');
+        } catch (error) {
+            console.error('🧠 Background: Local AI auto-initialization failed:', error);
+        }
+        
         // Open Branestawm tab on first install
         await openBranestawmTab();
         
@@ -60,6 +69,15 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         
         // Initialize vector database for updates too
         await initializeVectorDatabase();
+        
+        // Auto-initialize Local AI on updates for better user experience
+        console.log('🧠 Background: Auto-initializing Local AI after extension update');
+        try {
+            await createOffscreenDocument();
+            console.log('🧠 Background: Local AI auto-initialization started after update');
+        } catch (error) {
+            console.error('🧠 Background: Local AI auto-initialization failed after update:', error);
+        }
     }
     
     // Set up context menus
@@ -983,7 +1001,7 @@ async function createOffscreenDocument() {
     await chrome.offscreen.createDocument({
         url: 'offscreen.html',
         reasons: ['DOM_SCRAPING'], // Using DOM_SCRAPING as it allows unrestricted access
-        justification: 'Local AI processing with 4-model architecture requires WebGPU access and transformers.js execution'
+        justification: 'Local AI processing with 4-model architecture requires WebGPU access and Web LLM execution'
     });
     
     console.log('✅ Offscreen document created successfully');
@@ -1392,13 +1410,22 @@ async function encryptData(data, password) {
     }
 }
 
-// Initialize vector database on service worker startup
+// Initialize vector database and Local AI on service worker startup
 (async () => {
     try {
         await initializeVectorDatabase();
         console.log('🧠 Background: Vector database startup initialization complete');
+        
+        // Auto-initialize Local AI on service worker startup for immediate availability
+        console.log('🧠 Background: Auto-initializing Local AI on startup for better user experience');
+        try {
+            await createOffscreenDocument();
+            console.log('🧠 Background: Local AI auto-initialization started on startup');
+        } catch (error) {
+            console.error('🧠 Background: Local AI auto-initialization failed on startup:', error);
+        }
     } catch (error) {
-        console.error('🧠 Background: Vector database startup initialization failed:', error);
+        console.error('🧠 Background: Startup initialization failed:', error);
     }
 })();
 

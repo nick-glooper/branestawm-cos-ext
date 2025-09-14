@@ -32,12 +32,12 @@ try {
     console.log('🔍 OFFSCREEN DEBUG: Failed to send HTML status:', error);
 }
 
-// Global variables for transformers.js
+// Global variables for Web LLM
 let pipeline, env;
 let transformersLoaded = false;
 let isReady = false;
 
-console.log('🔍 OFFSCREEN DEBUG: Setting up Web Worker for transformers.js...');
+console.log('🔍 OFFSCREEN DEBUG: Setting up Web Worker for Web LLM...');
 
 // UI elements
 const statusEl = document.getElementById('status');
@@ -302,7 +302,7 @@ function handleAIResult(message) {
 try {
     chrome.runtime.sendMessage({
         type: 'LOCAL_AI_STATUS',
-        status: 'Setting up transformers.js...',
+        status: 'Setting up Web LLM...',
         progress: 2,
         ready: false
     });
@@ -365,8 +365,8 @@ function loadViaScriptTag(url, globalVarName, timeout = 20000) {
     });
 }
 
-// Initialize transformers.js via Web Worker approach
-console.log('🔍 OFFSCREEN DEBUG: Starting Web Worker transformers.js loading...');
+// Initialize Web LLM via Web Worker approach
+console.log('🔍 OFFSCREEN DEBUG: Starting Web Worker Web LLM loading...');
 
 // Send status update
 try {
@@ -508,4 +508,4 @@ chrome.runtime.sendMessage({ type: 'OFFSCREEN_READY' })
     });
 
 console.log('🔍 OFFSCREEN DEBUG: Branestawm offscreen document loaded and ready for messages');
-console.log('🔍 OFFSCREEN DEBUG: Auto-initialization will trigger after transformers.js loads');
+console.log('🔍 OFFSCREEN DEBUG: Auto-initialization will trigger after Web LLM loads');
