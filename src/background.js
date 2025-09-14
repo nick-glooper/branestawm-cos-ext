@@ -1028,6 +1028,11 @@ async function checkOffscreenDocument() {
     }
 }
 
+// Alias for consistency with function calls
+async function hasOffscreenDocument() {
+    return await checkOffscreenDocument();
+}
+
 async function waitForOffscreenAndSend(messageType, messageData = {}) {
     // Wait for offscreen document to load and be ready
     let attempts = 0;
