@@ -15,32 +15,32 @@ let currentModels = {
   synthesizer: null // Text generation model
 };
 
-// Model configurations optimized for cutting-edge performance  
-// Using latest Gemma 3 series models - most advanced available in Web LLM
+// Model configurations optimized for edge device performance
+// Balancing cutting-edge Gemma architecture with lightweight efficiency
 const MODEL_CONFIGS = {
   scout: {
-    name: 'gemma-3-4b-it-q4f32_1', // Latest Gemma 3 for superior classification
+    name: 'gemma-3-1b-it-q4f32_1', // Smallest Gemma 3 for fast classification
     role: '🔍 The Scout (Classifier)',
     progress: 25,
-    justification: 'Gemma-3-4B-IT: Latest generation Google model with enhanced reasoning and classification capabilities'
+    justification: 'Gemma-3-1B-IT: Latest Gemma 3 architecture optimized for edge devices with fast classification'
   },
   indexer: {
-    name: 'gemma-3-4b-it-q4f32_1', // Gemma 3 for advanced semantic understanding
+    name: 'gemma-2-2b-it-q4f32_1', // Lightweight for embeddings
     role: '📚 The Indexer (Embeddings)', 
     progress: 50,
-    justification: 'Gemma-3-4B-IT: Cutting-edge semantic understanding with advanced text comprehension'
+    justification: 'Gemma-2-2B-IT: Efficient semantic understanding optimized for edge device performance'
   },
   extractor: {
-    name: 'gemma-3-12b-it-q4f32_1', // Largest Gemma 3 for complex NER
+    name: 'gemma-2-2b-it-q4f32_1', // Same lightweight model for NER
     role: '🏷️ The Extractor (NER)',
     progress: 75,
-    justification: 'Gemma-3-12B-IT: Most capable Gemma 3 model for sophisticated entity recognition'
+    justification: 'Gemma-2-2B-IT: Balanced capability and performance for entity recognition on edge devices'
   },
   synthesizer: {
-    name: 'gemma-3-27b-it-q4f32_1', // Most powerful for text generation
+    name: 'gemma-3-4b-it-q4f32_1', // Larger only where text quality critical
     role: '✍️ The Synthesizer (Text Gen)',
     progress: 100,
-    justification: 'Gemma-3-27B-IT: Most advanced and capable model for high-quality text synthesis'
+    justification: 'Gemma-3-4B-IT: Best balance of generation quality and edge device performance'
   }
 };
 
