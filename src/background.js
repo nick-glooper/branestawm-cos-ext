@@ -52,8 +52,13 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         // Auto-initialize Local AI (4-Model Architecture) for better user experience
         console.log('🧠 Background: Auto-initializing Local AI for new installation');
         try {
-            await createOffscreenDocument();
-            console.log('🧠 Background: Local AI auto-initialization started');
+            const hasOffscreen = await hasOffscreenDocument();
+            if (!hasOffscreen) {
+                await createOffscreenDocument();
+                console.log('🧠 Background: Local AI auto-initialization started');
+            } else {
+                console.log('🧠 Background: Offscreen document already exists, skipping auto-initialization');
+            }
         } catch (error) {
             console.error('🧠 Background: Local AI auto-initialization failed:', error);
         }
@@ -73,8 +78,13 @@ chrome.runtime.onInstalled.addListener(async (details) => {
         // Auto-initialize Local AI on updates for better user experience
         console.log('🧠 Background: Auto-initializing Local AI after extension update');
         try {
-            await createOffscreenDocument();
-            console.log('🧠 Background: Local AI auto-initialization started after update');
+            const hasOffscreen = await hasOffscreenDocument();
+            if (!hasOffscreen) {
+                await createOffscreenDocument();
+                console.log('🧠 Background: Local AI auto-initialization started after update');
+            } else {
+                console.log('🧠 Background: Offscreen document already exists after update, skipping auto-initialization');
+            }
         } catch (error) {
             console.error('🧠 Background: Local AI auto-initialization failed after update:', error);
         }
@@ -1419,8 +1429,13 @@ async function encryptData(data, password) {
         // Auto-initialize Local AI on service worker startup for immediate availability
         console.log('🧠 Background: Auto-initializing Local AI on startup for better user experience');
         try {
-            await createOffscreenDocument();
-            console.log('🧠 Background: Local AI auto-initialization started on startup');
+            const hasOffscreen = await hasOffscreenDocument();
+            if (!hasOffscreen) {
+                await createOffscreenDocument();
+                console.log('🧠 Background: Local AI auto-initialization started on startup');
+            } else {
+                console.log('🧠 Background: Offscreen document already exists on startup, skipping auto-initialization');
+            }
         } catch (error) {
             console.error('🧠 Background: Local AI auto-initialization failed on startup:', error);
         }

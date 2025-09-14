@@ -19,28 +19,28 @@ let currentModels = {
 // Cross-family analysis selecting fastest models by specialization
 const MODEL_CONFIGS = {
   scout: {
-    name: 'SmolLM-1.7B-Instruct-q4f32_1', // Best sub-2B classification performance
+    name: 'SmolLM-1.7B-Instruct-q4f32_1-MLC', // Best sub-2B classification performance
     role: '🔍 The Scout (Classifier)',
     progress: 25,
     justification: 'SmolLM-1.7B: 64.2% commonsense reasoning, outperforms all <2B models, optimized for zero-shot classification speed'
   },
   indexer: {
-    name: 'Qwen1.5-1.8B-Chat-q4f32_1', // Best semantic understanding/speed balance
+    name: 'Llama-3.2-1B-Instruct-q4f32_1-MLC', // Lightweight for semantic understanding
     role: '📚 The Indexer (Embeddings)', 
     progress: 50,
-    justification: 'Qwen1.5-1.8B: State-of-the-art semantic understanding, 100+ languages, 32k context, 1.46s first token time'
+    justification: 'Llama-3.2-1B: Efficient instruction-following for semantic analysis, optimized for embedding generation'
   },
   extractor: {
-    name: 'Qwen1.5-1.8B-Chat-q4f32_1', // Best instruction following for NER
+    name: 'Llama-3.2-1B-Instruct-q4f32_1-MLC', // Best instruction following for NER
     role: '🏷️ The Extractor (NER)',
     progress: 75,
-    justification: 'Qwen1.5-1.8B: Superior instruction following for structured NER output, multilingual entity recognition'
+    justification: 'Llama-3.2-1B: Superior instruction following for structured NER output, multilingual entity recognition'
   },
   synthesizer: {
-    name: 'Phi-3.5-mini-instruct-q4f32_1', // Best generation quality at speed
+    name: 'Phi-3-mini-128k-instruct-q4f32_1-MLC', // Best generation quality at speed
     role: '✍️ The Synthesizer (Text Gen)',
     progress: 100,
-    justification: 'Phi-3.5-mini: 69% MMLU, 8.38 MT-bench, 128k context, cloud LLM-like quality with 3.8B efficiency'
+    justification: 'Phi-3-mini: High-quality text generation with 128k context, balanced performance and efficiency'
   }
 };
 
