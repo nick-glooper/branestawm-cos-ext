@@ -15,32 +15,32 @@ let currentModels = {
   synthesizer: null // Text generation model
 };
 
-// Model configurations optimized for edge device performance
-// Balancing cutting-edge Gemma architecture with lightweight efficiency
+// Model configurations optimized for cloud LLM-like response times
+// Cross-family analysis selecting fastest models by specialization
 const MODEL_CONFIGS = {
   scout: {
-    name: 'gemma-3-1b-it-q4f32_1', // Smallest Gemma 3 for fast classification
+    name: 'SmolLM-1.7B-Instruct-q4f32_1', // Best sub-2B classification performance
     role: '🔍 The Scout (Classifier)',
     progress: 25,
-    justification: 'Gemma-3-1B-IT: Latest Gemma 3 architecture optimized for edge devices with fast classification'
+    justification: 'SmolLM-1.7B: 64.2% commonsense reasoning, outperforms all <2B models, optimized for zero-shot classification speed'
   },
   indexer: {
-    name: 'gemma-2-2b-it-q4f32_1', // Lightweight for embeddings
+    name: 'Qwen1.5-1.8B-Chat-q4f32_1', // Best semantic understanding/speed balance
     role: '📚 The Indexer (Embeddings)', 
     progress: 50,
-    justification: 'Gemma-2-2B-IT: Efficient semantic understanding optimized for edge device performance'
+    justification: 'Qwen1.5-1.8B: State-of-the-art semantic understanding, 100+ languages, 32k context, 1.46s first token time'
   },
   extractor: {
-    name: 'gemma-2-2b-it-q4f32_1', // Same lightweight model for NER
+    name: 'Qwen1.5-1.8B-Chat-q4f32_1', // Best instruction following for NER
     role: '🏷️ The Extractor (NER)',
     progress: 75,
-    justification: 'Gemma-2-2B-IT: Balanced capability and performance for entity recognition on edge devices'
+    justification: 'Qwen1.5-1.8B: Superior instruction following for structured NER output, multilingual entity recognition'
   },
   synthesizer: {
-    name: 'gemma-3-4b-it-q4f32_1', // Larger only where text quality critical
+    name: 'Phi-3.5-mini-instruct-q4f32_1', // Best generation quality at speed
     role: '✍️ The Synthesizer (Text Gen)',
     progress: 100,
-    justification: 'Gemma-3-4B-IT: Best balance of generation quality and edge device performance'
+    justification: 'Phi-3.5-mini: 69% MMLU, 8.38 MT-bench, 128k context, cloud LLM-like quality with 3.8B efficiency'
   }
 };
 
