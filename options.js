@@ -346,9 +346,6 @@ function setupEventListeners() {
     const airplaneModeToggle = document.getElementById('airplaneModeToggle');
     
     
-    const expandOllamaBtn = document.getElementById('expandOllamaSetup');
-    const ollamaAdvanced = document.getElementById('ollamaAdvanced');
-    
     // Airplane Mode Toggle with exclusivity
     if (airplaneModeToggle) {
         airplaneModeToggle.addEventListener('change', (e) => {
@@ -417,16 +414,6 @@ function setupEventListeners() {
     // Update airplaneMode toggle to also handle exclusivity - need to replace the existing handler
     // (The original handler is already set up above, this extends it with exclusivity logic)
     
-    if (expandOllamaBtn && ollamaAdvanced) {
-        expandOllamaBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const isExpanded = ollamaAdvanced.style.display !== 'none';
-            ollamaAdvanced.style.display = isExpanded ? 'none' : 'block';
-            expandOllamaBtn.innerHTML = isExpanded ? 
-                '🔽 Show Airplane Mode Setup' : 
-                '🔼 Hide Airplane Mode Setup';
-        });
-    }
     
     // Old LLM management system removed - now using three-tier setup
     

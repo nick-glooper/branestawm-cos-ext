@@ -10,10 +10,7 @@
  */
 class AppState {
     constructor() {
-        // Hybrid LLM System
-        this.ollamaClient = null;
-        this.llmRouter = null;
-        this.modelManager = null;
+        // AI System (Web LLM)
         
         // UI State
         this.isProcessing = false;
@@ -1520,36 +1517,7 @@ window.addEventListener('beforeunload', () => {
 /**
  * Initialize the hybrid LLM system
  */
-async function initializeHybridLLMSystem() {
-    try {
-        // Initialize Ollama client
-        ollamaClient = new OllamaClient();
-        
-        // Initialize LLM router
-        llmRouter = new LLMRouter(ollamaClient);
-        
-        // Initialize model manager
-        modelManager = new ModelManager(ollamaClient, llmRouter);
-        
-        console.log('Hybrid LLM system initialized');
-        
-        // Log connection status
-        setTimeout(() => {
-            if (ollamaClient.isConnected()) {
-                const models = ollamaClient.getAvailableModels();
-                const activeModel = ollamaClient.getActiveModel();
-                console.log(`Ollama connected with ${models.length} models. Active: ${activeModel}`);
-            } else {
-                console.log('Ollama not available - using cloud-only mode');
-            }
-        }, 2000); // Give it time to establish connection
-        
-    } catch (error) {
-        console.error('Error initializing hybrid LLM system:', error);
-        // Continue without Ollama if initialization fails
-        console.log('Falling back to cloud-only mode');
-    }
-}
+// Hybrid LLM system removed - now using Web LLM for local AI
 
 /**
  * Get LLM response using hybrid routing
@@ -1579,34 +1547,7 @@ async function getHybridLLMResponse(messages, originalMessage) {
     }
 }
 
-/**
- * Get current model information for display
- */
-function getCurrentModelInfo() {
-    if (!ollamaClient || !ollamaClient.isConnected()) {
-        return {
-            source: 'cloud',
-            model: settings.apiProvider || 'Cloud LLM',
-            available: true
-        };
-    }
-    
-    const activeModel = ollamaClient.getActiveModel();
-    const modelInfo = modelManager ? modelManager.getModelDisplayName(activeModel) : activeModel;
-    
-    return {
-        source: 'local',
-        model: modelInfo || 'Local LLM',
-        available: !!activeModel
-    };
-}
-
-/**
- * Check if local LLM is available
- */
-function isLocalLLMAvailable() {
-    return ollamaClient && ollamaClient.isConnected() && ollamaClient.getActiveModel();
-}
+// Model info functions removed - now handled by Local AI via background script
 
 /**
  * Force local routing for next request
@@ -1631,22 +1572,7 @@ function getRoutingStatistics() {
     return llmRouter.getPerformanceStats();
 }
 
-/**
- * Refresh Ollama connection and models
- */
-async function refreshOllamaConnection() {
-    if (ollamaClient) {
-        try {
-            const status = await ollamaClient.refresh();
-            console.log('Ollama refresh result:', status);
-            return status;
-        } catch (error) {
-            console.error('Error refreshing Ollama:', error);
-            return { connected: false, error: error.message };
-        }
-    }
-    return { connected: false, error: 'Ollama client not initialized' };
-}
+// Ollama refresh function removed - now using Web LLM for local AI
 
 // Make functions globally accessible for HTML onclick handlers
 window.editArtifact = editArtifact;
@@ -1656,12 +1582,11 @@ window.createArtifactFromTemplate = createArtifactFromTemplate;
 window.showArtifactGenerationMenu = showArtifactGenerationMenu;
 
 // Make hybrid LLM functions accessible
-window.getCurrentModelInfo = getCurrentModelInfo;
-window.isLocalLLMAvailable = isLocalLLMAvailable;
+// Model info window functions removed - now using Web LLM
 window.forceLocalRouting = forceLocalRouting;
 window.forceCloudRouting = forceCloudRouting;
 window.getRoutingStatistics = getRoutingStatistics;
-window.refreshOllamaConnection = refreshOllamaConnection;
+// window.refreshOllamaConnection removed - now using Web LLM
 
 // Make web search function accessible
 window.showWebSearchModal = showWebSearchModal;

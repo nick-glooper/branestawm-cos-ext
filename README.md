@@ -3,41 +3,40 @@
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)
 
 > Your indispensable AI Chief of Staff - A cognitive prosthetic designed specifically for neurodivergent users.
 
-## 🌟 Features
+## 🌟 Current Architecture
 
-### 🧠 **Intelligent Task Management**
-- **Automatic Task Extraction**: AI-powered detection of tasks from conversations
-- **Smart Templates**: Context-aware task breakdowns with time estimates
-- **Time-First Approach**: Conscious deadline decisions with pause/resume functionality
-- **Category Intelligence**: Automatic categorization (Work, Personal, Creative, Administrative)
+Branestawm is a Chrome extension that provides multiple AI options for neurodivergent users:
 
-### 🔍 **Advanced Analytics & Monitoring**
-- **Performance Tracking**: Real-time performance metrics and optimization
-- **Error Monitoring**: Comprehensive error tracking and analytics
-- **Privacy-First Analytics**: User consent-based usage insights
-- **Memory Leak Detection**: Automatic memory usage monitoring
+### 🤖 **Four-AI System**
+- **Local AI (Web LLM)**: 4-model architecture running entirely offline
+- **Google Gemini**: One-click OAuth setup with free tier
+- **Custom APIs**: Support for Cerebras, OpenAI, OpenRouter, and any OpenAI-compatible endpoint
+- **Smart Routing**: Automatic failover and optimal model selection
 
-### 🛡️ **Security & Quality**
-- **XSS Protection**: Comprehensive input sanitization and HTML escaping
-- **Type Safety**: Gradual TypeScript migration for better maintainability
-- **Code Quality**: Automated linting with security and performance rules
-- **Content Security Policy**: Secure Chrome extension architecture
+### 🧠 **Local AI (4-Model Architecture)**
+- **🔍 Scout** (SmolLM2-1.7B): Classification and intent detection
+- **📚 Indexer** (Llama-3.2-1B): Semantic embeddings and search
+- **🏷️ Extractor** (Llama-3.2-1B): Named entity recognition and extraction
+- **✨ Synthesizer** (Phi-3-mini): High-quality text generation
 
-### 🚀 **Developer Experience**
-- **Modern Build System**: Minification, bundling, and optimization
-- **Comprehensive Testing**: Custom test framework with watch mode
-- **CI/CD Pipeline**: Automated testing, building, and deployment
-- **Hot Reload**: Development workflow with live reloading
+### 🚀 **Core Features**
+- **Offline-First**: Full functionality without internet via Web LLM
+- **Privacy-Focused**: Local processing with optional cloud sync
+- **Neurodivergent-Optimized**: Patient, structured AI responses
+- **Cross-Platform**: Works entirely in browser with no installation
+- **Data Portability**: Full export capabilities
 
 ## 📦 Installation
 
 ### For Users
-1. Download from [Chrome Web Store](https://chrome.google.com/webstore) (coming soon)
-2. Or load as unpacked extension for development
+1. Load as unpacked extension in Chrome (Chrome Web Store coming soon)
+2. Choose your AI setup:
+   - **Easy**: Google sign-in (1,500 free requests/day)
+   - **Offline**: Local AI (no internet required)
+   - **Advanced**: Custom API keys
 
 ### For Developers
 ```bash
@@ -45,221 +44,202 @@
 git clone https://github.com/your-org/branestawm-cos-ext.git
 cd branestawm-cos-ext
 
-# Install dependencies (if any)
-npm install
-
-# Build the extension
-npm run build
-
 # Load the extension in Chrome:
 # 1. Go to chrome://extensions/
 # 2. Enable "Developer mode"
 # 3. Click "Load unpacked"
-# 4. Select the 'build' folder
+# 4. Select this folder
 ```
 
-## 🔧 Development
+## 🏗️ Architecture
 
-### Quick Start
-```bash
-# Development build with file watching
-npm run dev
-
-# Run tests
-npm run test
-
-# Run tests in watch mode
-npm run test:watch
-
-# Lint code
-npm run lint
-
-# Full validation (lint + test + build)
-npm run validate
-
-# Clean build artifacts
-npm run clean
-```
-
-### Project Structure
+### **Core Files**
 ```
 branestawm-cos-ext/
-├── 📁 src/                     # Source code (future TypeScript migration)
-├── 📁 build/                   # Built extension files
-├── 📁 dist/                    # Distribution packages
-├── 📁 docs/                    # Documentation
-├── 📁 tests/                   # Test suites
-├── 📁 types/                   # TypeScript definitions
-├── 📁 .github/workflows/       # CI/CD pipelines
-├── 🔧 manifest.json            # Chrome extension manifest
-├── 🔧 tsconfig.json            # TypeScript configuration
-├── 🔧 package.json             # NPM configuration
-├── 🧪 test-runner.js           # Custom test framework
-├── 🏗️ build.js                # Build system
-├── 📋 linter.js               # Code quality checker
-└── 📊 analytics-tracker.js    # Usage analytics
+├── manifest.json           # Chrome extension configuration
+├── index.html             # Main conversation interface
+├── options.html           # Settings and AI configuration
+├── background.js          # Service worker with vector database
+├── offscreen.html         # Web LLM processing interface
+├── offscreen.js           # Local AI orchestration
+├── webllm-worker.js       # 4-model Web LLM implementation
+├── api.js                 # AI routing and API management
+├── chat.js                # Conversation logic
+├── ui.js                  # UI components and themes
+└── main.js                # Application core
 ```
 
-### Core Modules
+### **Key Components**
 
-#### Task Management System
-- **`task-manager.js`** - Main coordinator (284 lines, was 8,341!)
-- **`task-extractor.js`** - Pattern matching and extraction logic
-- **`task-templates.js`** - Template generation and suggestions
-- **`task-storage.js`** - Data persistence and management
-- **`task-scheduler.js`** - Time tracking and scheduling
-- **`task-renderer.js`** - UI rendering and interactions
+#### Background Service Worker
+- **Vector Database**: IndexedDB-based semantic search
+- **Message Routing**: AI provider selection and failover
+- **Offscreen Management**: Web LLM process coordination
+- **Auto-sync**: Optional encrypted cloud synchronization
 
-#### Infrastructure
-- **`logger.js`** - Centralized logging with levels
-- **`security-utils.js`** - XSS protection and sanitization
-- **`performance-tracker.js`** - Performance monitoring
-- **`analytics-tracker.js`** - Privacy-conscious usage analytics
+#### Local AI System (Web LLM)
+- **4-Model Pipeline**: Specialized models for different tasks
+- **WebGPU Acceleration**: Hardware-optimized inference
+- **Progressive Loading**: Smart model initialization
+- **Memory Management**: Efficient resource utilization
 
-## 🧪 Testing
+#### API Layer
+- **Universal Routing**: Seamless switching between AI providers
+- **Authentication**: OAuth2 + API key management
+- **Error Handling**: Graceful degradation and retry logic
+- **Rate Limiting**: Respectful API usage
 
-Our custom test framework provides:
-- **Async/await support** for modern JavaScript testing
-- **Watch mode** for continuous testing during development
-- **Comprehensive assertions** with clear error messages
-- **Performance tracking** integration
+## 🔧 Configuration
 
+### **AI Provider Setup**
+
+#### Local AI (Offline)
+```javascript
+// Automatically initialized on first run
+// No configuration required
+// Models download on demand (~2-4GB total)
+```
+
+#### Google Gemini (Recommended)
+```javascript
+// One-click OAuth setup
+// 1,500 free requests per day
+// No API key required
+```
+
+#### Custom API Providers
+```javascript
+// Supported: Cerebras, OpenAI, OpenRouter, Hugging Face
+// Requires API key
+// Configurable endpoints and models
+```
+
+## 🧪 Development
+
+### **Local Development**
 ```bash
-# Run all tests
-npm test
+# Make changes and reload extension
+# No build step required - uses vanilla JavaScript
 
-# Run tests with file watching
-npm run test:watch
+# Test Local AI
+chrome://extensions/ → Details → Inspect views: offscreen.html
 
-# Run specific test file
-node test-runner.js tests/task-extractor.test.js
+# Debug background script
+chrome://extensions/ → Details → Inspect views: service worker
 ```
 
-### Test Coverage
-- ✅ Task extraction and validation
-- ✅ Security utilities and XSS prevention
-- ✅ Logger configuration and levels
-- ✅ Task storage operations
-- 🔄 Performance monitoring (in progress)
-- 🔄 Analytics tracking (in progress)
+### **Key APIs**
+
+#### Check Local AI Status
+```javascript
+const status = await chrome.runtime.sendMessage({
+    type: 'CHECK_LOCAL_AI_STATUS'
+});
+console.log(status.ready); // true/false
+```
+
+#### Generate Text (Any Provider)
+```javascript
+const response = await callLLMAPI([
+    { role: 'user', content: 'Hello!' }
+]);
+```
+
+#### Vector Database Search
+```javascript
+const results = await chrome.runtime.sendMessage({
+    type: 'SEARCH_VECTOR_DB',
+    query: 'search query',
+    options: { topK: 5 }
+});
+```
 
 ## 📊 Performance
 
-### Build Optimization
-- **94% size reduction** in main task manager (8,341 → 284 lines)
-- **Minification** reduces bundle size by ~40%
-- **Tree shaking** eliminates unused code
-- **Source maps** for development debugging
+### **Local AI Benchmarks**
+- **Cold Start**: ~30-60 seconds (first model load)
+- **Warm Inference**: ~1-3 seconds per response
+- **Memory Usage**: ~4-6GB RAM (all models loaded)
+- **Storage**: ~2-4GB (model cache)
 
-### Runtime Performance
-- **Memory usage monitoring** with leak detection
-- **Operation timing** with threshold alerting
-- **Chrome API optimization** with automatic wrapping
-- **Lazy loading** for non-critical components
+### **Cloud API Performance**
+- **Google Gemini**: ~500ms average response
+- **Cerebras**: ~200ms average response (free tier)
+- **OpenAI**: ~1-2s average response
 
-### Metrics Dashboard
-Access performance insights via:
-```javascript
-// In browser console
-perf.summary()        // Get performance overview
-perf.export()         // Export detailed metrics
-analytics.summary()   // Get usage analytics
-```
+## 🛡️ Security & Privacy
 
-## 🛡️ Security
+### **Local AI Security**
+- **Air-Gapped**: No data leaves device when using Local AI
+- **Sandboxed**: Runs in Chrome's secure offscreen context
+- **No Telemetry**: Zero tracking or analytics
 
-### XSS Protection
-- **Input sanitization** for all user data
-- **HTML escaping** in template rendering
-- **CSS value validation** for safe styling
-- **URL validation** for external links
+### **Cloud API Security**
+- **API Key Encryption**: Keys stored securely, never synced
+- **OAuth2**: Google-managed authentication
+- **Request Filtering**: No sensitive data in API calls
 
-### Privacy
-- **Opt-in analytics** with user consent
-- **Local data storage** with encryption option
-- **Minimal permissions** following principle of least privilege
-- **No external tracking** without explicit permission
+### **Data Privacy**
+- **Local-First**: All data stored locally by default
+- **Optional Sync**: AES256-encrypted cloud backup
+- **Full Export**: Complete data portability
+- **No Tracking**: Zero user analytics or telemetry
 
-### Chrome Extension Security
-- **Manifest V3** compliance
-- **Content Security Policy** configured
-- **Host permissions** limited to necessary domains
-- **No eval()** or unsafe dynamic code execution
+## 🎯 Use Cases
 
-## 📈 Analytics & Monitoring
+### **For Neurodivergent Users**
+- **Executive Function Support**: Task breakdown and planning
+- **Context Switching Help**: Conversation threading and recall
+- **Decision Fatigue Relief**: AI-assisted choices and prioritization
+- **Working Memory Aid**: Conversation history and search
 
-### User Analytics (Privacy-First)
-- **Task completion rates** and patterns
-- **Feature usage** insights
-- **Performance metrics** collection
-- **Error tracking** and reporting
+### **For Privacy-Conscious Users**
+- **Offline AI**: Complete functionality without internet
+- **Local Processing**: Sensitive data never leaves device
+- **Self-Hosted Compatible**: Works with any OpenAI-compatible API
 
-### Developer Insights
-- **Real-time performance** monitoring
-- **Memory usage** tracking
-- **Error aggregation** with stack traces
-- **Build optimization** metrics
+### **For Developers**
+- **AI Integration Testing**: Multi-provider compatibility testing
+- **Offline Development**: Local AI for air-gapped environments
+- **API Exploration**: Easy switching between different AI providers
 
-## 🤝 Contributing
+## 🗺️ Roadmap
 
-We welcome contributions! Please see our [Contributing Guide](docs/CONTRIBUTING.md) for details.
+### **Current (v1.0)**
+- ✅ 4-model Web LLM implementation
+- ✅ Multi-provider AI routing
+- ✅ Google OAuth integration
+- ✅ Vector database for semantic search
+- ✅ Encrypted cloud sync
 
-### Development Workflow
-1. **Fork** the repository
-2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
-3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
-4. **Push** to the branch (`git push origin feature/amazing-feature`)
-5. **Open** a Pull Request
+### **Near-term (v1.1)**
+- [ ] Enhanced model management UI
+- [ ] Performance optimization for mobile devices
+- [ ] Additional AI provider integrations
+- [ ] Advanced conversation threading
 
-### Code Style
-- **ESLint** configuration for consistent style
-- **TypeScript** preferred for new features
-- **Security-first** development practices
-- **Performance** considerations for all changes
-
-## 📋 Roadmap
-
-### Phase 1: ✅ Completed
-- [x] Modular architecture refactoring
-- [x] Security improvements and XSS protection
-- [x] Centralized logging system
-- [x] Performance monitoring infrastructure
-
-### Phase 2: ✅ Completed
-- [x] Build system with minification
-- [x] Comprehensive testing framework
-- [x] Task timer pause/resume functionality
-- [x] Code quality tools and linting
-
-### Phase 3: ✅ Completed
-- [x] TypeScript migration foundation
-- [x] Advanced error tracking and analytics
-- [x] CI/CD pipeline setup
-- [x] Comprehensive documentation
-
-### Future Enhancements
-- [ ] AI model integration improvements
-- [ ] Advanced task scheduling algorithms
+### **Future (v2.0)**
+- [ ] Custom model fine-tuning
 - [ ] Team collaboration features
+- [ ] Plugin ecosystem
 - [ ] Mobile companion app
-- [ ] Advanced reporting dashboard
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - See LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
-- Built with ❤️ for the neurodivergent community
-- Powered by modern web technologies and AI
-- Inspired by the needs of users who think differently
+- **MLC Team**: For Web LLM technology enabling local AI
+- **Neurodivergent Community**: For feedback and testing
+- **Open Source AI**: Models from Meta, Microsoft, and others
 
 ## 📞 Support
 
-- **Documentation**: [docs/](docs/)
 - **Issues**: [GitHub Issues](https://github.com/your-org/branestawm-cos-ext/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/branestawm-cos-ext/discussions)
+- **Documentation**: See code comments and inline help
+- **Community**: Built for and with the neurodivergent community
 
 ---
 
-**Branestawm** - Making productivity accessible for minds that work differently. 🧠✨
+**Branestawm** - Your indispensable AI Chief of Staff, powered by cutting-edge local AI technology. 🧠✨

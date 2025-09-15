@@ -39,10 +39,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "models/*",
-        "transformers.min.js",
-        "*.wasm",
-        "src/offscreen.html"
+        "webllm-worker.js",
+        "offscreen.html"
       ],
       "matches": ["<all_urls>"]
     }
