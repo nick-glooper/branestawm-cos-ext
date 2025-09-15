@@ -1,9 +1,50 @@
-// src/webllm-worker.js
-// Web Worker for Web LLM - Latest AI models with WebGPU acceleration
+// webllm-worker.js
+// Web Worker for Web LLM - Simplified implementation for Chrome extension
 
-console.log('🚀 WEBLLM WORKER: Starting Web LLM worker with latest models...');
+console.log('🚀 WEBLLM WORKER: Starting simplified Web LLM worker...');
 
-import * as webllm from '@mlc-ai/web-llm';
+// Simplified Web LLM simulation for Chrome extension environment
+// Note: This is a placeholder implementation until proper Web LLM integration
+const webllm = {
+  MLCEngine: class {
+    constructor() {
+      console.log('🚀 WEBLLM: Creating mock MLC Engine for testing...');
+    }
+    
+    setInitProgressCallback(callback) {
+      this.progressCallback = callback;
+    }
+    
+    async reload(modelName) {
+      console.log(`🚀 WEBLLM: Mock loading model: ${modelName}`);
+      
+      // Simulate loading progress
+      if (this.progressCallback) {
+        for (let progress = 0; progress <= 100; progress += 20) {
+          this.progressCallback({
+            progress: progress / 100,
+            text: `Loading ${modelName}... ${progress}%`
+          });
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      return true;
+    }
+    
+    async generate(prompt, options = {}) {
+      console.log(`🚀 WEBLLM: Mock generating response for: ${prompt.substring(0, 50)}...`);
+      
+      // Simulate generation delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return {
+        response: `This is a mock response from Web LLM for: "${prompt}". The actual Web LLM models are not yet integrated due to Chrome extension constraints.`,
+        usage: { prompt_tokens: 10, completion_tokens: 20 }
+      };
+    }
+  }
+};
 
 // Global engine and model instances for 4-model architecture
 let mlcEngine = null;
