@@ -923,9 +923,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     // Query the offscreen document for actual status
                     try {
                         const status = await waitForOffscreenAndSend('CHECK_LOCAL_AI_STATUS', {});
+                        console.log('🧠 Background: Local AI status response:', status);
                         sendResponse(status || { ready: false, loading: true, hasModel: false });
                     } catch (error) {
-                        console.log('Offscreen not responding, assuming still loading');
+                        console.log('🧠 Background: Offscreen not responding, assuming still loading:', error);
                         sendResponse({ ready: false, loading: true, hasModel: false });
                     }
                 } else {

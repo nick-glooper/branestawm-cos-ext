@@ -143,6 +143,7 @@ function initializeWebLLMWorker() {
                         console.log('🚀 OFFSCREEN DEBUG: All Web LLM models initialized successfully!');
                         transformersLoaded = true;
                         isReady = true;
+                        console.log('🔍 OFFSCREEN DEBUG: Setting isReady = true, workerReady =', workerReady);
                         updateStatus('✅ Local AI ready with Web LLM!', 100, message.message);
                         
                         chrome.runtime.sendMessage({
@@ -483,6 +484,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             break;
             
         case 'CHECK_LOCAL_AI_STATUS':
+            console.log('🔍 OFFSCREEN DEBUG: Status check - isReady:', isReady, 'workerReady:', workerReady);
             sendResponse({ 
                 ready: isReady, 
                 workerReady: workerReady,
