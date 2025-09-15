@@ -1081,15 +1081,17 @@ async function waitForOffscreenAndSend(messageType, messageData = {}) {
             });
             
             if (contexts.length > 0) {
-                // Try to ping the offscreen document
+                // Send message to offscreen document and get response
                 try {
-                    await chrome.runtime.sendMessage({
+                    const response = await chrome.runtime.sendMessage({
                         type: messageType,
                         ...messageData
                     });
-                    return true;
+                    console.log('🧠 Background: Offscreen response received:', response);
+                    return response;
                 } catch (error) {
                     // Document not ready yet, wait and retry
+                    console.log('🧠 Background: Offscreen not ready, retrying...', error.message);
                     await new Promise(resolve => setTimeout(resolve, 500));
                     attempts++;
                 }
