@@ -33,9 +33,8 @@ try {
 }
 
 // Global variables for Web LLM
-let pipeline, env;
-let transformersLoaded = false;
 let isReady = false;
+let workerReady = false;
 
 console.log('🔍 OFFSCREEN DEBUG: Setting up Web Worker for Web LLM...');
 
@@ -113,19 +112,18 @@ function updateModelProgress(message, progress) {
     }
 }
 
-// Web Worker approach for transformers.js loading
-let transformersWorker = null;
-let workerReady = false;
+// Web Worker for Web LLM
+let webllmWorker = null;
 
 // Initialize Web LLM Worker with latest models
 function initializeWebLLMWorker() {
     console.log('🚀 OFFSCREEN DEBUG: Creating Web LLM Worker (latest models)...');
     
     try {
-        transformersWorker = new Worker(chrome.runtime.getURL('webllm-worker.js'), { type: 'module' });
+        webllmWorker = new Worker(chrome.runtime.getURL('webllm-worker.js'), { type: 'module' });
         
         // Handle worker messages
-        transformersWorker.onmessage = function(e) {
+        webllmWorker.onmessage = function(e) {
             const message = e.data;
             const { type } = message;
             
@@ -141,7 +139,7 @@ function initializeWebLLMWorker() {
                 case 'init-complete':
                     if (message.success) {
                         console.log('🚀 OFFSCREEN DEBUG: All Web LLM models initialized successfully!');
-                        transformersLoaded = true;
+                        workerReady = true;
                         isReady = true;
                         console.log('🔍 OFFSCREEN DEBUG: Setting isReady = true, workerReady =', workerReady);
                         updateStatus('✅ Local AI ready with Web LLM!', 100, message.message);
@@ -154,13 +152,13 @@ function initializeWebLLMWorker() {
                         });
                     } else {
                         console.error('🚀 OFFSCREEN DEBUG: Web LLM model initialization failed:', message.error);
-                        handleTransformersFailure(new Error(message.error));
+                        handleWebLLMFailure(new Error(message.error));
                     }
                     break;
                     
                 case 'error':
                     console.error('🚀 OFFSCREEN DEBUG: Web LLM Worker error:', message.error);
-                    handleTransformersFailure(new Error(message.error));
+                    handleWebLLMFailure(new Error(message.error));
                     break;
                     
                 default:
@@ -168,104 +166,37 @@ function initializeWebLLMWorker() {
             }
         };
         
-        transformersWorker.onerror = function(error) {
+        webllmWorker.onerror = function(error) {
             console.error('🚀 OFFSCREEN DEBUG: Web LLM Worker error:', error);
-            handleTransformersFailure(error);
+            handleWebLLMFailure(error);
         };
         
         // Initialize the worker
         const extensionBaseURL = chrome.runtime.getURL('');
         console.log('🚀 OFFSCREEN DEBUG: Extension base URL:', extensionBaseURL);
         
-        transformersWorker.postMessage({
+        webllmWorker.postMessage({
             type: 'init',
             data: { extensionBaseURL }
         });
         
     } catch (error) {
         console.error('🚀 OFFSCREEN DEBUG: Failed to create Web LLM Worker:', error);
-        handleTransformersFailure(error);
+        handleWebLLMFailure(error);
     }
 }
 
-// Initialize Web Worker with local-first architecture (Legacy transformers.js)
-function initializeTransformersWorker() {
-    console.log('🔍 OFFSCREEN DEBUG: Creating transformers.js Web Worker (local build)...');
-    
-    try {
-        transformersWorker = new Worker(chrome.runtime.getURL('transformers-worker.js'), { type: 'module' });
-        
-        // Handle worker messages
-        transformersWorker.onmessage = function(e) {
-            const message = e.data;
-            const { type } = message;
-            
-            switch (type) {
-                case 'status':
-                    updateStatus(message.message, message.progress);
-                    break;
-                    
-                case 'init-complete':
-                    if (message.success) {
-                        console.log('🔍 OFFSCREEN DEBUG: All AI models initialized successfully!');
-                        workerReady = true;
-                        isReady = true;
-                        updateStatus('All AI models ready! ✅', 100);
-                    } else {
-                        console.error('🔍 OFFSCREEN DEBUG: AI model initialization failed:', message.error);
-                        handleTransformersFailure(new Error(message.error));
-                    }
-                    break;
-                    
-                case 'error':
-                    console.error('🔍 OFFSCREEN DEBUG: Worker error:', message.error);
-                    handleTransformersFailure(new Error(message.error || 'Unknown worker error'));
-                    break;
-                    
-                case 'classify-result':
-                case 'embed-result':
-                case 'entities-result':
-                case 'generate-result':
-                    // Handle AI task results
-                    handleAIResult(message);
-                    break;
-                    
-                default:
-                    console.log('🔍 OFFSCREEN DEBUG: Unknown worker message:', type);
-            }
-        };
-        
-        transformersWorker.onerror = function(error) {
-            console.error('🔍 OFFSCREEN DEBUG: Worker error:', error);
-            handleTransformersFailure(error);
-        };
-        
-        // **CRITICAL:** Get the extension's base URL and send it to the worker
-        const extensionBaseURL = chrome.runtime.getURL('/');
-        console.log('🔍 OFFSCREEN DEBUG: Extension base URL:', extensionBaseURL);
-        
-        // Initialize AI models in the worker with the base URL
-        updateStatus('Initializing AI models...', 5);
-        transformersWorker.postMessage({ 
-            type: 'init', 
-            data: { extensionBaseURL } 
-        });
-        
-    } catch (error) {
-        console.error('🔍 OFFSCREEN DEBUG: Failed to create Web Worker:', error);
-        handleTransformersFailure(error);
-    }
-}
+// Legacy transformers worker function removed - now using Web LLM only
 
-// Handle transformers loading failure
-function handleTransformersFailure(error) {
-    console.error('🔍 OFFSCREEN DEBUG: Transformers.js Web Worker failed:', error);
+// Handle Web LLM loading failure
+function handleWebLLMFailure(error) {
+    console.error('🔍 OFFSCREEN DEBUG: Web LLM Worker failed:', error);
     updateStatus('❌ AI model initialization failed', 0, error.message);
     
     // Send error status to background
     chrome.runtime.sendMessage({
         type: 'LOCAL_AI_ERROR',
-        error: error.message || 'Transformers.js Web Worker failed'
+        error: error.message || 'Web LLM Worker failed'
     });
 }
 
@@ -311,60 +242,7 @@ try {
     console.log('🔍 OFFSCREEN DEBUG: Failed to send setup status:', error);
 }
 
-// Load transformers.js via script tag (for UMD builds)
-function loadViaScriptTag(url, globalVarName, timeout = 20000) {
-    return new Promise((resolve, reject) => {
-        console.log(`🔍 OFFSCREEN DEBUG: Creating script tag for ${url}`);
-        
-        const script = document.createElement('script');
-        script.src = url;
-        script.type = 'text/javascript'; // Regular script, not module
-        
-        // Add timeout
-        const timeoutId = setTimeout(() => {
-            console.error(`🔍 OFFSCREEN DEBUG: Script loading timeout for ${url}`);
-            reject(new Error(`Script loading timeout after ${timeout}ms`));
-        }, timeout);
-        
-        script.onload = () => {
-            clearTimeout(timeoutId);
-            console.log(`🔍 OFFSCREEN DEBUG: Script loaded, checking for global: ${globalVarName}`);
-            
-            // Give the script a moment to initialize
-            setTimeout(() => {
-                // Check if the global variable exists
-                if (window[globalVarName]) {
-                    console.log(`🔍 OFFSCREEN DEBUG: Found global ${globalVarName}:`, typeof window[globalVarName]);
-                    resolve(window[globalVarName]);
-                } else {
-                    console.log(`🔍 OFFSCREEN DEBUG: Global ${globalVarName} not found. Available globals:`, Object.keys(window).filter(key => key.toLowerCase().includes('transform')));
-                    
-                    // Try common transformer.js global names
-                    const possibleNames = ['Transformers', 'transformers', 'TransformersJS', 'HuggingFace', 'XenovaTransformers'];
-                    for (const name of possibleNames) {
-                        if (window[name]) {
-                            console.log(`🔍 OFFSCREEN DEBUG: Found alternative global: ${name}`);
-                            resolve(window[name]);
-                            return;
-                        }
-                    }
-                    
-                    reject(new Error(`Global variable ${globalVarName} not found after script load`));
-                }
-            }, 100); // Small delay for initialization
-        };
-        
-        script.onerror = (error) => {
-            clearTimeout(timeoutId);
-            console.error(`🔍 OFFSCREEN DEBUG: Script tag loading failed:`, error);
-            reject(new Error(`Script tag loading failed`));
-        };
-        
-        // Append script to start loading
-        document.head.appendChild(script);
-        console.log(`🔍 OFFSCREEN DEBUG: Script tag appended for ${url}`);
-    });
-}
+// Legacy script loading function removed - Web LLM loads via worker
 
 // Initialize Web LLM via Web Worker approach
 console.log('🔍 OFFSCREEN DEBUG: Starting Web Worker Web LLM loading...');
@@ -389,9 +267,9 @@ if (document.readyState === 'loading') {
     initializeWebLLMWorker();
 }
 
-// AI processing functions - these delegate to the Web Worker
+// AI processing functions - these delegate to the Web LLM Worker
 async function generateEmbedding(text) {
-    if (!workerReady || !transformersWorker) {
+    if (!workerReady || !webllmWorker) {
         throw new Error('AI models not ready. Please wait for initialization to complete.');
     }
     
@@ -401,16 +279,16 @@ async function generateEmbedding(text) {
         const handleResponse = (e) => {
             const message = e.data;
             if (message.type === 'embed-result' && message.id === id) {
-                transformersWorker.removeEventListener('message', handleResponse);
+                webllmWorker.removeEventListener('message', handleResponse);
                 resolve(message.embedding);
             } else if (message.type === 'error' && message.id === id) {
-                transformersWorker.removeEventListener('message', handleResponse);
+                webllmWorker.removeEventListener('message', handleResponse);
                 reject(new Error(message.error));
             }
         };
         
-        transformersWorker.addEventListener('message', handleResponse);
-        transformersWorker.postMessage({
+        webllmWorker.addEventListener('message', handleResponse);
+        webllmWorker.postMessage({
             type: 'embed',
             data: { id, text }
         });
@@ -418,7 +296,7 @@ async function generateEmbedding(text) {
 }
 
 async function generateText(prompt, options = {}) {
-    if (!workerReady || !transformersWorker) {
+    if (!workerReady || !webllmWorker) {
         throw new Error('AI models not ready. Please wait for initialization to complete.');
     }
     
@@ -428,16 +306,16 @@ async function generateText(prompt, options = {}) {
         const handleResponse = (e) => {
             const message = e.data;
             if (message.type === 'generate-result' && message.id === id) {
-                transformersWorker.removeEventListener('message', handleResponse);
+                webllmWorker.removeEventListener('message', handleResponse);
                 resolve(message.text);
             } else if (message.type === 'error' && message.id === id) {
-                transformersWorker.removeEventListener('message', handleResponse);
+                webllmWorker.removeEventListener('message', handleResponse);
                 reject(new Error(message.error));
             }
         };
         
-        transformersWorker.addEventListener('message', handleResponse);
-        transformersWorker.postMessage({
+        webllmWorker.addEventListener('message', handleResponse);
+        webllmWorker.postMessage({
             type: 'generate',
             data: { id, prompt, ...options }
         });
