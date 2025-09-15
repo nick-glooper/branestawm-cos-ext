@@ -10,8 +10,12 @@ async function sendMessage() {
     if (!message) return;
     if (isProcessing) return;
     
-    // Check if user is authenticated
-    if (!settings.googleToken && !settings.apiKey) {
+    // Check if user has any authentication method configured
+    const hasLocalAI = settings.activeLlm === 'local' || settings.authMethod === 'local' || settings.authMethod === 'localAI';
+    const hasGoogleAuth = settings.googleToken;
+    const hasCustomAPI = settings.apiKey;
+    
+    if (!hasLocalAI && !hasGoogleAuth && !hasCustomAPI) {
         showMessage('Please complete setup first. Click the settings button to configure your API.', 'error');
         showSetupModal();
         return;
