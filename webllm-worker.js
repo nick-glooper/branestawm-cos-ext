@@ -9,10 +9,36 @@ const webllm = {
   MLCEngine: class {
     constructor() {
       console.log('🚀 WEBLLM: Creating mock MLC Engine for testing...');
+      this.currentModel = null;
+      
+      // Mock completions API
+      this.completions = {
+        create: async (options) => {
+          console.log(`🚀 WEBLLM: Mock completions.create with messages:`, options.messages);
+          
+          // Simulate generation delay
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          const prompt = options.messages[options.messages.length - 1]?.content || '';
+          
+          return {
+            choices: [{
+              message: {
+                content: `This is a mock response from Web LLM for: "${prompt}". The actual Web LLM models are not yet integrated due to Chrome extension constraints.`
+              }
+            }],
+            usage: { prompt_tokens: 10, completion_tokens: 20 }
+          };
+        }
+      };
     }
     
     setInitProgressCallback(callback) {
       this.progressCallback = callback;
+    }
+    
+    getLoadedModelId() {
+      return this.currentModel;
     }
     
     async reload(modelName) {
@@ -29,6 +55,7 @@ const webllm = {
         }
       }
       
+      this.currentModel = modelName;
       return true;
     }
     

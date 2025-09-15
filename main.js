@@ -1476,8 +1476,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupAccessibility();
         populatePersonaDropdown();
         
-        // Initialize hybrid LLM system
-        await initializeHybridLLMSystem();
+        // Hybrid LLM system removed - now using Web LLM and cloud APIs
         
         updateUI();
         
@@ -1524,19 +1523,9 @@ window.addEventListener('beforeunload', () => {
  */
 async function getHybridLLMResponse(messages, originalMessage) {
     try {
-        // If hybrid system not available, use cloud fallback
-        if (!llmRouter) {
-            console.log('Hybrid system not available, using cloud API');
-            return await callLLMAPI(messages);
-        }
-        
-        // Use hybrid routing
-        const response = await llmRouter.query(originalMessage, messages);
-        
-        // Log routing decision for debugging
-        console.log(`LLM routed to: ${response.source} (${response.routing})`);
-        
-        return response.content;
+        // Hybrid system replaced with direct API routing
+        console.log('Using simplified API routing');
+        return await callLLMAPI(messages);
         
     } catch (error) {
         console.error('Hybrid LLM error:', error);
