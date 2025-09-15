@@ -1425,25 +1425,14 @@ async function encryptData(data, password) {
     }
 }
 
-// Initialize vector database and Local AI on service worker startup
+// Initialize vector database on service worker startup
 (async () => {
     try {
         await initializeVectorDatabase();
         console.log('🧠 Background: Vector database startup initialization complete');
         
-        // Auto-initialize Local AI on service worker startup for immediate availability
-        console.log('🧠 Background: Auto-initializing Local AI on startup for better user experience');
-        try {
-            const hasOffscreen = await hasOffscreenDocument();
-            if (!hasOffscreen) {
-                await createOffscreenDocument();
-                console.log('🧠 Background: Local AI auto-initialization started on startup');
-            } else {
-                console.log('🧠 Background: Offscreen document already exists on startup, skipping auto-initialization');
-            }
-        } catch (error) {
-            console.error('🧠 Background: Local AI auto-initialization failed on startup:', error);
-        }
+        // Note: Local AI auto-initialization is handled in chrome.runtime.onInstalled listener
+        // to avoid race conditions and duplicate offscreen document creation
     } catch (error) {
         console.error('🧠 Background: Startup initialization failed:', error);
     }
