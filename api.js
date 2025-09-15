@@ -70,7 +70,14 @@ async function testGoogleConnection(token) {
 // ========== LLM API INTEGRATION ==========
 
 async function callLLMAPI(messages) {
-    if (settings.authMethod === 'google' && settings.googleToken) {
+    // Check new activeLlm setting first (takes priority)
+    if (settings.activeLlm === 'local') {
+        return await callLocalAI(messages);
+    } 
+    // Check legacy authMethod settings for backward compatibility
+    else if (settings.authMethod === 'local' || settings.authMethod === 'localAI') {
+        return await callLocalAI(messages);
+    } else if (settings.authMethod === 'google' && settings.googleToken) {
         return await callGoogleGeminiAPI(messages);
     } else if (settings.apiKey) {
         return await callGenericAPI(messages);
@@ -175,6 +182,44 @@ async function callGenericAPI(messages) {
         
     } catch (error) {
         console.error('Generic API error:', error);
+        throw error;
+    }
+}
+
+// ========== LOCAL AI INTEGRATION ==========
+
+async function callLocalAI(messages) {
+    try {
+        // Check if Local AI is ready by sending a status check
+        const statusResponse = await chrome.runtime.sendMessage({
+            type: 'CHECK_LOCAL_AI_STATUS'
+        });
+        
+        if (!statusResponse || !statusResponse.ready) {
+            throw new Error('Local AI is not ready. Please wait for models to load or check the Local AI settings.');
+        }
+        
+        // Send message to Local AI for processing
+        // For now, we'll use the text generation capability
+        const prompt = messages.map(msg => `${msg.role}: ${msg.content}`).join('\n\n') + '\n\nassistant:';
+        
+        const response = await chrome.runtime.sendMessage({
+            type: 'GENERATE_TEXT',
+            data: {
+                prompt: prompt,
+                maxLength: 2048,
+                temperature: 0.7
+            }
+        });
+        
+        if (!response || !response.success) {
+            throw new Error(response?.error || 'Local AI processing failed');
+        }
+        
+        return response.text;
+        
+    } catch (error) {
+        console.error('Local AI error:', error);
         throw error;
     }
 }

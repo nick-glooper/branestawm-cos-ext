@@ -920,7 +920,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 const hasOffscreen = await checkOffscreenDocument();
                 
                 if (hasOffscreen) {
-                    sendResponse({ ready: false, loading: true, hasModel: false });
+                    // Query the offscreen document for actual status
+                    try {
+                        const status = await waitForOffscreenAndSend('CHECK_LOCAL_AI_STATUS', {});
+                        sendResponse(status || { ready: false, loading: true, hasModel: false });
+                    } catch (error) {
+                        console.log('Offscreen not responding, assuming still loading');
+                        sendResponse({ ready: false, loading: true, hasModel: false });
+                    }
                 } else {
                     sendResponse({ ready: false, loading: false, hasModel: false });
                 }
@@ -943,6 +950,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === 'LOCAL_AI_ERROR') {
         console.error('🧠 Local AI Error:', message.error);
         return false;
+    }
+    
+    if (message.type === 'GENERATE_TEXT') {
+        console.log('🧠 Background: Processing text generation request');
+        
+        // Handle async operation properly
+        (async () => {
+            try {
+                // Check if offscreen document exists
+                const hasOffscreen = await checkOffscreenDocument();
+                
+                if (!hasOffscreen) {
+                    sendResponse({ success: false, error: 'Local AI not initialized' });
+                    return;
+                }
+                
+                // Forward the message to the offscreen document
+                const response = await waitForOffscreenAndSend('GENERATE_TEXT', message.data);
+                sendResponse(response || { success: false, error: 'No response from Local AI' });
+                
+            } catch (error) {
+                console.error('Error generating text:', error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
+        
+        return true; // Will respond asynchronously
     }
     
     if (message.type === 'OFFSCREEN_READY') {
