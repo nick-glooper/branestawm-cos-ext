@@ -1,77 +1,142 @@
 // webllm-worker.js
-// Web Worker for Web LLM - Simplified implementation for Chrome extension
+// Web Worker for Web LLM - Real implementation with CDN loading
 
-console.log('🚀 WEBLLM WORKER: Starting simplified Web LLM worker...');
+console.log('🚀 WEBLLM WORKER: Starting real Web LLM worker...');
 
-// Simplified Web LLM simulation for Chrome extension environment
-// Note: This is a placeholder implementation until proper Web LLM integration
-const webllm = {
-  MLCEngine: class {
-    constructor() {
-      console.log('🚀 WEBLLM: Creating mock MLC Engine for testing...');
-      this.currentModel = null;
+// Global Web LLM reference
+let webllm = null;
+
+// Load Web LLM with multiple fallback strategies for Chrome extensions
+async function loadWebLLM() {
+  try {
+    console.log('🚀 WEBLLM WORKER: Loading Web LLM with multiple strategies...');
+    
+    // Method 1: Try CDN dynamic import first (often more reliable in workers)
+    try {
+      console.log('🚀 WEBLLM WORKER: Attempting CDN import (primary method)...');
+      const module = await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/lib/index.js');
+      webllm = module;
+      console.log('🚀 WEBLLM WORKER: Web LLM loaded from CDN');
+      console.log('🚀 WEBLLM WORKER: CDN Module exports:', Object.keys(module));
       
-      // Mock completions API
-      this.completions = {
-        create: async (options) => {
-          console.log(`🚀 WEBLLM: Mock completions.create with messages:`, options.messages);
-          
-          // Simulate generation delay
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          const prompt = options.messages[options.messages.length - 1]?.content || '';
-          
-          return {
-            choices: [{
-              message: {
-                content: `This is a mock response from Web LLM for: "${prompt}". The actual Web LLM models are not yet integrated due to Chrome extension constraints.`
-              }
-            }],
-            usage: { prompt_tokens: 10, completion_tokens: 20 }
-          };
-        }
-      };
+      if (module.MLCEngine || module.CreateMLCEngine) {
+        return true;
+      } else {
+        console.warn('🚀 WEBLLM WORKER: CDN module loaded but no MLCEngine found');
+      }
+    } catch (cdnError) {
+      console.warn('🚀 WEBLLM WORKER: CDN import failed:', cdnError.message);
     }
     
-    setInitProgressCallback(callback) {
-      this.progressCallback = callback;
-    }
-    
-    getLoadedModelId() {
-      return this.currentModel;
-    }
-    
-    async reload(modelName) {
-      console.log(`🚀 WEBLLM: Mock loading model: ${modelName}`);
+    // Method 2: Try dynamic import with local bundle
+    try {
+      console.log('🚀 WEBLLM WORKER: Attempting dynamic import of local bundle...');
+      const module = await import('./webllm-bundle.js');
+      webllm = module;
+      console.log('🚀 WEBLLM WORKER: Web LLM loaded via dynamic import');
+      console.log('🚀 WEBLLM WORKER: Module exports:', Object.keys(module));
       
-      // Simulate loading progress
-      if (this.progressCallback) {
-        for (let progress = 0; progress <= 100; progress += 20) {
-          this.progressCallback({
-            progress: progress / 100,
-            text: `Loading ${modelName}... ${progress}%`
-          });
-          await new Promise(resolve => setTimeout(resolve, 100));
+      if (module.MLCEngine || module.CreateMLCEngine) {
+        return true;
+      } else {
+        console.warn('🚀 WEBLLM WORKER: Module loaded but no MLCEngine found');
+      }
+    } catch (dynamicError) {
+      console.warn('🚀 WEBLLM WORKER: Dynamic import failed:', dynamicError.message);
+    }
+    
+    // Method 3: Try importScripts with local bundle (legacy approach)
+    try {
+      console.log('🚀 WEBLLM WORKER: Attempting importScripts with local bundle...');
+      
+      // Import the local Web LLM bundle
+      importScripts('./webllm-bundle.js');
+      
+      // The bundle is UMD format and should expose globals
+      // Check for the main exports that should be available globally
+      const possibleExports = [
+        'MLCEngine', 'CreateMLCEngine', 'WebWorkerMLCEngine',
+        'ServiceWorkerMLCEngine', 'ExtensionServiceWorkerMLCEngine'
+      ];
+      
+      console.log('🚀 WEBLLM WORKER: Checking for Web LLM exports...');
+      
+      // Look for direct global exports
+      for (const exportName of possibleExports) {
+        if (self[exportName]) {
+          console.log(`🚀 WEBLLM WORKER: Found ${exportName} in global scope`);
+          webllm = { MLCEngine: self.MLCEngine || self[exportName] };
+          break;
         }
       }
       
-      this.currentModel = modelName;
+      // If not found directly, check for webllm namespace
+      if (!webllm) {
+        webllm = self.webllm || self.WebLLM || self.mlc || globalThis.webllm;
+      }
+      
+      // Also try to access the module exports directly if available
+      if (!webllm && typeof module !== 'undefined' && module.exports) {
+        webllm = module.exports;
+        console.log('🚀 WEBLLM WORKER: Found Web LLM in module.exports');
+      }
+      
+      // Check if it's available as a CommonJS export
+      if (!webllm && typeof exports !== 'undefined') {
+        webllm = exports;
+        console.log('🚀 WEBLLM WORKER: Found Web LLM in exports');
+      }
+      
+      if (webllm && (webllm.MLCEngine || webllm.CreateMLCEngine)) {
+        console.log('🚀 WEBLLM WORKER: Web LLM loaded from local bundle');
+        console.log('🚀 WEBLLM WORKER: Available methods:', Object.keys(webllm));
+        return true;
+      } else {
+        console.log('🚀 WEBLLM WORKER: Web LLM bundle loaded but no valid exports found');
+        console.log('🚀 WEBLLM WORKER: Available globals:', Object.keys(self).filter(k => 
+          k.toLowerCase().includes('web') || 
+          k.toLowerCase().includes('mlc') || 
+          k.toLowerCase().includes('engine')
+        ));
+      }
+    } catch (importError) {
+      console.error('🚀 WEBLLM WORKER: ImportScripts with local bundle failed:', importError);
+    }
+    
+    // Method 4: Fallback - Create a basic structure if all else fails
+    console.warn('🚀 WEBLLM WORKER: All import methods failed, creating fallback structure...');
+    
+    // Check if any part of Web LLM was loaded into globals
+    const possibleGlobals = Object.keys(self).filter(k => 
+      k.toLowerCase().includes('web') || 
+      k.toLowerCase().includes('mlc') || 
+      k.toLowerCase().includes('engine') ||
+      k === 'MLCEngine'
+    );
+    
+    console.log('🚀 WEBLLM WORKER: Available globals after bundle load:', possibleGlobals);
+    
+    // If we have an MLCEngine constructor or CreateMLCEngine function, use it
+    if (self.MLCEngine) {
+      webllm = { MLCEngine: self.MLCEngine };
+      console.log('🚀 WEBLLM WORKER: Found MLCEngine in global scope');
       return true;
     }
     
-    async generate(prompt, options = {}) {
-      console.log(`🚀 WEBLLM: Mock generating response for: ${prompt.substring(0, 50)}...`);
-      
-      // Simulate generation delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      return {
-        response: `This is a mock response from Web LLM for: "${prompt}". The actual Web LLM models are not yet integrated due to Chrome extension constraints.`,
-        usage: { prompt_tokens: 10, completion_tokens: 20 }
-      };
+    if (self.CreateMLCEngine) {
+      webllm = { CreateMLCEngine: self.CreateMLCEngine };
+      console.log('🚀 WEBLLM WORKER: Found CreateMLCEngine in global scope');
+      return true;
     }
+    
+    // All methods failed
+    throw new Error('All Web LLM loading methods failed - bundle may be incompatible');
+    
+  } catch (error) {
+    console.error('🚀 WEBLLM WORKER: Failed to load Web LLM:', error);
+    return false;
   }
-};
+}
 
 // Global engine and model instances for 4-model architecture
 let mlcEngine = null;
@@ -83,41 +148,64 @@ let currentModels = {
   synthesizer: null // Text generation model
 };
 
-// Model configurations optimized for cloud LLM-like response times
-// Cross-family analysis selecting fastest models by specialization
+// Model configurations optimized for Chrome extension environment
+// Prioritizing smaller, faster models for better performance
 const MODEL_CONFIGS = {
   scout: {
-    name: 'SmolLM2-1.7B-Instruct-q4f32_1-MLC', // Best sub-2B classification performance
+    name: 'SmolLM2-1.7B-Instruct-q4f32_1-MLC', 
     role: '🔍 The Scout (Classifier)',
     progress: 25,
-    justification: 'SmolLM2-1.7B: Latest SmolLM generation, optimized for zero-shot classification speed'
+    justification: 'SmolLM2-1.7B: Optimized for classification speed in browser environment'
   },
   indexer: {
-    name: 'Llama-3.2-1B-Instruct-q4f32_1-MLC', // Lightweight for semantic understanding
+    name: 'Llama-3.2-1B-Instruct-q4f32_1-MLC', 
     role: '📚 The Indexer (Embeddings)', 
     progress: 50,
-    justification: 'Llama-3.2-1B: Efficient instruction-following for semantic analysis, optimized for embedding generation'
+    justification: 'Llama-3.2-1B: Efficient semantic analysis for browser WebGPU'
   },
   extractor: {
-    name: 'Llama-3.2-1B-Instruct-q4f32_1-MLC', // Best instruction following for NER
+    name: 'Llama-3.2-1B-Instruct-q4f32_1-MLC', 
     role: '🏷️ The Extractor (NER)',
     progress: 75,
-    justification: 'Llama-3.2-1B: Superior instruction following for structured NER output, multilingual entity recognition'
+    justification: 'Llama-3.2-1B: Fast NER processing in browser context'
   },
   synthesizer: {
-    name: 'Phi-3-mini-4k-instruct-q4f32_1-MLC', // Best generation quality at speed
+    name: 'Phi-3-mini-4k-instruct-q4f32_1-MLC', 
     role: '✍️ The Synthesizer (Text Gen)',
     progress: 100,
-    justification: 'Phi-3-mini: High-quality text generation with 4k context, balanced performance and efficiency'
+    justification: 'Phi-3-mini: Balanced quality and speed for Chrome extension'
   }
+};
+
+// Chrome extension optimizations
+const CHROME_OPTIMIZATIONS = {
+  maxConcurrentModels: 1, // Load one model at a time to reduce memory pressure
+  useProgressive: true,   // Progressive loading for better UX
+  enableCaching: true,    // Cache models for faster subsequent loads
+  memoryThreshold: 0.8    // Stop loading if memory usage exceeds 80%
 };
 
 // Initialize Web LLM engine
 async function initializeWebLLM() {
   try {
-    console.log('🚀 WEBLLM WORKER: Creating MLC Engine...');
+    // First load the Web LLM library
+    const loaded = await loadWebLLM();
+    if (!loaded) {
+      throw new Error('Failed to load Web LLM library from CDN');
+    }
     
-    mlcEngine = new webllm.MLCEngine();
+    console.log('🚀 WEBLLM WORKER: Creating real MLC Engine...');
+    
+    // Create the real MLC Engine - try different initialization methods
+    if (webllm.CreateMLCEngine) {
+      console.log('🚀 WEBLLM WORKER: Using CreateMLCEngine factory function');
+      mlcEngine = await webllm.CreateMLCEngine();
+    } else if (webllm.MLCEngine) {
+      console.log('🚀 WEBLLM WORKER: Using MLCEngine constructor');
+      mlcEngine = new webllm.MLCEngine();
+    } else {
+      throw new Error('No valid MLCEngine constructor or factory found');
+    }
     
     // Set up progress callback for model loading
     mlcEngine.setInitProgressCallback((report) => {
@@ -222,11 +310,33 @@ async function handleInit(data) {
     // Initialize the MLC engine
     await initializeWebLLM();
     
-    // Load models sequentially for better progress tracking
-    await loadModel('scout', MODEL_CONFIGS.scout);
-    await loadModel('indexer', MODEL_CONFIGS.indexer); 
-    await loadModel('extractor', MODEL_CONFIGS.extractor);
-    await loadModel('synthesizer', MODEL_CONFIGS.synthesizer);
+    // Load models with Chrome extension optimizations
+    if (CHROME_OPTIMIZATIONS.useProgressive) {
+      // Progressive loading - one model at a time with memory checks
+      console.log('🚀 WEBLLM WORKER: Starting progressive model loading...');
+      
+      for (const [role, config] of Object.entries(MODEL_CONFIGS)) {
+        // Check memory before loading next model
+        if (typeof performance !== 'undefined' && performance.memory) {
+          const memoryUsage = performance.memory.usedJSHeapSize / performance.memory.totalJSHeapSize;
+          if (memoryUsage > CHROME_OPTIMIZATIONS.memoryThreshold) {
+            console.warn(`🚀 WEBLLM WORKER: Memory usage ${Math.round(memoryUsage * 100)}% exceeds threshold, pausing model loading`);
+            break;
+          }
+        }
+        
+        await loadModel(role, config);
+        
+        // Small delay between models to allow memory cleanup
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    } else {
+      // Standard sequential loading
+      await loadModel('scout', MODEL_CONFIGS.scout);
+      await loadModel('indexer', MODEL_CONFIGS.indexer); 
+      await loadModel('extractor', MODEL_CONFIGS.extractor);
+      await loadModel('synthesizer', MODEL_CONFIGS.synthesizer);
+    }
     
     isInitialized = true;
     
