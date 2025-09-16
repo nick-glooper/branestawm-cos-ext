@@ -6,14 +6,17 @@ console.log('🧠 TRANSFORMERS WORKER: Starting modern ES Module worker...');
 // ✅ STEP 1: Import the library directly as ES Modules - no more importScripts!
 import { pipeline, env } from '@huggingface/transformers';
 
-// ✅ STEP 2: Configure environment for Chrome extension immediately
+// ✅ STEP 2: Configure environment per Lead Architect directive (WebGPU priority)
 env.allowLocalModels = false;  // Use CDN models instead of local
 env.backends = env.backends || {};
 env.backends.onnx = env.backends.onnx || {};
+
+// ARCHITECT DIRECTIVE: Prioritize WebGPU with WASM fallback for 4x-100x performance
+env.backends.onnx.providers = ['webgpu', 'wasm'];
+
 env.backends.onnx.wasm = env.backends.onnx.wasm || {};
-env.backends.onnx.wasm.numThreads = 1;  // Single thread to avoid worker issues
-env.backends.onnx.wasm.simd = false;    // Disable SIMD to avoid compatibility issues
-env.backends.onnx.wasm.proxy = false;   // Disable worker proxy to avoid importScripts
+env.backends.onnx.wasm.numThreads = 4;  // Increase threads for better performance
+env.backends.onnx.wasm.simd = true;     // Enable SIMD for performance
 env.useBrowserCache = true;
 env.remoteHost = 'https://huggingface.co/';  // Use Hugging Face CDN
 
@@ -27,15 +30,16 @@ class AIPipelines {
   static synthesizer = null;  // Text generation specialist
   static isInitialized = false;
 
-  // 🔍 The Scout (Classification) - DistilBERT-SST2
+  // 📚 The Scout (Classification) - BART-MNLI (State-of-the-art per Architect)
   static async getScout() {
     if (this.scout === null) {
-      console.log('🔍 TRANSFORMERS WORKER: Loading The Scout (Classification)...');
+      console.log('📚 TRANSFORMERS WORKER: Loading The Scout (BART-MNLI)...');
       
       this.scout = await pipeline(
         'zero-shot-classification',
-        'Xenova/distilbert-base-uncased-finetuned-sst-2-english',
+        'facebook/bart-large-mnli',
         {
+          device: 'webgpu',  // Prioritize WebGPU per directive
           progress_callback: (data) => {
             self.postMessage({
               type: 'download-progress',
@@ -45,20 +49,21 @@ class AIPipelines {
           }
         }
       );
-      console.log('✅ SCOUT: Successfully loaded DistilBERT-SST2 (~67MB)');
+      console.log('✅ SCOUT: Successfully loaded BART-MNLI (state-of-the-art classification)');
     }
     return this.scout;
   }
 
-  // 📚 The Indexer (Embeddings) - MiniLM-L6-v2 (reliable fallback)
+  // 🔍 The Indexer (Embeddings) - Google EmbeddingGemma (MTEB leaderboard top per Architect)
   static async getIndexer() {
     if (this.indexer === null) {
-      console.log('📚 TRANSFORMERS WORKER: Loading The Indexer (Embeddings)...');
+      console.log('🔍 TRANSFORMERS WORKER: Loading The Indexer (EmbeddingGemma)...');
       
       this.indexer = await pipeline(
         'feature-extraction',
-        'Xenova/all-MiniLM-L6-v2',
+        'onnx-community/embeddinggemma-300m-ONNX',
         {
+          device: 'webgpu',  // Prioritize WebGPU per directive
           progress_callback: (data) => {
             self.postMessage({
               type: 'download-progress',
@@ -68,7 +73,7 @@ class AIPipelines {
           }
         }
       );
-      console.log('✅ INDEXER: Successfully loaded all-MiniLM-L6-v2 (~90MB)');
+      console.log('✅ INDEXER: Successfully loaded EmbeddingGemma-300m (MTEB leaderboard)');
     }
     return this.indexer;
   }
@@ -82,6 +87,7 @@ class AIPipelines {
         'token-classification',
         'Xenova/bert-base-NER',
         {
+          device: 'webgpu',  // Prioritize WebGPU per directive
           progress_callback: (data) => {
             self.postMessage({
               type: 'download-progress',
@@ -96,16 +102,17 @@ class AIPipelines {
     return this.extractor;
   }
 
-  // ✍️ The Synthesizer (LLM) - Phi-3-mini (Microsoft's optimized model)
+  // ✍️ The Synthesizer (LLM) - Qwen2.5-0.5B (Latest generation per Architect)
   static async getSynthesizer() {
     if (this.synthesizer === null) {
-      console.log('✍️ TRANSFORMERS WORKER: Loading The Synthesizer (Phi-3-mini)...');
+      console.log('✍️ TRANSFORMERS WORKER: Loading The Synthesizer (Qwen2.5-0.5B)...');
       
       this.synthesizer = await pipeline(
         'text-generation',
-        'Xenova/Phi-3-mini-4k-instruct',  // Microsoft's optimized Phi-3 model
+        'onnx-community/Qwen2.5-0.5B-Instruct',
         {
-          dtype: 'q4',  // Use quantized version for efficiency in v3
+          device: 'webgpu',  // Prioritize WebGPU per directive
+          dtype: 'q4',       // Use 4-bit quantization per directive
           progress_callback: (data) => {
             self.postMessage({
               type: 'download-progress',
@@ -115,7 +122,7 @@ class AIPipelines {
           }
         }
       );
-      console.log('✅ SYNTHESIZER: Successfully loaded Phi-3-mini (~2.4GB)');
+      console.log('✅ SYNTHESIZER: Successfully loaded Qwen2.5-0.5B (latest generation LLM)');
     }
     return this.synthesizer;
   }
@@ -168,7 +175,7 @@ async function handleInit(data) {
     
     self.postMessage({
       type: 'status',
-      message: 'Loading AI specialists (~1.2GB total download)...',
+      message: 'Loading AI specialists with WebGPU acceleration (state-of-the-art models)...',
       progress: 10
     });
     
@@ -209,7 +216,7 @@ async function handleInit(data) {
       type: 'init-complete',
       success: true,
       progress: 100,
-      message: '✅ Modern AI architecture ready! (4 Transformers.js specialists with CDN models)'
+      message: '✅ State-of-the-art AI architecture ready! (WebGPU-accelerated specialists per Lead Architect directive)'
     });
     
     console.log('🧠 TRANSFORMERS WORKER: All specialists initialized successfully!');

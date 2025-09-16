@@ -46215,10 +46215,10 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
   __webpack_exports__env.allowLocalModels = false;
   __webpack_exports__env.backends = __webpack_exports__env.backends || {};
   __webpack_exports__env.backends.onnx = __webpack_exports__env.backends.onnx || {};
+  __webpack_exports__env.backends.onnx.providers = ["webgpu", "wasm"];
   __webpack_exports__env.backends.onnx.wasm = __webpack_exports__env.backends.onnx.wasm || {};
-  __webpack_exports__env.backends.onnx.wasm.numThreads = 1;
-  __webpack_exports__env.backends.onnx.wasm.simd = false;
-  __webpack_exports__env.backends.onnx.wasm.proxy = false;
+  __webpack_exports__env.backends.onnx.wasm.numThreads = 4;
+  __webpack_exports__env.backends.onnx.wasm.simd = true;
   __webpack_exports__env.useBrowserCache = true;
   __webpack_exports__env.remoteHost = "https://huggingface.co/";
   console.log("✅ TRANSFORMERS WORKER: Environment configured for Chrome extension");
@@ -46232,14 +46232,16 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
     static synthesizer = null;
     // Text generation specialist
     static isInitialized = false;
-    // 🔍 The Scout (Classification) - DistilBERT-SST2
+    // 📚 The Scout (Classification) - BART-MNLI (State-of-the-art per Architect)
     static async getScout() {
       if (this.scout === null) {
-        console.log("🔍 TRANSFORMERS WORKER: Loading The Scout (Classification)...");
+        console.log("📚 TRANSFORMERS WORKER: Loading The Scout (BART-MNLI)...");
         this.scout = await __webpack_exports__pipeline(
           "zero-shot-classification",
-          "Xenova/distilbert-base-uncased-finetuned-sst-2-english",
+          "facebook/bart-large-mnli",
           {
+            device: "webgpu",
+            // Prioritize WebGPU per directive
             progress_callback: (data) => {
               self.postMessage({
                 type: "download-progress",
@@ -46249,18 +46251,20 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
             }
           }
         );
-        console.log("✅ SCOUT: Successfully loaded DistilBERT-SST2 (~67MB)");
+        console.log("✅ SCOUT: Successfully loaded BART-MNLI (state-of-the-art classification)");
       }
       return this.scout;
     }
-    // 📚 The Indexer (Embeddings) - MiniLM-L6-v2 (reliable fallback)
+    // 🔍 The Indexer (Embeddings) - Google EmbeddingGemma (MTEB leaderboard top per Architect)
     static async getIndexer() {
       if (this.indexer === null) {
-        console.log("📚 TRANSFORMERS WORKER: Loading The Indexer (Embeddings)...");
+        console.log("🔍 TRANSFORMERS WORKER: Loading The Indexer (EmbeddingGemma)...");
         this.indexer = await __webpack_exports__pipeline(
           "feature-extraction",
-          "Xenova/all-MiniLM-L6-v2",
+          "onnx-community/embeddinggemma-300m-ONNX",
           {
+            device: "webgpu",
+            // Prioritize WebGPU per directive
             progress_callback: (data) => {
               self.postMessage({
                 type: "download-progress",
@@ -46270,7 +46274,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
             }
           }
         );
-        console.log("✅ INDEXER: Successfully loaded all-MiniLM-L6-v2 (~90MB)");
+        console.log("✅ INDEXER: Successfully loaded EmbeddingGemma-300m (MTEB leaderboard)");
       }
       return this.indexer;
     }
@@ -46282,6 +46286,8 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
           "token-classification",
           "Xenova/bert-base-NER",
           {
+            device: "webgpu",
+            // Prioritize WebGPU per directive
             progress_callback: (data) => {
               self.postMessage({
                 type: "download-progress",
@@ -46295,17 +46301,18 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
       }
       return this.extractor;
     }
-    // ✍️ The Synthesizer (LLM) - Phi-3-mini (Microsoft's optimized model)
+    // ✍️ The Synthesizer (LLM) - Qwen2.5-0.5B (Latest generation per Architect)
     static async getSynthesizer() {
       if (this.synthesizer === null) {
-        console.log("✍️ TRANSFORMERS WORKER: Loading The Synthesizer (Phi-3-mini)...");
+        console.log("✍️ TRANSFORMERS WORKER: Loading The Synthesizer (Qwen2.5-0.5B)...");
         this.synthesizer = await __webpack_exports__pipeline(
           "text-generation",
-          "Xenova/Phi-3-mini-4k-instruct",
-          // Microsoft's optimized Phi-3 model
+          "onnx-community/Qwen2.5-0.5B-Instruct",
           {
+            device: "webgpu",
+            // Prioritize WebGPU per directive
             dtype: "q4",
-            // Use quantized version for efficiency in v3
+            // Use 4-bit quantization per directive
             progress_callback: (data) => {
               self.postMessage({
                 type: "download-progress",
@@ -46315,7 +46322,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
             }
           }
         );
-        console.log("✅ SYNTHESIZER: Successfully loaded Phi-3-mini (~2.4GB)");
+        console.log("✅ SYNTHESIZER: Successfully loaded Qwen2.5-0.5B (latest generation LLM)");
       }
       return this.synthesizer;
     }
@@ -46357,7 +46364,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
       console.log("🧠 TRANSFORMERS WORKER: Initializing AI specialists...");
       self.postMessage({
         type: "status",
-        message: "Loading AI specialists (~1.2GB total download)...",
+        message: "Loading AI specialists with WebGPU acceleration (state-of-the-art models)...",
         progress: 10
       });
       const loadOrder = [
@@ -46392,7 +46399,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
         type: "init-complete",
         success: true,
         progress: 100,
-        message: "✅ Modern AI architecture ready! (4 Transformers.js specialists with CDN models)"
+        message: "✅ State-of-the-art AI architecture ready! (WebGPU-accelerated specialists per Lead Architect directive)"
       });
       console.log("🧠 TRANSFORMERS WORKER: All specialists initialized successfully!");
     } catch (error) {
