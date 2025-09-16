@@ -29049,14 +29049,15 @@ ${t2}`);
     return result;
   }
   console.log("🧠 TRANSFORMERS WORKER: Starting modern ES Module worker...");
-  env$1.allowLocalModels = true;
+  env$1.allowLocalModels = false;
   env$1.backends = env$1.backends || {};
   env$1.backends.onnx = env$1.backends.onnx || {};
   env$1.backends.onnx.wasm = env$1.backends.onnx.wasm || {};
-  env$1.backends.onnx.wasm.numThreads = 2;
-  env$1.backends.onnx.wasm.simd = true;
+  env$1.backends.onnx.wasm.numThreads = 1;
+  env$1.backends.onnx.wasm.simd = false;
+  env$1.backends.onnx.wasm.proxy = false;
   env$1.useBrowserCache = true;
-  env$1.localModelPath = "./models/";
+  env$1.remoteHost = "https://huggingface.co/";
   console.log("✅ TRANSFORMERS WORKER: Environment configured for Chrome extension");
   class AIPipelines {
     static scout = null;
@@ -29131,13 +29132,13 @@ ${t2}`);
       }
       return this.extractor;
     }
-    // ✍️ The Synthesizer (LLM) - Phi-3-mini
+    // ✍️ The Synthesizer (LLM) - GPT-2 (compatible with Transformers.js)
     static async getSynthesizer() {
       if (this.synthesizer === null) {
         console.log("✍️ TRANSFORMERS WORKER: Loading The Synthesizer (LLM)...");
         this.synthesizer = await pipeline(
           "text-generation",
-          "Xenova/Phi-3-mini-4k-instruct",
+          "Xenova/gpt2",
           {
             progress_callback: (data) => {
               self.postMessage({
@@ -29148,7 +29149,7 @@ ${t2}`);
             }
           }
         );
-        console.log("✅ SYNTHESIZER: Successfully loaded Phi-3-mini (~2.4GB)");
+        console.log("✅ SYNTHESIZER: Successfully loaded GPT-2 (~500MB)");
       }
       return this.synthesizer;
     }
@@ -29190,7 +29191,7 @@ ${t2}`);
       console.log("🧠 TRANSFORMERS WORKER: Initializing AI specialists...");
       self.postMessage({
         type: "status",
-        message: "Loading AI specialists (~3.7GB total download)...",
+        message: "Loading AI specialists (~1.2GB total download)...",
         progress: 10
       });
       const loadOrder = [
@@ -29225,7 +29226,7 @@ ${t2}`);
         type: "init-complete",
         success: true,
         progress: 100,
-        message: "✅ Modern AI architecture ready! (4 Transformers.js specialists)"
+        message: "✅ Modern AI architecture ready! (4 Transformers.js specialists with CDN models)"
       });
       console.log("🧠 TRANSFORMERS WORKER: All specialists initialized successfully!");
     } catch (error) {

@@ -7,14 +7,15 @@ console.log('🧠 TRANSFORMERS WORKER: Starting modern ES Module worker...');
 import { pipeline, env } from '@xenova/transformers';
 
 // ✅ STEP 2: Configure environment for Chrome extension immediately
-env.allowLocalModels = true;
+env.allowLocalModels = false;  // Use CDN models instead of local
 env.backends = env.backends || {};
 env.backends.onnx = env.backends.onnx || {};
 env.backends.onnx.wasm = env.backends.onnx.wasm || {};
-env.backends.onnx.wasm.numThreads = 2;
-env.backends.onnx.wasm.simd = true;
+env.backends.onnx.wasm.numThreads = 1;  // Single thread to avoid worker issues
+env.backends.onnx.wasm.simd = false;    // Disable SIMD to avoid compatibility issues
+env.backends.onnx.wasm.proxy = false;   // Disable worker proxy to avoid importScripts
 env.useBrowserCache = true;
-env.localModelPath = './models/';
+env.remoteHost = 'https://huggingface.co/';  // Use Hugging Face CDN
 
 console.log('✅ TRANSFORMERS WORKER: Environment configured for Chrome extension');
 
@@ -95,14 +96,14 @@ class AIPipelines {
     return this.extractor;
   }
 
-  // ✍️ The Synthesizer (LLM) - Phi-3-mini
+  // ✍️ The Synthesizer (LLM) - GPT-2 (compatible with Transformers.js)
   static async getSynthesizer() {
     if (this.synthesizer === null) {
       console.log('✍️ TRANSFORMERS WORKER: Loading The Synthesizer (LLM)...');
       
       this.synthesizer = await pipeline(
         'text-generation',
-        'Xenova/Phi-3-mini-4k-instruct',
+        'Xenova/gpt2',
         {
           progress_callback: (data) => {
             self.postMessage({
@@ -113,7 +114,7 @@ class AIPipelines {
           }
         }
       );
-      console.log('✅ SYNTHESIZER: Successfully loaded Phi-3-mini (~2.4GB)');
+      console.log('✅ SYNTHESIZER: Successfully loaded GPT-2 (~500MB)');
     }
     return this.synthesizer;
   }
@@ -166,7 +167,7 @@ async function handleInit(data) {
     
     self.postMessage({
       type: 'status',
-      message: 'Loading AI specialists (~3.7GB total download)...',
+      message: 'Loading AI specialists (~1.2GB total download)...',
       progress: 10
     });
     
@@ -207,7 +208,7 @@ async function handleInit(data) {
       type: 'init-complete',
       success: true,
       progress: 100,
-      message: '✅ Modern AI architecture ready! (4 Transformers.js specialists)'
+      message: '✅ Modern AI architecture ready! (4 Transformers.js specialists with CDN models)'
     });
     
     console.log('🧠 TRANSFORMERS WORKER: All specialists initialized successfully!');
