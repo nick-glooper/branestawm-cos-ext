@@ -3,34 +3,23 @@ import { resolve } from 'path';
 
 export default defineConfig({
   build: {
-    rollupOptions: {
-      input: {
-        // Main entry points
-        main: resolve(__dirname, 'index.html'),
-        options: resolve(__dirname, 'options.html'),
-        offscreen: resolve(__dirname, 'offscreen.html'),
-        
-        // Worker entry point - Vite will handle ES Module bundling automatically
-        'transformers-worker': resolve(__dirname, 'src/transformers-worker.js'),
-        
-        // Service worker and other scripts
-        background: resolve(__dirname, 'background.js'),
-      },
-      output: {
-        // Ensure workers are generated in the root for Chrome extension compatibility
-        entryFileNames: (chunkInfo) => {
-          return chunkInfo.name === 'transformers-worker' ? 'transformers-worker.js' : '[name].js';
-        }
-      }
+    // Target Chrome extension environment
+    target: ['chrome87'],
+    // Disable minification to avoid eval issues with onnxruntime-web
+    minify: false,
+    // Build as library in IIFE format for Chrome extension worker
+    lib: {
+      entry: resolve(__dirname, 'src/transformers-worker.js'),
+      name: 'TransformersWorker',
+      formats: ['iife'],
+      fileName: () => 'transformers-worker.js'
     },
-    // Ensure proper chunk splitting for workers
-    target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14']
-  },
-  
-  // Worker-specific configuration
-  worker: {
-    format: 'es', // Use ES modules for workers
-    plugins: []
+    rollupOptions: {
+      output: {
+        inlineDynamicImports: true, // Bundle everything into single file
+        dir: '.' // Output directly to root directory for Chrome extension
+      }
+    }
   },
   
   // Optimization settings
@@ -38,8 +27,12 @@ export default defineConfig({
     include: ['@xenova/transformers']
   },
   
-  // Define globals for better tree-shaking
+  // Define globals for Chrome extension compatibility
   define: {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production')
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'production'),
+    'import.meta.env': '{}',
+    'import.meta.hot': 'undefined',
+    'import.meta.url': '"worker-script"',
+    global: 'globalThis'
   }
 });
