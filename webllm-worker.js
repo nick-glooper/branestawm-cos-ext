@@ -11,32 +11,13 @@ async function loadWebLLM() {
   try {
     console.log('🚀 WEBLLM WORKER: Loading Web LLM with multiple strategies...');
     
-    // Method 1: Try CDN dynamic import first (now CSP-allowed)
-    try {
-      console.log('🚀 WEBLLM WORKER: Attempting CDN import (primary method)...');
-      const module = await import('https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.79/lib/index.js');
-      webllm = module;
-      console.log('🚀 WEBLLM WORKER: Web LLM loaded from CDN');
-      console.log('🚀 WEBLLM WORKER: CDN Module exports:', Object.keys(module).slice(0, 10), '...');
-      
-      if (module.MLCEngine || module.CreateMLCEngine) {
-        console.log('🚀 WEBLLM WORKER: Found MLCEngine in CDN module');
-        return true;
-      } else {
-        console.warn('🚀 WEBLLM WORKER: CDN module loaded but no MLCEngine found');
-        console.log('🚀 WEBLLM WORKER: Searching for engine classes:', Object.keys(module).filter(k => k.toLowerCase().includes('engine')));
-      }
-    } catch (cdnError) {
-      console.error('🚀 WEBLLM WORKER: CDN import failed:', cdnError.message);
-    }
-    
-    // Method 2: Try dynamic import with local bundle
+    // Method 1: Try dynamic import with local bundle (primary method for CSP compliance)
     try {
       console.log('🚀 WEBLLM WORKER: Attempting dynamic import of local bundle...');
       const module = await import('./webllm-bundle.js');
       webllm = module;
       console.log('🚀 WEBLLM WORKER: Web LLM loaded via dynamic import');
-      console.log('🚀 WEBLLM WORKER: Module exports:', Object.keys(module));
+      console.log('🚀 WEBLLM WORKER: Module exports:', Object.keys(module).slice(0, 10), '...');
       console.log('🚀 WEBLLM WORKER: Available classes:', Object.keys(module).filter(k => k.includes('Engine')));
       
       if (module.MLCEngine || module.CreateMLCEngine) {
@@ -49,7 +30,7 @@ async function loadWebLLM() {
       console.warn('🚀 WEBLLM WORKER: Dynamic import failed:', dynamicError.message);
     }
     
-    // Method 3: Try importScripts with local bundle (legacy approach)
+    // Method 2: Try importScripts with local bundle (legacy approach)
     try {
       console.log('🚀 WEBLLM WORKER: Attempting importScripts with local bundle...');
       
@@ -107,7 +88,7 @@ async function loadWebLLM() {
       console.error('🚀 WEBLLM WORKER: ImportScripts with local bundle failed:', importError);
     }
     
-    // Method 4: Fallback - Create a basic structure if all else fails
+    // Method 3: Fallback - Create a basic structure if all else fails
     console.warn('🚀 WEBLLM WORKER: All import methods failed, creating fallback structure...');
     
     // Check if any part of Web LLM was loaded into globals
