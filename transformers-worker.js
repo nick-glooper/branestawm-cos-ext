@@ -46214,11 +46214,12 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
   console.log("🧠 TRANSFORMERS WORKER: Starting modern ES Module worker...");
   __webpack_exports__env.allowLocalModels = false;
   __webpack_exports__env.backends = __webpack_exports__env.backends || {};
-  __webpack_exports__env.backends.onnx = __webpack_exports__env.backends.onnx || {};
-  __webpack_exports__env.backends.onnx.providers = ["wasm"];
-  __webpack_exports__env.backends.onnx.wasm = __webpack_exports__env.backends.onnx.wasm || {};
-  __webpack_exports__env.backends.onnx.wasm.numThreads = 4;
-  __webpack_exports__env.backends.onnx.wasm.simd = true;
+  __webpack_exports__env.backends = {
+    onnx: {
+      providers: []
+      // Disable ONNX completely
+    }
+  };
   __webpack_exports__env.useBrowserCache = true;
   __webpack_exports__env.remoteHost = "https://huggingface.co/";
   console.log("✅ TRANSFORMERS WORKER: Environment configured for Chrome extension");
@@ -46240,8 +46241,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
           "zero-shot-classification",
           "facebook/bart-large-mnli",
           {
-            device: "wasm",
-            // Chrome extension CSP blocks WebGPU - use optimized WASM
+            // No device specified - let Transformers.js choose compatible backend
             progress_callback: (data) => {
               self.postMessage({
                 type: "download-progress",
@@ -46263,8 +46263,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
           "feature-extraction",
           "onnx-community/embeddinggemma-300m-ONNX",
           {
-            device: "wasm",
-            // Chrome extension CSP blocks WebGPU - use optimized WASM
+            // No device specified - let Transformers.js choose compatible backend
             progress_callback: (data) => {
               self.postMessage({
                 type: "download-progress",
@@ -46286,8 +46285,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
           "token-classification",
           "Xenova/bert-base-NER",
           {
-            device: "wasm",
-            // Chrome extension CSP blocks WebGPU - use optimized WASM
+            // No device specified - let Transformers.js choose compatible backend
             progress_callback: (data) => {
               self.postMessage({
                 type: "download-progress",
@@ -46309,8 +46307,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
           "text-generation",
           "onnx-community/Qwen2.5-0.5B-Instruct",
           {
-            device: "wasm",
-            // Chrome extension CSP blocks WebGPU - use optimized WASM
+            // No device specified - let Transformers.js choose compatible backend
             dtype: "q4",
             // Use 4-bit quantization per directive
             progress_callback: (data) => {

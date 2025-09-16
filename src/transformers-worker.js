@@ -6,18 +6,17 @@ console.log('🧠 TRANSFORMERS WORKER: Starting modern ES Module worker...');
 // ✅ STEP 1: Import the library directly as ES Modules - no more importScripts!
 import { pipeline, env } from '@huggingface/transformers';
 
-// ✅ STEP 2: Configure environment per Lead Architect directive (WebGPU priority)
+// ✅ STEP 2: Chrome Extension Compatible Configuration
 env.allowLocalModels = false;  // Use CDN models instead of local
 env.backends = env.backends || {};
-env.backends.onnx = env.backends.onnx || {};
 
-// ARCHITECT DIRECTIVE: WebGPU blocked by Chrome extension CSP - use WASM optimized
-// Note: WebGPU requires dynamic blob imports which violate Chrome extension CSP
-env.backends.onnx.providers = ['wasm'];  // WASM-only for Chrome extension compatibility
-
-env.backends.onnx.wasm = env.backends.onnx.wasm || {};
-env.backends.onnx.wasm.numThreads = 4;  // Increase threads for better performance
-env.backends.onnx.wasm.simd = true;     // Enable SIMD for performance
+// CRITICAL: Disable all backends that require dynamic imports
+// This will force fallback to any compatible execution method
+env.backends = {
+  onnx: {
+    providers: []  // Disable ONNX completely
+  }
+};
 env.useBrowserCache = true;
 env.remoteHost = 'https://huggingface.co/';  // Use Hugging Face CDN
 
@@ -40,7 +39,7 @@ class AIPipelines {
         'zero-shot-classification',
         'facebook/bart-large-mnli',
         {
-          device: 'wasm',  // Chrome extension CSP blocks WebGPU - use optimized WASM
+          // No device specified - let Transformers.js choose compatible backend
           progress_callback: (data) => {
             self.postMessage({
               type: 'download-progress',
@@ -64,7 +63,7 @@ class AIPipelines {
         'feature-extraction',
         'onnx-community/embeddinggemma-300m-ONNX',
         {
-          device: 'wasm',  // Chrome extension CSP blocks WebGPU - use optimized WASM
+          // No device specified - let Transformers.js choose compatible backend
           progress_callback: (data) => {
             self.postMessage({
               type: 'download-progress',
@@ -88,7 +87,7 @@ class AIPipelines {
         'token-classification',
         'Xenova/bert-base-NER',
         {
-          device: 'wasm',  // Chrome extension CSP blocks WebGPU - use optimized WASM
+          // No device specified - let Transformers.js choose compatible backend
           progress_callback: (data) => {
             self.postMessage({
               type: 'download-progress',
@@ -112,7 +111,7 @@ class AIPipelines {
         'text-generation',
         'onnx-community/Qwen2.5-0.5B-Instruct',
         {
-          device: 'wasm',    // Chrome extension CSP blocks WebGPU - use optimized WASM
+          // No device specified - let Transformers.js choose compatible backend
           dtype: 'q4',       // Use 4-bit quantization per directive
           progress_callback: (data) => {
             self.postMessage({
