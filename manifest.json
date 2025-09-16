@@ -40,17 +40,7 @@
     {
       "resources": [
         "transformers-worker.js",
-        "offscreen.html",
-        "transformers.min.js",
-        "ort-wasm-simd-threaded.wasm",
-        "ort-wasm-simd.wasm",
-        "ort-wasm-threaded.wasm", 
-        "ort-wasm.wasm",
-        "ort-webgl.min.js",
-        "ort-wasm-simd-threaded.jsep.wasm",
-        "ort.wasm.js",
-        "ort.min.js",
-        "ort.min.mjs"
+        "offscreen.html"
       ],
       "matches": ["<all_urls>"]
     }
