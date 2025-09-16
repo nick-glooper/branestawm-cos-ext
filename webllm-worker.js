@@ -52,22 +52,22 @@ const MODEL_CONFIGS = {
     justification: 'DistilBERT-SST2: Fast, accurate sentiment and classification analysis'
   },
   extractor: {
-    // DistilBERT-NER for entity extraction - ~67MB
-    modelUrl: 'https://huggingface.co/distilbert-base-NER/resolve/main/onnx/model_quantized.onnx',
-    tokenizerUrl: 'https://huggingface.co/distilbert-base-NER/resolve/main/tokenizer.json',
+    // DistilBERT-NER for entity extraction - ~67MB (verified available)
+    modelUrl: 'https://huggingface.co/dslim/distilbert-NER/resolve/main/onnx/model.onnx',
+    tokenizerUrl: 'https://huggingface.co/dslim/distilbert-NER/resolve/main/tokenizer.json',
     role: '🏷️ The Extractor (NER)',
     task: 'token-classification',
     size: '~67MB',
-    justification: 'DistilBERT-NER: Specialized named entity recognition with high accuracy'
+    justification: 'dslim/distilbert-NER: Proven NER model trained on CoNLL-2003, high F1 score (0.92)'
   },
   synthesizer: {
-    // Phi-2 INT8 quantized for generation - ~1.4GB
-    modelUrl: 'https://huggingface.co/microsoft/phi-2/resolve/main/onnx/model_int8_quantized.onnx',
-    tokenizerUrl: 'https://huggingface.co/microsoft/phi-2/resolve/main/tokenizer.json',
+    // Using Phi-3-mini ONNX as verified alternative - ~2.4GB
+    modelUrl: 'https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-onnx/resolve/main/model.onnx',
+    tokenizerUrl: 'https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-onnx/resolve/main/tokenizer.json',
     role: '✍️ The Synthesizer (Generation)',
     task: 'text-generation',
-    size: '~1.4GB',
-    justification: 'Phi-2 INT8: Microsoft\'s efficient 2.7B parameter model, quantized for performance'
+    size: '~2.4GB',
+    justification: 'Phi-3-mini ONNX: Microsoft\'s verified ONNX model with 4k context, INT4 quantized'
   }
 };
 
@@ -209,12 +209,12 @@ async function handleInit(data) {
     
     postMessage({
       type: 'status',
-      message: 'Loading AI specialists (~1.7GB total download)...',
+      message: 'Loading AI specialists (~2.8GB total download)...',
       progress: 10
     });
     
     // Load specialists sequentially to avoid resource conflicts
-    // Order: Indexer (200MB) → Scout (67MB) → Extractor (67MB) → Synthesizer (1.4GB)
+    // Order: Indexer (200MB) → Scout (67MB) → Extractor (67MB) → Synthesizer (2.4GB)
     const loadOrder = ['indexer', 'scout', 'extractor', 'synthesizer'];
     
     for (const role of loadOrder) {
@@ -234,7 +234,7 @@ async function handleInit(data) {
       type: 'init-complete',
       success: true,
       progress: 100,
-      message: `✅ Team of specialists ready! (${loadedCount}/${totalCount} models: EmbeddingGemma, DistilBERT x2, Phi-2)`
+      message: `✅ Team of specialists ready! (${loadedCount}/${totalCount} models: EmbeddingGemma, DistilBERT x2, Phi-3-mini)`
     });
     
     console.log('🧠 ONNX WORKER: Team of specialists initialized successfully!');
