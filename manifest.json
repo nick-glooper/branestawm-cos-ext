@@ -40,7 +40,9 @@
     {
       "resources": [
         "webllm-worker.js",
-        "offscreen.html"
+        "offscreen.html",
+        "ort-wasm-simd-threaded.wasm",
+        "ort-wasm-simd-threaded.jsep.wasm"
       ],
       "matches": ["<all_urls>"]
     }
