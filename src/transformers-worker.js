@@ -4,7 +4,7 @@
 console.log('🧠 TRANSFORMERS WORKER: Starting modern ES Module worker...');
 
 // ✅ STEP 1: Import the library directly as ES Modules - no more importScripts!
-import { pipeline, env } from '@xenova/transformers';
+import { pipeline, env } from '@huggingface/transformers';
 
 // ✅ STEP 2: Configure environment for Chrome extension immediately
 env.allowLocalModels = false;  // Use CDN models instead of local
@@ -96,15 +96,16 @@ class AIPipelines {
     return this.extractor;
   }
 
-  // ✍️ The Synthesizer (LLM) - GPT-2 (compatible with Transformers.js)
+  // ✍️ The Synthesizer (LLM) - Phi-3-mini (Microsoft's optimized model)
   static async getSynthesizer() {
     if (this.synthesizer === null) {
-      console.log('✍️ TRANSFORMERS WORKER: Loading The Synthesizer (LLM)...');
+      console.log('✍️ TRANSFORMERS WORKER: Loading The Synthesizer (Phi-3-mini)...');
       
       this.synthesizer = await pipeline(
         'text-generation',
-        'Xenova/gpt2',
+        'Xenova/Phi-3-mini-4k-instruct',  // Microsoft's optimized Phi-3 model
         {
+          dtype: 'q4',  // Use quantized version for efficiency in v3
           progress_callback: (data) => {
             self.postMessage({
               type: 'download-progress',
@@ -114,7 +115,7 @@ class AIPipelines {
           }
         }
       );
-      console.log('✅ SYNTHESIZER: Successfully loaded GPT-2 (~500MB)');
+      console.log('✅ SYNTHESIZER: Successfully loaded Phi-3-mini (~2.4GB)');
     }
     return this.synthesizer;
   }
