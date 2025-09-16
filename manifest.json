@@ -40,7 +40,6 @@
     {
       "resources": [
         "webllm-worker.js",
-        "webllm-bundle.js",
         "offscreen.html"
       ],
       "matches": ["<all_urls>"]

@@ -115,9 +115,9 @@ function updateModelProgress(message, progress) {
 // Web Worker for Web LLM
 let webllmWorker = null;
 
-// Initialize Web LLM Worker with latest models
-function initializeWebLLMWorker() {
-    console.log('🚀 OFFSCREEN DEBUG: Creating Web LLM Worker (latest models)...');
+// Initialize AI Worker (placeholder for transformers.js)
+function initializeAIWorker() {
+    console.log('🔄 OFFSCREEN DEBUG: Creating AI Worker (placeholder)...');
     
     try {
         webllmWorker = new Worker(chrome.runtime.getURL('webllm-worker.js'), { type: 'module' });
@@ -132,71 +132,62 @@ function initializeWebLLMWorker() {
                     updateStatus(message.message, message.progress);
                     break;
                     
-                case 'model-progress':
-                    updateStatus(message.text, message.progress);
-                    break;
-                    
                 case 'init-complete':
                     if (message.success) {
-                        console.log('🚀 OFFSCREEN DEBUG: All Web LLM models initialized successfully!');
+                        console.log('🔄 OFFSCREEN DEBUG: Placeholder worker initialized');
                         workerReady = true;
                         isReady = true;
                         console.log('🔍 OFFSCREEN DEBUG: Setting isReady = true, workerReady =', workerReady);
-                        updateStatus('✅ Local AI ready with Web LLM!', 100, message.message);
+                        updateStatus('⏳ Ready for transformers.js implementation', 100, message.message);
                         
                         chrome.runtime.sendMessage({
                             type: 'LOCAL_AI_STATUS',
-                            status: '✅ All 4 AI models ready with Web LLM!',
+                            status: '⏳ Ready for transformers.js implementation',
                             progress: 100,
                             ready: true
                         });
                     } else {
-                        console.error('🚀 OFFSCREEN DEBUG: Web LLM model initialization failed:', message.error);
-                        handleWebLLMFailure(new Error(message.error));
+                        console.error('🔄 OFFSCREEN DEBUG: Worker initialization failed:', message.error);
+                        handleAIFailure(new Error(message.error));
                     }
                     break;
                     
                 case 'error':
-                    console.error('🚀 OFFSCREEN DEBUG: Web LLM Worker error:', message.error);
-                    handleWebLLMFailure(new Error(message.error));
+                    console.error('🔄 OFFSCREEN DEBUG: AI Worker error:', message.error);
+                    handleAIFailure(new Error(message.error));
                     break;
                     
                 default:
-                    console.log('🚀 OFFSCREEN DEBUG: Unknown message type from Web LLM Worker:', type);
+                    console.log('🔄 OFFSCREEN DEBUG: Unknown message type from AI Worker:', type);
             }
         };
         
         webllmWorker.onerror = function(error) {
-            console.error('🚀 OFFSCREEN DEBUG: Web LLM Worker error:', error);
-            handleWebLLMFailure(error);
+            console.error('🔄 OFFSCREEN DEBUG: AI Worker error:', error);
+            handleAIFailure(error);
         };
         
         // Initialize the worker
-        const extensionBaseURL = chrome.runtime.getURL('');
-        console.log('🚀 OFFSCREEN DEBUG: Extension base URL:', extensionBaseURL);
-        
         webllmWorker.postMessage({
             type: 'init',
-            data: { extensionBaseURL }
+            data: {}
         });
         
     } catch (error) {
-        console.error('🚀 OFFSCREEN DEBUG: Failed to create Web LLM Worker:', error);
-        handleWebLLMFailure(error);
+        console.error('🔄 OFFSCREEN DEBUG: Failed to create AI Worker:', error);
+        handleAIFailure(error);
     }
 }
 
-// Legacy transformers worker function removed - now using Web LLM only
-
-// Handle Web LLM loading failure
-function handleWebLLMFailure(error) {
-    console.error('🔍 OFFSCREEN DEBUG: Web LLM Worker failed:', error);
-    updateStatus('❌ AI model initialization failed', 0, error.message);
+// Handle AI worker failure
+function handleAIFailure(error) {
+    console.error('🔍 OFFSCREEN DEBUG: AI Worker failed:', error);
+    updateStatus('❌ AI worker initialization failed', 0, error.message);
     
     // Send error status to background
     chrome.runtime.sendMessage({
         type: 'LOCAL_AI_ERROR',
-        error: error.message || 'Web LLM Worker failed'
+        error: error.message || 'AI Worker failed'
     });
 }
 
@@ -244,82 +235,46 @@ try {
 
 // Legacy script loading function removed - Web LLM loads via worker
 
-// Initialize Web LLM via Web Worker approach
-console.log('🔍 OFFSCREEN DEBUG: Starting Web Worker Web LLM loading...');
+// Initialize AI Worker (placeholder for transformers.js)
+console.log('🔍 OFFSCREEN DEBUG: Starting AI Worker initialization...');
 
 // Send status update
 try {
     chrome.runtime.sendMessage({
         type: 'LOCAL_AI_STATUS',
-        status: 'Starting Web Worker approach...',
+        status: 'Starting AI Worker...',
         progress: 3,
         ready: false
     });
 } catch (error) {
-    console.log('🔍 OFFSCREEN DEBUG: Failed to send Web Worker status:', error);
+    console.log('🔍 OFFSCREEN DEBUG: Failed to send AI Worker status:', error);
 }
 
-// Start Web LLM Worker initialization when DOM is ready
+// Start AI Worker initialization when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeWebLLMWorker);
+    document.addEventListener('DOMContentLoaded', initializeAIWorker);
 } else {
     // DOM is already ready
-    initializeWebLLMWorker();
+    initializeAIWorker();
 }
 
-// AI processing functions - these delegate to the Web LLM Worker
+// AI processing functions - placeholder for transformers.js implementation
 async function generateEmbedding(text) {
     if (!workerReady || !webllmWorker) {
-        throw new Error('AI models not ready. Please wait for initialization to complete.');
+        throw new Error('AI models not ready. Transformers.js implementation pending.');
     }
     
-    return new Promise((resolve, reject) => {
-        const id = Date.now().toString();
-        
-        const handleResponse = (e) => {
-            const message = e.data;
-            if (message.type === 'embed-result' && message.id === id) {
-                webllmWorker.removeEventListener('message', handleResponse);
-                resolve(message.embedding);
-            } else if (message.type === 'error' && message.id === id) {
-                webllmWorker.removeEventListener('message', handleResponse);
-                reject(new Error(message.error));
-            }
-        };
-        
-        webllmWorker.addEventListener('message', handleResponse);
-        webllmWorker.postMessage({
-            type: 'embed',
-            data: { id, text }
-        });
-    });
+    // Placeholder - will be replaced with transformers.js
+    throw new Error('Embedding generation not implemented - awaiting transformers.js');
 }
 
 async function generateText(prompt, options = {}) {
     if (!workerReady || !webllmWorker) {
-        throw new Error('AI models not ready. Please wait for initialization to complete.');
+        throw new Error('AI models not ready. Transformers.js implementation pending.');
     }
     
-    return new Promise((resolve, reject) => {
-        const id = Date.now().toString();
-        
-        const handleResponse = (e) => {
-            const message = e.data;
-            if (message.type === 'generate-result' && message.id === id) {
-                webllmWorker.removeEventListener('message', handleResponse);
-                resolve(message.text);
-            } else if (message.type === 'error' && message.id === id) {
-                webllmWorker.removeEventListener('message', handleResponse);
-                reject(new Error(message.error));
-            }
-        };
-        
-        webllmWorker.addEventListener('message', handleResponse);
-        webllmWorker.postMessage({
-            type: 'generate',
-            data: { id, prompt, ...options }
-        });
-    });
+    // Placeholder - will be replaced with transformers.js
+    throw new Error('Text generation not implemented - awaiting transformers.js');
 }
 
 // Message handlers for communication with background script
@@ -388,4 +343,4 @@ chrome.runtime.sendMessage({ type: 'OFFSCREEN_READY' })
     });
 
 console.log('🔍 OFFSCREEN DEBUG: Branestawm offscreen document loaded and ready for messages');
-console.log('🔍 OFFSCREEN DEBUG: Auto-initialization will trigger after Web LLM loads');
+console.log('🔍 OFFSCREEN DEBUG: Web LLM removed - ready for transformers.js implementation');

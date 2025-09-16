@@ -51,9 +51,6 @@
       "https://www.perplexity.ai/*"
     ]
   },
-  "dependencies": {
-    "@mlc-ai/web-llm": "^0.2.79"
-  },
   "devDependencies": {
     "vite": "^6.3.6",
     "vite-plugin-static-copy": "^3.1.2"
