@@ -12,7 +12,10 @@ async function loadONNXRuntime() {
     
     // Method 1: Try importScripts with extension root file
     try {
-      importScripts('./ort.min.js');
+      // Only try if ort isn't already loaded to avoid declaration conflicts
+      if (!self.ort) {
+        importScripts('./ort.min.js');
+      }
       ort = self.ort;
       if (ort) {
         console.log('🧠 ONNX WORKER: ONNX Runtime loaded via importScripts');
@@ -119,9 +122,24 @@ async function initializeONNX() {
     ort.env.wasm.numThreads = 1;
     ort.env.wasm.simd = true;
     
-    // Set WASM paths for Chrome extension
-    const extensionURL = self.location.origin;
-    ort.env.wasm.wasmPaths = extensionURL + '/';
+    // Disable problematic features for Chrome extension compatibility
+    ort.env.wasm.proxy = false;
+    ort.env.logLevel = 'warning';
+    
+    // Set WASM paths for Chrome extension - use chrome.runtime.getURL if available
+    try {
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
+        ort.env.wasm.wasmPaths = chrome.runtime.getURL('./');
+        console.log('🧠 ONNX WORKER: WASM paths set using chrome.runtime.getURL');
+      } else {
+        // Fallback to relative paths
+        ort.env.wasm.wasmPaths = './';
+        console.log('🧠 ONNX WORKER: WASM paths set to relative');
+      }
+    } catch (pathError) {
+      console.warn('🧠 ONNX WORKER: Failed to set WASM paths:', pathError.message);
+      ort.env.wasm.wasmPaths = './';
+    }
     
     console.log('🧠 ONNX WORKER: ONNX Runtime initialized successfully');
     return true;
@@ -152,7 +170,7 @@ async function loadSpecialist(role, config) {
     if (ort && ort.InferenceSession) {
       try {
         session = await ort.InferenceSession.create(config.modelUrl, {
-          executionProviders: ['wasm'], // Use WASM execution provider
+          executionProviders: ['wasm', 'cpu'], // WASM first, CPU fallback
           graphOptimizationLevel: 'all',
           executionMode: 'sequential'
         });
