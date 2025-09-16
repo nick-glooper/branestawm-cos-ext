@@ -156,31 +156,31 @@ let currentModels = {
 };
 
 // Model configurations optimized for Chrome extension environment
-// Prioritizing smaller, faster models for better performance
+// Using actual Web LLM supported models
 const MODEL_CONFIGS = {
   scout: {
-    name: 'SmolLM2-1.7B-Instruct-q4f32_1-MLC', 
+    name: 'Llama-3.2-1B-Instruct-q4f32_1', 
     role: '🔍 The Scout (Classifier)',
     progress: 25,
-    justification: 'SmolLM2-1.7B: Optimized for classification speed in browser environment'
+    justification: 'Llama-3.2-1B: Small, fast model for classification tasks'
   },
   indexer: {
-    name: 'Llama-3.2-1B-Instruct-q4f32_1-MLC', 
+    name: 'Llama-3.2-1B-Instruct-q4f32_1', 
     role: '📚 The Indexer (Embeddings)', 
     progress: 50,
     justification: 'Llama-3.2-1B: Efficient semantic analysis for browser WebGPU'
   },
   extractor: {
-    name: 'Llama-3.2-1B-Instruct-q4f32_1-MLC', 
+    name: 'Llama-3.2-1B-Instruct-q4f32_1', 
     role: '🏷️ The Extractor (NER)',
     progress: 75,
     justification: 'Llama-3.2-1B: Fast NER processing in browser context'
   },
   synthesizer: {
-    name: 'Phi-3-mini-4k-instruct-q4f32_1-MLC', 
+    name: 'Llama-3.2-3B-Instruct-q4f32_1', 
     role: '✍️ The Synthesizer (Text Gen)',
     progress: 100,
-    justification: 'Phi-3-mini: Balanced quality and speed for Chrome extension'
+    justification: 'Llama-3.2-3B: Higher quality text generation while still efficient'
   }
 };
 
@@ -216,6 +216,11 @@ async function initializeWebLLM() {
       console.log('🚀 WEBLLM WORKER: webllm keys:', webllm ? Object.keys(webllm) : 'webllm is null');
       console.log('🚀 WEBLLM WORKER: Engine-related keys:', webllm ? Object.keys(webllm).filter(k => k.toLowerCase().includes('engine')) : 'none');
       throw new Error('No valid MLCEngine constructor or factory found');
+    }
+    
+    // Log available models for debugging
+    if (webllm.prebuiltAppConfig) {
+      console.log('🚀 WEBLLM WORKER: Available models:', Object.keys(webllm.prebuiltAppConfig.model_list || {}));
     }
     
     // Set up progress callback for model loading
@@ -257,7 +262,16 @@ async function loadModel(role, config) {
       throw new Error(`Invalid model name for ${role}: ${config.name}`);
     }
     
-    await mlcEngine.reload(config.name);
+    console.log(`🚀 WEBLLM WORKER: Attempting to load model: ${config.name}`);
+    
+    try {
+      await mlcEngine.reload(config.name);
+      console.log(`🚀 WEBLLM WORKER: Successfully loaded model: ${config.name}`);
+    } catch (reloadError) {
+      console.error(`🚀 WEBLLM WORKER: Model reload failed for ${config.name}:`, reloadError);
+      console.log(`🚀 WEBLLM WORKER: Available models might be different. Check console for model list.`);
+      throw reloadError;
+    }
     currentModels[role] = config.name;
     
     console.log(`✅ WEBLLM WORKER: ${config.role} loaded successfully`);
