@@ -112,18 +112,18 @@ function updateModelProgress(message, progress) {
     }
 }
 
-// Web Worker for Web LLM
-let onnxWorker = null;
+// Transformers.js Hybrid Worker
+let transformersWorker = null;
 
-// Initialize ONNX Runtime AI Worker with team of specialists
-function initializeONNXWorker() {
-    console.log('🧠 OFFSCREEN DEBUG: Creating ONNX Runtime Worker (team of specialists)...');
+// Initialize Transformers.js Hybrid AI Worker with team of specialists
+function initializeTransformersWorker() {
+    console.log('🧠 OFFSCREEN DEBUG: Creating Transformers.js Hybrid Worker (team of specialists)...');
     
     try {
-        onnxWorker = new Worker(chrome.runtime.getURL('onnx-worker.js'));
+        transformersWorker = new Worker(chrome.runtime.getURL('transformers-worker.js'));
         
         // Handle worker messages
-        onnxWorker.onmessage = function(e) {
+        transformersWorker.onmessage = function(e) {
             const message = e.data;
             const { type } = message;
             
@@ -162,13 +162,13 @@ function initializeONNXWorker() {
             }
         };
         
-        onnxWorker.onerror = function(error) {
+        transformersWorker.onerror = function(error) {
             console.error('🧠 OFFSCREEN DEBUG: ONNX Worker error:', error);
             handleAIFailure(error);
         };
         
         // Initialize the worker
-        onnxWorker.postMessage({
+        transformersWorker.postMessage({
             type: 'init',
             data: {}
         });
@@ -233,9 +233,9 @@ try {
     console.log('🔍 OFFSCREEN DEBUG: Failed to send setup status:', error);
 }
 
-// ONNX Runtime loads via dedicated worker
+// Transformers.js hybrid architecture loads via dedicated worker
 
-// Initialize ONNX Runtime Worker for local AI processing
+// Initialize Transformers.js Hybrid Worker for local AI processing
 console.log('🔍 OFFSCREEN DEBUG: Starting AI Worker initialization...');
 
 // Send status update
@@ -252,15 +252,15 @@ try {
 
 // Start ONNX Worker initialization when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeONNXWorker);
+    document.addEventListener('DOMContentLoaded', initializeTransformersWorker);
 } else {
     // DOM is already ready
-    initializeONNXWorker();
+    initializeTransformersWorker();
 }
 
 // AI processing functions - delegate to ONNX team of specialists
 async function generateEmbedding(text) {
-    if (!workerReady || !onnxWorker) {
+    if (!workerReady || !transformersWorker) {
         throw new Error('ONNX team of specialists not ready. Please wait for initialization.');
     }
     
@@ -270,16 +270,16 @@ async function generateEmbedding(text) {
         const handleResponse = (e) => {
             const message = e.data;
             if (message.type === 'embed-result' && message.id === id) {
-                onnxWorker.removeEventListener('message', handleResponse);
+                transformersWorker.removeEventListener('message', handleResponse);
                 resolve(message.embedding);
             } else if (message.type === 'error' && message.id === id) {
-                onnxWorker.removeEventListener('message', handleResponse);
+                transformersWorker.removeEventListener('message', handleResponse);
                 reject(new Error(message.error));
             }
         };
         
-        onnxWorker.addEventListener('message', handleResponse);
-        onnxWorker.postMessage({
+        transformersWorker.addEventListener('message', handleResponse);
+        transformersWorker.postMessage({
             type: 'embed',
             data: { id, text }
         });
@@ -287,7 +287,7 @@ async function generateEmbedding(text) {
 }
 
 async function generateText(prompt, options = {}) {
-    if (!workerReady || !onnxWorker) {
+    if (!workerReady || !transformersWorker) {
         throw new Error('ONNX team of specialists not ready. Please wait for initialization.');
     }
     
@@ -297,16 +297,16 @@ async function generateText(prompt, options = {}) {
         const handleResponse = (e) => {
             const message = e.data;
             if (message.type === 'generate-result' && message.id === id) {
-                onnxWorker.removeEventListener('message', handleResponse);
+                transformersWorker.removeEventListener('message', handleResponse);
                 resolve(message.text);
             } else if (message.type === 'error' && message.id === id) {
-                onnxWorker.removeEventListener('message', handleResponse);
+                transformersWorker.removeEventListener('message', handleResponse);
                 reject(new Error(message.error));
             }
         };
         
-        onnxWorker.addEventListener('message', handleResponse);
-        onnxWorker.postMessage({
+        transformersWorker.addEventListener('message', handleResponse);
+        transformersWorker.postMessage({
             type: 'generate',
             data: { id, prompt, ...options }
         });

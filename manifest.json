@@ -39,10 +39,14 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "onnx-worker.js",
+        "transformers-worker.js",
         "offscreen.html",
-        "ort-webgl.min.js",
+        "transformers.min.js",
         "ort-wasm-simd-threaded.wasm",
+        "ort-wasm-simd.wasm",
+        "ort-wasm-threaded.wasm", 
+        "ort-wasm.wasm",
+        "ort-webgl.min.js",
         "ort-wasm-simd-threaded.jsep.wasm",
         "ort.wasm.js",
         "ort.min.js",
