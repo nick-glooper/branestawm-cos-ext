@@ -113,17 +113,17 @@ function updateModelProgress(message, progress) {
 }
 
 // Web Worker for Web LLM
-let webllmWorker = null;
+let onnxWorker = null;
 
 // Initialize ONNX Runtime AI Worker with team of specialists
 function initializeONNXWorker() {
     console.log('🧠 OFFSCREEN DEBUG: Creating ONNX Runtime Worker (team of specialists)...');
     
     try {
-        webllmWorker = new Worker(chrome.runtime.getURL('webllm-worker.js'));
+        onnxWorker = new Worker(chrome.runtime.getURL('onnx-worker.js'));
         
         // Handle worker messages
-        webllmWorker.onmessage = function(e) {
+        onnxWorker.onmessage = function(e) {
             const message = e.data;
             const { type } = message;
             
@@ -162,13 +162,13 @@ function initializeONNXWorker() {
             }
         };
         
-        webllmWorker.onerror = function(error) {
+        onnxWorker.onerror = function(error) {
             console.error('🧠 OFFSCREEN DEBUG: ONNX Worker error:', error);
             handleAIFailure(error);
         };
         
         // Initialize the worker
-        webllmWorker.postMessage({
+        onnxWorker.postMessage({
             type: 'init',
             data: {}
         });
@@ -233,9 +233,9 @@ try {
     console.log('🔍 OFFSCREEN DEBUG: Failed to send setup status:', error);
 }
 
-// Legacy script loading function removed - Web LLM loads via worker
+// ONNX Runtime loads via dedicated worker
 
-// Initialize AI Worker (placeholder for transformers.js)
+// Initialize ONNX Runtime Worker for local AI processing
 console.log('🔍 OFFSCREEN DEBUG: Starting AI Worker initialization...');
 
 // Send status update
@@ -260,7 +260,7 @@ if (document.readyState === 'loading') {
 
 // AI processing functions - delegate to ONNX team of specialists
 async function generateEmbedding(text) {
-    if (!workerReady || !webllmWorker) {
+    if (!workerReady || !onnxWorker) {
         throw new Error('ONNX team of specialists not ready. Please wait for initialization.');
     }
     
@@ -270,16 +270,16 @@ async function generateEmbedding(text) {
         const handleResponse = (e) => {
             const message = e.data;
             if (message.type === 'embed-result' && message.id === id) {
-                webllmWorker.removeEventListener('message', handleResponse);
+                onnxWorker.removeEventListener('message', handleResponse);
                 resolve(message.embedding);
             } else if (message.type === 'error' && message.id === id) {
-                webllmWorker.removeEventListener('message', handleResponse);
+                onnxWorker.removeEventListener('message', handleResponse);
                 reject(new Error(message.error));
             }
         };
         
-        webllmWorker.addEventListener('message', handleResponse);
-        webllmWorker.postMessage({
+        onnxWorker.addEventListener('message', handleResponse);
+        onnxWorker.postMessage({
             type: 'embed',
             data: { id, text }
         });
@@ -287,7 +287,7 @@ async function generateEmbedding(text) {
 }
 
 async function generateText(prompt, options = {}) {
-    if (!workerReady || !webllmWorker) {
+    if (!workerReady || !onnxWorker) {
         throw new Error('ONNX team of specialists not ready. Please wait for initialization.');
     }
     
@@ -297,16 +297,16 @@ async function generateText(prompt, options = {}) {
         const handleResponse = (e) => {
             const message = e.data;
             if (message.type === 'generate-result' && message.id === id) {
-                webllmWorker.removeEventListener('message', handleResponse);
+                onnxWorker.removeEventListener('message', handleResponse);
                 resolve(message.text);
             } else if (message.type === 'error' && message.id === id) {
-                webllmWorker.removeEventListener('message', handleResponse);
+                onnxWorker.removeEventListener('message', handleResponse);
                 reject(new Error(message.error));
             }
         };
         
-        webllmWorker.addEventListener('message', handleResponse);
-        webllmWorker.postMessage({
+        onnxWorker.addEventListener('message', handleResponse);
+        onnxWorker.postMessage({
             type: 'generate',
             data: { id, prompt, ...options }
         });

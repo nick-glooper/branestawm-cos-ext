@@ -39,8 +39,9 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "webllm-worker.js",
+        "onnx-worker.js",
         "offscreen.html",
+        "ort-webgl.min.js",
         "ort-wasm-simd-threaded.wasm",
         "ort-wasm-simd-threaded.jsep.wasm",
         "ort.wasm.js",

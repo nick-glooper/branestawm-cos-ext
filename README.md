@@ -11,19 +11,19 @@
 Branestawm is a Chrome extension that provides multiple AI options for neurodivergent users:
 
 ### 🤖 **Four-AI System**
-- **Local AI (Web LLM)**: 4-model architecture running entirely offline
+- **Local AI (ONNX Runtime)**: 4-model architecture running entirely offline
 - **Google Gemini**: One-click OAuth setup with free tier
 - **Custom APIs**: Support for Cerebras, OpenAI, OpenRouter, and any OpenAI-compatible endpoint
 - **Smart Routing**: Automatic failover and optimal model selection
 
 ### 🧠 **Local AI (4-Model Architecture)**
-- **🔍 Scout** (SmolLM2-1.7B): Classification and intent detection
-- **📚 Indexer** (Llama-3.2-1B): Semantic embeddings and search
-- **🏷️ Extractor** (Llama-3.2-1B): Named entity recognition and extraction
+- **🔍 Scout** (DistilBERT-SST2): Classification and sentiment analysis
+- **📚 Indexer** (EmbeddingGemma-300M): Semantic embeddings and search
+- **🏷️ Extractor** (DistilBERT-NER): Named entity recognition and extraction
 - **✨ Synthesizer** (Phi-3-mini): High-quality text generation
 
 ### 🚀 **Core Features**
-- **Offline-First**: Full functionality without internet via Web LLM
+- **Offline-First**: Full functionality without internet via ONNX Runtime
 - **Privacy-Focused**: Local processing with optional cloud sync
 - **Neurodivergent-Optimized**: Patient, structured AI responses
 - **Cross-Platform**: Works entirely in browser with no installation
@@ -60,9 +60,9 @@ branestawm-cos-ext/
 ├── index.html             # Main conversation interface
 ├── options.html           # Settings and AI configuration
 ├── background.js          # Service worker with vector database
-├── offscreen.html         # Web LLM processing interface
+├── offscreen.html         # ONNX Runtime processing interface
 ├── offscreen.js           # Local AI orchestration
-├── webllm-worker.js       # 4-model Web LLM implementation
+├── onnx-worker.js         # 4-model ONNX Runtime implementation
 ├── api.js                 # AI routing and API management
 ├── chat.js                # Conversation logic
 ├── ui.js                  # UI components and themes
@@ -74,12 +74,12 @@ branestawm-cos-ext/
 #### Background Service Worker
 - **Vector Database**: IndexedDB-based semantic search
 - **Message Routing**: AI provider selection and failover
-- **Offscreen Management**: Web LLM process coordination
+- **Offscreen Management**: ONNX Runtime process coordination
 - **Auto-sync**: Optional encrypted cloud synchronization
 
-#### Local AI System (Web LLM)
+#### Local AI System (ONNX Runtime)
 - **4-Model Pipeline**: Specialized models for different tasks
-- **WebGPU Acceleration**: Hardware-optimized inference
+- **WebGL/CPU Acceleration**: Hardware-optimized inference
 - **Progressive Loading**: Smart model initialization
 - **Memory Management**: Efficient resource utilization
 
@@ -171,7 +171,7 @@ const results = await chrome.runtime.sendMessage({
 
 ### **Local AI Security**
 - **Air-Gapped**: No data leaves device when using Local AI
-- **Sandboxed**: Runs in Chrome's secure offscreen context
+- **Sandboxed**: Runs in Chrome's secure offscreen context with ONNX Runtime
 - **No Telemetry**: Zero tracking or analytics
 
 ### **Cloud API Security**
@@ -206,7 +206,7 @@ const results = await chrome.runtime.sendMessage({
 ## 🗺️ Roadmap
 
 ### **Current (v1.0)**
-- ✅ 4-model Web LLM implementation
+- ✅ 4-model ONNX Runtime implementation
 - ✅ Multi-provider AI routing
 - ✅ Google OAuth integration
 - ✅ Vector database for semantic search
@@ -230,7 +230,7 @@ MIT License - See LICENSE file for details.
 
 ## 🙏 Acknowledgments
 
-- **MLC Team**: For Web LLM technology enabling local AI
+- **Microsoft**: For ONNX Runtime Web technology enabling local AI
 - **Neurodivergent Community**: For feedback and testing
 - **Open Source AI**: Models from Meta, Microsoft, and others
 

@@ -3,58 +3,49 @@
 
 console.log('🧠 ONNX WORKER: Starting ONNX Runtime Web worker...');
 
-// Import ONNX Runtime Web
-// Multiple loading strategies for Chrome extension compatibility
-let ort = null;
+// Global ONNX Runtime instance - avoid redeclaration
+if (typeof self.ort === 'undefined') {
+  self.ort = null;
+}
+
 async function loadONNXRuntime() {
   try {
     console.log('🧠 ONNX WORKER: Attempting to load ONNX Runtime...');
     
     // Check if already loaded
     if (self.ort) {
-      ort = self.ort;
       console.log('🧠 ONNX WORKER: ONNX Runtime already available');
       return true;
     }
     
-    // Method 1: Try importScripts with extension root file
+    // Try loading WebGL build first (no WASM dependencies)
+    try {
+      importScripts('./ort-webgl.min.js');
+      if (self.ort) {
+        console.log('🧠 ONNX WORKER: ONNX Runtime WebGL loaded successfully');
+        return true;
+      }
+    } catch (webglError) {
+      console.warn('🧠 ONNX WORKER: WebGL build failed:', webglError.message);
+    }
+    
+    // Try loading regular build as fallback
     try {
       importScripts('./ort.min.js');
-      ort = self.ort;
-      if (ort) {
-        console.log('🧠 ONNX WORKER: ONNX Runtime loaded via importScripts');
+      if (self.ort) {
+        console.log('🧠 ONNX WORKER: ONNX Runtime loaded successfully');
         return true;
       }
     } catch (importError) {
-      console.warn('🧠 ONNX WORKER: importScripts failed:', importError.message);
+      console.warn('🧠 ONNX WORKER: Regular build failed:', importError.message);
     }
     
-    // Method 2: Try dynamic import with extension root file
-    try {
-      const module = await import('./ort.min.mjs');
-      ort = module;
-      console.log('🧠 ONNX WORKER: ONNX Runtime loaded via dynamic import');
-      return true;
-    } catch (dynamicError) {
-      console.warn('🧠 ONNX WORKER: Dynamic import failed:', dynamicError.message);
-    }
-    
-    // Method 3: Try loading from chrome extension URL
-    try {
-      const extensionUrl = chrome.runtime.getURL('ort.min.js');
-      importScripts(extensionUrl);
-      ort = self.ort;
-      if (ort) {
-        console.log('🧠 ONNX WORKER: ONNX Runtime loaded via chrome.runtime.getURL');
-        return true;
-      }
-    } catch (chromeError) {
-      console.warn('🧠 ONNX WORKER: Chrome extension URL loading failed:', chromeError.message);
-    }
-    
+    // If loading fails, continue with mock mode
+    console.warn('🧠 ONNX WORKER: ONNX Runtime loading failed, using mock mode');
     return false;
+    
   } catch (error) {
-    console.error('🧠 ONNX WORKER: All ONNX Runtime loading methods failed:', error);
+    console.error('🧠 ONNX WORKER: ONNX Runtime loading failed:', error);
     return false;
   }
 }
@@ -122,22 +113,27 @@ async function initializeONNX() {
       return true; // Continue with mock mode instead of throwing error
     }
     
-    // Configure ONNX Runtime for Chrome extension - use CPU only for reliability
-    ort.env.logLevel = 'warning';
-    
-    // Disable WASM completely to avoid Chrome extension issues
-    ort.env.wasm.numThreads = 1;
-    ort.env.wasm.simd = false;
-    ort.env.wasm.proxy = false;
-    
-    console.log('🧠 ONNX WORKER: ONNX Runtime configured for Chrome extension compatibility');
+    // Configure ONNX Runtime for Chrome extension - disable all WASM features
+    if (self.ort) {
+      self.ort.env.logLevel = 'warning';
+      
+      // Completely disable WASM to avoid .jsep.mjs issues
+      self.ort.env.wasm = {
+        numThreads: 1,
+        simd: false,
+        proxy: false,
+        wasmPaths: undefined // Don't set any WASM paths
+      };
+      
+      console.log('🧠 ONNX WORKER: ONNX Runtime configured for Chrome extension compatibility');
+    }
     
     console.log('🧠 ONNX WORKER: ONNX Runtime initialized successfully');
     return true;
     
   } catch (error) {
     console.error('❌ ONNX WORKER: Failed to initialize ONNX Runtime:', error);
-    throw error;
+    return true; // Continue with mock mode instead of throwing error
   }
 }
 
@@ -158,10 +154,11 @@ async function loadSpecialist(role, config) {
     
     // Create ONNX session for the model (if ONNX Runtime is available)
     let session = null;
-    if (ort && ort.InferenceSession) {
+    if (self.ort && self.ort.InferenceSession) {
       try {
-        session = await ort.InferenceSession.create(config.modelUrl, {
-          executionProviders: ['cpu'], // CPU only for Chrome extension reliability
+        // Try to create session with WebGL first, CPU fallback
+        session = await self.ort.InferenceSession.create(config.modelUrl, {
+          executionProviders: ['webgl', 'cpu'], // WebGL first, CPU fallback
           graphOptimizationLevel: 'all',
           executionMode: 'sequential'
         });

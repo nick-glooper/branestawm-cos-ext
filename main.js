@@ -1561,7 +1561,7 @@ function getRoutingStatistics() {
     return llmRouter.getPerformanceStats();
 }
 
-// Ollama refresh function removed - now using Web LLM for local AI
+// Local AI now handled by ONNX Runtime Web
 
 // Make functions globally accessible for HTML onclick handlers
 window.editArtifact = editArtifact;
@@ -1571,11 +1571,11 @@ window.createArtifactFromTemplate = createArtifactFromTemplate;
 window.showArtifactGenerationMenu = showArtifactGenerationMenu;
 
 // Make hybrid LLM functions accessible
-// Model info window functions removed - now using Web LLM
+// Model info handled by ONNX Runtime team of specialists
 window.forceLocalRouting = forceLocalRouting;
 window.forceCloudRouting = forceCloudRouting;
 window.getRoutingStatistics = getRoutingStatistics;
-// window.refreshOllamaConnection removed - now using Web LLM
+// ONNX Runtime connection managed through offscreen document
 
 // Make web search function accessible
 window.showWebSearchModal = showWebSearchModal;
