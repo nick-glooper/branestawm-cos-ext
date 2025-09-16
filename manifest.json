@@ -42,7 +42,9 @@
         "webllm-worker.js",
         "offscreen.html",
         "ort-wasm-simd-threaded.wasm",
-        "ort-wasm-simd-threaded.jsep.wasm"
+        "ort-wasm-simd-threaded.jsep.wasm",
+        "ort.min.js",
+        "ort.min.mjs"
       ],
       "matches": ["<all_urls>"]
     }
