@@ -31,39 +31,43 @@ let specialists = {
   synthesizer: null // Text generation specialist
 };
 
-// Model configurations for team of specialists
+// Model configurations for team of specialists - Research-based selections
 const MODEL_CONFIGS = {
-  scout: {
-    // Using a quantized DistilBERT for fast classification
-    modelUrl: 'https://huggingface.co/Xenova/distilbert-base-uncased-finetuned-sst-2-english/resolve/main/onnx/model_quantized.onnx',
-    tokenizerUrl: 'https://huggingface.co/Xenova/distilbert-base-uncased-finetuned-sst-2-english/resolve/main/tokenizer.json',
-    role: '🔍 The Scout (Classification)',
-    task: 'text-classification',
-    justification: 'DistilBERT: Fast, accurate sentiment/classification analysis'
-  },
   indexer: {
-    // Using sentence-transformers for embeddings
-    modelUrl: 'https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main/onnx/model_quantized.onnx',
-    tokenizerUrl: 'https://huggingface.co/Xenova/all-MiniLM-L6-v2/resolve/main/tokenizer.json',
+    // EmbeddingGemma optimized for embeddings - ~200MB
+    modelUrl: 'https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/main/model_quantized.onnx',
+    tokenizerUrl: 'https://huggingface.co/onnx-community/embeddinggemma-300m-ONNX/resolve/main/tokenizer.json',
     role: '📚 The Indexer (Embeddings)',
     task: 'feature-extraction',
-    justification: 'all-MiniLM-L6-v2: High-quality sentence embeddings'
+    size: '~200MB',
+    justification: 'EmbeddingGemma-300M: Google\'s specialized embedding model, optimized for semantic understanding'
+  },
+  scout: {
+    // DistilBERT for classification - ~67MB
+    modelUrl: 'https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english/resolve/main/onnx/model_quantized.onnx',
+    tokenizerUrl: 'https://huggingface.co/distilbert-base-uncased-finetuned-sst-2-english/resolve/main/tokenizer.json',
+    role: '🔍 The Scout (Classification)',
+    task: 'text-classification',
+    size: '~67MB',
+    justification: 'DistilBERT-SST2: Fast, accurate sentiment and classification analysis'
   },
   extractor: {
-    // Using a NER-specific model
-    modelUrl: 'https://huggingface.co/Xenova/bert-base-NER/resolve/main/onnx/model_quantized.onnx',
-    tokenizerUrl: 'https://huggingface.co/Xenova/bert-base-NER/resolve/main/tokenizer.json',
+    // DistilBERT-NER for entity extraction - ~67MB
+    modelUrl: 'https://huggingface.co/distilbert-base-NER/resolve/main/onnx/model_quantized.onnx',
+    tokenizerUrl: 'https://huggingface.co/distilbert-base-NER/resolve/main/tokenizer.json',
     role: '🏷️ The Extractor (NER)',
     task: 'token-classification',
-    justification: 'BERT-base-NER: Specialized named entity recognition'
+    size: '~67MB',
+    justification: 'DistilBERT-NER: Specialized named entity recognition with high accuracy'
   },
   synthesizer: {
-    // Using a smaller generative model
-    modelUrl: 'https://huggingface.co/Xenova/gpt2/resolve/main/onnx/model_quantized.onnx',
-    tokenizerUrl: 'https://huggingface.co/Xenova/gpt2/resolve/main/tokenizer.json',
+    // Phi-2 INT8 quantized for generation - ~1.4GB
+    modelUrl: 'https://huggingface.co/microsoft/phi-2/resolve/main/onnx/model_int8_quantized.onnx',
+    tokenizerUrl: 'https://huggingface.co/microsoft/phi-2/resolve/main/tokenizer.json',
     role: '✍️ The Synthesizer (Generation)',
     task: 'text-generation',
-    justification: 'GPT-2: Reliable text generation for summarization and completion'
+    size: '~1.4GB',
+    justification: 'Phi-2 INT8: Microsoft\'s efficient 2.7B parameter model, quantized for performance'
   }
 };
 
@@ -100,10 +104,14 @@ async function loadSpecialist(role, config) {
   try {
     console.log(`🧠 ONNX WORKER: Loading ${config.role}...`);
     
+    const loadOrder = ['indexer', 'scout', 'extractor', 'synthesizer'];
+    const modelIndex = loadOrder.indexOf(role);
+    const progressStart = 25 + (modelIndex * 18);
+    
     postMessage({
       type: 'status',
-      message: `Loading ${config.role}...`,
-      progress: 25 + (Object.keys(specialists).indexOf(role) * 20)
+      message: `Loading ${config.role} (${config.size})...`,
+      progress: progressStart
     });
     
     // Create ONNX session for the model
@@ -124,7 +132,7 @@ async function loadSpecialist(role, config) {
     postMessage({
       type: 'status',
       message: `${config.role} ready!`,
-      progress: 25 + (Object.keys(specialists).indexOf(role) * 20) + 20
+      progress: progressStart + 18
     });
     
     return true;
@@ -201,17 +209,20 @@ async function handleInit(data) {
     
     postMessage({
       type: 'status',
-      message: 'Loading AI specialists...',
+      message: 'Loading AI specialists (~1.7GB total download)...',
       progress: 10
     });
     
     // Load specialists sequentially to avoid resource conflicts
-    const roles = Object.keys(MODEL_CONFIGS);
-    for (const role of roles) {
+    // Order: Indexer (200MB) → Scout (67MB) → Extractor (67MB) → Synthesizer (1.4GB)
+    const loadOrder = ['indexer', 'scout', 'extractor', 'synthesizer'];
+    
+    for (const role of loadOrder) {
       await loadSpecialist(role, MODEL_CONFIGS[role]);
       
-      // Small delay between loads
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Longer delay before loading the large Phi-2 model
+      const delay = role === 'extractor' ? 2000 : 500;
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
     
     isInitialized = true;
@@ -223,7 +234,7 @@ async function handleInit(data) {
       type: 'init-complete',
       success: true,
       progress: 100,
-      message: `✅ Team of specialists ready! (${loadedCount}/${totalCount} models loaded)`
+      message: `✅ Team of specialists ready! (${loadedCount}/${totalCount} models: EmbeddingGemma, DistilBERT x2, Phi-2)`
     });
     
     console.log('🧠 ONNX WORKER: Team of specialists initialized successfully!');
