@@ -10,12 +10,16 @@ async function loadONNXRuntime() {
   try {
     console.log('🧠 ONNX WORKER: Attempting to load ONNX Runtime...');
     
+    // Check if already loaded
+    if (self.ort) {
+      ort = self.ort;
+      console.log('🧠 ONNX WORKER: ONNX Runtime already available');
+      return true;
+    }
+    
     // Method 1: Try importScripts with extension root file
     try {
-      // Only try if ort isn't already loaded to avoid declaration conflicts
-      if (!self.ort) {
-        importScripts('./ort.min.js');
-      }
+      importScripts('./ort.min.js');
       ort = self.ort;
       if (ort) {
         console.log('🧠 ONNX WORKER: ONNX Runtime loaded via importScripts');
@@ -118,28 +122,15 @@ async function initializeONNX() {
       return true; // Continue with mock mode instead of throwing error
     }
     
-    // Configure ONNX Runtime for Chrome extension
-    ort.env.wasm.numThreads = 1;
-    ort.env.wasm.simd = true;
-    
-    // Disable problematic features for Chrome extension compatibility
-    ort.env.wasm.proxy = false;
+    // Configure ONNX Runtime for Chrome extension - use CPU only for reliability
     ort.env.logLevel = 'warning';
     
-    // Set WASM paths for Chrome extension - use chrome.runtime.getURL if available
-    try {
-      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL) {
-        ort.env.wasm.wasmPaths = chrome.runtime.getURL('./');
-        console.log('🧠 ONNX WORKER: WASM paths set using chrome.runtime.getURL');
-      } else {
-        // Fallback to relative paths
-        ort.env.wasm.wasmPaths = './';
-        console.log('🧠 ONNX WORKER: WASM paths set to relative');
-      }
-    } catch (pathError) {
-      console.warn('🧠 ONNX WORKER: Failed to set WASM paths:', pathError.message);
-      ort.env.wasm.wasmPaths = './';
-    }
+    // Disable WASM completely to avoid Chrome extension issues
+    ort.env.wasm.numThreads = 1;
+    ort.env.wasm.simd = false;
+    ort.env.wasm.proxy = false;
+    
+    console.log('🧠 ONNX WORKER: ONNX Runtime configured for Chrome extension compatibility');
     
     console.log('🧠 ONNX WORKER: ONNX Runtime initialized successfully');
     return true;
@@ -170,7 +161,7 @@ async function loadSpecialist(role, config) {
     if (ort && ort.InferenceSession) {
       try {
         session = await ort.InferenceSession.create(config.modelUrl, {
-          executionProviders: ['wasm', 'cpu'], // WASM first, CPU fallback
+          executionProviders: ['cpu'], // CPU only for Chrome extension reliability
           graphOptimizationLevel: 'all',
           executionMode: 'sequential'
         });

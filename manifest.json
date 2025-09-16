@@ -43,6 +43,7 @@
         "offscreen.html",
         "ort-wasm-simd-threaded.wasm",
         "ort-wasm-simd-threaded.jsep.wasm",
+        "ort.wasm.js",
         "ort.min.js",
         "ort.min.mjs"
       ],
