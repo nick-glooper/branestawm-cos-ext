@@ -46215,7 +46215,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
   __webpack_exports__env.allowLocalModels = false;
   __webpack_exports__env.backends = __webpack_exports__env.backends || {};
   __webpack_exports__env.backends.onnx = __webpack_exports__env.backends.onnx || {};
-  __webpack_exports__env.backends.onnx.providers = ["webgpu", "wasm"];
+  __webpack_exports__env.backends.onnx.providers = ["wasm"];
   __webpack_exports__env.backends.onnx.wasm = __webpack_exports__env.backends.onnx.wasm || {};
   __webpack_exports__env.backends.onnx.wasm.numThreads = 4;
   __webpack_exports__env.backends.onnx.wasm.simd = true;
@@ -46240,8 +46240,8 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
           "zero-shot-classification",
           "facebook/bart-large-mnli",
           {
-            device: "webgpu",
-            // Prioritize WebGPU per directive
+            device: "wasm",
+            // Chrome extension CSP blocks WebGPU - use optimized WASM
             progress_callback: (data) => {
               self.postMessage({
                 type: "download-progress",
@@ -46263,8 +46263,8 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
           "feature-extraction",
           "onnx-community/embeddinggemma-300m-ONNX",
           {
-            device: "webgpu",
-            // Prioritize WebGPU per directive
+            device: "wasm",
+            // Chrome extension CSP blocks WebGPU - use optimized WASM
             progress_callback: (data) => {
               self.postMessage({
                 type: "download-progress",
@@ -46286,8 +46286,8 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
           "token-classification",
           "Xenova/bert-base-NER",
           {
-            device: "webgpu",
-            // Prioritize WebGPU per directive
+            device: "wasm",
+            // Chrome extension CSP blocks WebGPU - use optimized WASM
             progress_callback: (data) => {
               self.postMessage({
                 type: "download-progress",
@@ -46309,8 +46309,8 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
           "text-generation",
           "onnx-community/Qwen2.5-0.5B-Instruct",
           {
-            device: "webgpu",
-            // Prioritize WebGPU per directive
+            device: "wasm",
+            // Chrome extension CSP blocks WebGPU - use optimized WASM
             dtype: "q4",
             // Use 4-bit quantization per directive
             progress_callback: (data) => {
@@ -46364,7 +46364,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
       console.log("🧠 TRANSFORMERS WORKER: Initializing AI specialists...");
       self.postMessage({
         type: "status",
-        message: "Loading AI specialists with WebGPU acceleration (state-of-the-art models)...",
+        message: "Loading AI specialists with optimized WASM (state-of-the-art models)...",
         progress: 10
       });
       const loadOrder = [
@@ -46399,7 +46399,7 @@ ${fake_token_around_image}${global_img_token}` + image_token.repeat(image_seq_le
         type: "init-complete",
         success: true,
         progress: 100,
-        message: "✅ State-of-the-art AI architecture ready! (WebGPU-accelerated specialists per Lead Architect directive)"
+        message: "✅ State-of-the-art AI architecture ready! (WASM-optimized specialists - Chrome extension compatible)"
       });
       console.log("🧠 TRANSFORMERS WORKER: All specialists initialized successfully!");
     } catch (error) {
